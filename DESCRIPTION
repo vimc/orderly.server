@@ -7,8 +7,10 @@ Author: Rich FitzJohn
 Maintainer: Rich FitzJohn <rich.fitzjohn@gmail.com>
 Imports:
     httpuv,
+    jsonlite,
     optparse,
-    orderly (>= 0.3.0)
+    orderly (>= 0.3.0),
+    webutils
 Suggests:
     httr,
     processx,
