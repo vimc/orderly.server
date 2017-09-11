@@ -30,7 +30,11 @@ then
 
 ```
 curl -X POST http://localhost:8123/reports/rebuild
+# {"status":"success","data":{},"errors":[]}
 curl -X POST http://localhost:8123/reports/example/run
+# {"status":"success","data":"20170911-165914-e9d6967d","errors":[]}
 curl -X GET http://localhost:8123/reports/example/20170911-165914-e9d6967d/status
+# {"status":"success","data":{"status":"archive","output":{}},"errors":[]}
 curl -X POST http://localhost:8123/reports/example/20170911-165914-e9d6967d/publish
+# {"status":"success","data":true,"errors":[]}
 ```
