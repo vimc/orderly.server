@@ -14,11 +14,11 @@ server <- function(path, port, host = "0.0.0.0") {
 
 server_app <- function(path) {
   runner <- orderly::orderly_runner(path)
-  map <- server_endpoints()
-  list(call = function(req) server_handler(runner, req, map))
+  map <- server_endpoints(runner)
+  list(call = function(req) server_handler(req, map))
 }
 
-server_handler <- function(runner, req, map) {
+server_handler <- function(req, map) {
   orderly::orderly_log(req$REQUEST_METHOD, req$PATH_INFO)
 
   catch <- function(e) {
@@ -50,11 +50,11 @@ server_response <- function(data, errors, status) {
        body = jsonlite::toJSON(body, auto_unbox = TRUE))
 }
 
-server_endpoints <- function() {
-  runner <- orderly::orderly_runner(path)
-
+server_endpoints <- function(runner) {
   root <- function() {
-    "orderly.server"
+    list(name = "orderly.server",
+         version = "0.0.0",
+         endpoints = vapply(map, "[[", character(1), "path"))
   }
   ## Wrapper functions to do a version -> id mapping
   status <- function(name, version, output = FALSE) {
