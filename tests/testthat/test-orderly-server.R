@@ -41,9 +41,19 @@ test_that("run", {
   dest <- file.path(path, "archive", "example", id)
   wait_for_path(dest)
 
-  r <- httr::GET(api_url("/reports/example/%s/status", id))
-  expect_equal(httr::status_code(r), 200)
-  dat <- content(r)
+  for (i in 1:10) {
+    r <- httr::GET(api_url("/reports/example/%s/status", id))
+    expect_equal(httr::status_code(r), 200)
+    dat <- content(r)
+    if (dat$data$status == "running") {
+      Sys.sleep(0.02)
+      message("...waiting")
+      next
+    } else {
+      break
+    }
+  }
+
   expect_equal(dat$status, "success")
   expect_equal(dat$data,
                list(status = "archive", output = empty_named_list()))

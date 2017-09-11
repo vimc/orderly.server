@@ -33,7 +33,7 @@ server_handler <- function(runner, req, map) {
       orderly::orderly_log(" `- args", paste(names(dat$args), collapse = ", "))
     }
     ret <- tryCatch(
-      server_response(do.call(runner[[dat$dest]], dat$args), list(), 200),
+      server_response(do.call(dat$dest, dat$args), list(), 200),
       error = catch)
   }
 
@@ -51,30 +51,50 @@ server_response <- function(data, errors, status) {
 }
 
 server_endpoints <- function() {
+  runner <- orderly::orderly_runner(path)
+
+  root <- function() {
+    "orderly.server"
+  }
+  ## Wrapper functions to do a version -> id mapping
+  status <- function(name, version, output = FALSE) {
+    runner$status(name, version, output)
+  }
+  commit <- function(name, version) {
+    runner$commit(name, version)
+  }
+  publish <- function(name, version, value = TRUE) {
+    runner$publish(name, version, as_logical(value))
+  }
+
   ## Order here matters because this will look through the first to
   ## the last, not anything clever with the least to most specific.
   ## For the endpoints listed here that's not a big deal.
   ##
   ## What is not dealt with here is any additional parameters; this is
   ## the case for run at least
-  map <- list(list(dest   = "rebuild",
+  map <- list(list(dest = root,
+                   path = "/",
+                   query = NULL,
+                   method = "GET"),
+              list(dest   = runner$rebuild,
                    path   = "/reports/rebuild",
                    query  = NULL,
                    method = "POST"),
-              list(dest   = "run",
+              list(dest   = runner$run,
                    path   = "/reports/:name/run",
                    query  = c("parameters", "commit"),
                    post   = "parameters",
                    method = "POST"),
-              list(dest   = "status",
+              list(dest   = status,
                    path   = "/reports/:name/:version/status",
                    query  = "output",
                    method = "GET"),
-              list(dest   = "commit",
+              list(dest   = commit,
                    path   = "/reports/:name/:version/commit",
                    query  = NULL,
                    method = "POST"),
-              list(dest   = "publish",
+              list(dest   = publish,
                    path   = "/reports/:name/:version/publish",
                    query  = "value",
                    method = "POST"))
@@ -127,14 +147,6 @@ parse_request <- function(req, map) {
       return(server_error_data("unknown-parameter", "Unknown query parameter",
                                405))
     }
-    if (dat$dest == "publish") {
-      ## Some ad-hoc type conversion for publish, making 'value' a logical
-      query$value <- as_logical(query$value)
-      if (is.na(query$value)) {
-      return(server_error_data("invalid-parameter", "value must be logical",
-                               405))
-      }
-    }
     dat$args <- c(dat$args, query)
   }
 
@@ -181,18 +193,14 @@ parse_path <- function(x) {
     }
   }
 
-  x <- sprintf("^%s$", x)
-
-  args[args == "version"] <- "id"
-
-  list(re = x, args = args)
+  list(re = sprintf("^%s$", x), args = args)
 }
 
-as_logical <- function(x) {
+as_logical <- function(x, name = deparse(substitute(x))) {
   switch(tolower(x),
          "true" = TRUE,
          "yes" = TRUE,
          "false" = FALSE,
          "no" = FALSE,
-         NA)
+         stop(sprintf("Invalid input for '%s'", name)))
 }

@@ -46,8 +46,18 @@ start_test_server <- function(log = "orderly.server.log") {
   Rscript <- file.path(R.home("bin"), "Rscript")
   px <- processx::process$new(Rscript, "orderly.server.R",
                               stdout = log, stderr = log)
+  message("waiting for process to start")
   cache$px <- px
   wait_for_path("orderly.server.path")
+  wait_for_path("orderly.server.port")
+
+  url <- sprintf("http://localhost:%s/", readLines("orderly.server.port"))
+  server_not_up <- function() {
+    isTRUE(tryCatch(httr::GET(url), error = function(e) TRUE))
+  }
+  message("waiting for server to be responsive")
+  wait_while(server_not_up)
+
   TRUE
 }
 
