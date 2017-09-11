@@ -8,7 +8,7 @@ Maintainer: Rich FitzJohn <rich.fitzjohn@gmail.com>
 Imports:
     httpuv,
     optparse,
-    orderly
+    orderly (>= 0.3.0)
 Suggests:
     httr,
     processx,
