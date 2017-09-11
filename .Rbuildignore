@@ -8,3 +8,4 @@
 ^docker$
 ^Makefile$
 ^orderly\.server$
+^orderly$

@@ -17,3 +17,20 @@ POST /reports/rebuild
 ```
 
 All the query stuff is already dealt with in [montagu-reporting-api](https://github.com/vimc/montagu-reporting-api) and will not be duplicated here.
+
+```
+IMAGE=docker.montagu.dide.ic.ac.uk:5000/orderly.server:i648
+docker pull $IMAGE
+mkdir orderly
+docker run --rm --entrypoint Rscript -v ${PWD}/orderly:/orderly --user docker $IMAGE -e 'orderly:::prepare_orderly_example("interactive", "/orderly")'
+docker run --rm -p 8123:8123 -v ${PWD}/orderly:/orderly --user docker $IMAGE /orderly
+```
+
+then
+
+```
+curl -X POST http://localhost:8123/reports/rebuild
+curl -X POST http://localhost:8123/reports/example/run
+curl -X GET http://localhost:8123/reports/example/20170911-165914-e9d6967d/status
+curl -X POST http://localhost:8123/reports/example/20170911-165914-e9d6967d/publish
+```
