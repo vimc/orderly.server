@@ -1,0 +1,16 @@
+Package: orderly.server
+Title: Serve Orderly
+Version: 0.1.0
+Description: What the package does (one paragraph).
+License: MIT + file LICENSE
+Author: Rich FitzJohn
+Maintainer: Rich FitzJohn <rich.fitzjohn@gmail.com>
+Imports:
+    httpuv,
+    optparse,
+    orderly
+Suggests:
+    httr,
+    processx,
+    testthat
+RoxygenNote: 6.0.1

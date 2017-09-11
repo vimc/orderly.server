@@ -1,0 +1,11 @@
+language: r
+sudo: false
+cache: packages
+
+r_packages:
+  - covr
+before_script:
+  - R CMD INSTALL .
+
+r_github_packages:
+  - vimc/orderly

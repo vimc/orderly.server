@@ -1,0 +1,7 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^tests/testthat/\.gitignore$
+^tests/testthat/orderly\.server\.log$
+^tests/testthat/orderly\.server\.path$
+^tests/testthat/orderly\.server\.port$
+^\.travis\.yml$
