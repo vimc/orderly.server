@@ -5,3 +5,6 @@
 ^tests/testthat/orderly\.server\.path$
 ^tests/testthat/orderly\.server\.port$
 ^\.travis\.yml$
+^docker$
+^Makefile$
+^orderly\.server$
