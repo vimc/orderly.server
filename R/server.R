@@ -47,24 +47,39 @@ server_response <- function(data, errors, status) {
                errors = errors)
   list(status = status,
        headers = list("Content-Type" = "application/json"),
-       body = jsonlite::toJSON(body, auto_unbox = TRUE))
+       body = to_json(body))
 }
 
 server_endpoints <- function(runner) {
-  root <- function() {
+  index <- function() {
     list(name = "orderly.server",
          version = "0.0.0",
          endpoints = vapply(map, "[[", character(1), "path"))
   }
+  run <- function(name, parameters = NULL, commit = TRUE) {
+    version <- runner$run(name, parameters, commit)
+    list(name = name,
+         version = version,
+         path = sprintf("/v1/reports/%s/%s/status/", name, version))
+  }
   ## Wrapper functions to do a version -> id mapping
   status <- function(name, version, output = FALSE) {
-    runner$status(name, version, output)
+    ret <- runner$status(name, version, output)
+    if (is.null(ret$output)) {
+      ret$output <- NA # maps to json 'null'
+    }
+    ret
   }
   commit <- function(name, version) {
     runner$commit(name, version)
+    NA
   }
   publish <- function(name, version, value = TRUE) {
     runner$publish(name, version, as_logical(value))
+  }
+  rebuild <- function() {
+    runner$rebuild()
+    NA
   }
 
   ## Order here matters because this will look through the first to
@@ -73,32 +88,40 @@ server_endpoints <- function(runner) {
   ##
   ## What is not dealt with here is any additional parameters; this is
   ## the case for run at least
-  map <- list(list(dest = root,
-                   path = "/",
-                   query = NULL,
+  map <- list(list(name   = "index",
+                   dest   = index,
+                   path   = "/",
+                   query  = NULL,
                    method = "GET"),
-              list(dest   = runner$rebuild,
+              list(name   = "rebuild",
+                   dest   = rebuild,
                    path   = "/v1/reports/rebuild/",
                    query  = NULL,
                    method = "POST"),
-              list(dest   = runner$run,
+              list(name   = "run",
+                   dest   = run,
                    path   = "/v1/reports/:name/run/",
                    query  = c("parameters", "commit"),
                    post   = "parameters",
                    method = "POST"),
-              list(dest   = status,
+              list(name   = "status",
+                   dest   = status,
                    path   = "/v1/reports/:name/:version/status/",
                    query  = "output",
                    method = "GET"),
-              list(dest   = commit,
+              list(name   = "commit",
+                   dest   = commit,
                    path   = "/v1/reports/:name/:version/commit/",
                    query  = NULL,
                    method = "POST"),
-              list(dest   = publish,
+              list(name   = "publish",
+                   dest   = publish,
                    path   = "/v1/reports/:name/:version/publish/",
                    query  = "value",
                    method = "POST"))
-  lapply(map, function(x) c(x, parse_path(x$path)))
+  res <- lapply(map, function(x) c(x, parse_path(x$path)))
+  names(res) <- vapply(map, "[[", character(1), "name")
+  res
 }
 
 server_match_endpoint <- function(path, map) {
@@ -203,4 +226,8 @@ as_logical <- function(x, name = deparse(substitute(x))) {
          "false" = FALSE,
          "no" = FALSE,
          stop(sprintf("Invalid input for '%s'", name)))
+}
+
+to_json <- function(x) {
+  jsonlite::toJSON(x, auto_unbox = TRUE)
 }

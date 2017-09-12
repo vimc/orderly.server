@@ -67,3 +67,17 @@ stop_test_server <- function() {
     file.remove("orderly.server.path")
   }
 }
+
+expect_valid_json <- function(json, schema) {
+  testthat::skip_if_not_installed("jsonvalidate")
+  testthat::expect_true(jsonvalidate::json_validate(json, schema))
+}
+
+expect_valid_response <- function(json, errors = list(), status = 200) {
+  expect_valid_json(json, "spec/Response.schema.json")
+}
+
+test_runner <- function(path = tempfile()) {
+  orderly:::prepare_orderly_example("interactive", path)
+  server_endpoints(orderly::orderly_runner(path))
+}

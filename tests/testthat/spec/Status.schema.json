@@ -1,0 +1,35 @@
+{
+    "id": "Status",
+    "type": "object",
+    "properties": {
+        "status": {
+            "enum": ["archive", "draft", "running", "unknown"]
+        },
+        "output": {
+            "oneOf": [
+                {"type": "null"},
+                {
+                    "type": "object",
+                    "properties": {
+                        "stdout": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "stderr": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "required": ["stdout", "stderr"],
+                    "additionalProperties": false
+                }
+            ]
+        }
+    },
+    "required": ["status", "output"],
+    "additionalProperties": false
+}

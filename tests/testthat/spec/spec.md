@@ -1,0 +1,125 @@
+# orderly.server API
+
+I'm following the general points in the [montagu api](https://github.com/vimc/montagu-api/blob/master/spec/spec.md)
+
+* all data is returned in JSON format
+* `POST` data must be sent in JSON format
+* The canonical form for all URLs (not including query string) ends in a slash: `/`
+* The API will be versioned via URL. So for version 1, all URLs will begin /v1/. e.g. http://.../v1/reports/
+
+* When a POST results in the creation of a new object, the API returns a response in the standard format (see below) with the 'data' field being the URL that identifies the new resource _(this one not done; but I don't think it's done in the main api either: the only case that is really relevant here is `run` and I'm returning hopefully enough)_
+
+In addition
+
+* Query parameter that accept booleans are case insensitive and accept `true`, `false`, `yes` and `no`.
+
+Some files are directly copied over (with only whitespace changes) from `montagu-api`:
+
+* `Error.schema.json`
+* `ErrorCode.schema.json`
+* `Index.schema.json`
+* `Response.schema.json`
+
+## POST /reports/rebuild/
+
+Force orderly to rebuild the index.  This is useful in cases where the index is corrupt (seen in failed restores), or during a schema migration.  It's a relatively harmless operation, though it might get a little slow when the store is large.  Returns nothing.
+
+Schema: [`Rebuild.schema.json`](Rebuild.schema.json)
+
+### Example
+
+```json
+null
+```
+
+## POST /reports/:name/run/
+
+Try and run a report `:name`
+
+Accepts as `POST` body json that will be passed directly through to the report.  This is required when the report requires parameters and is not allowed for reports that do not allow parameters.
+
+Accepts the query parameter `commit` which can be set to `false` (e.g., `/reports/:name/run/?commit=false` to try running the report but not commit it.  This can be used for testing that the report compiles.
+
+Returns information to query the status of the report via the next endpoint
+
+Schema: [`Run.schema.json`](Run.schema.json)
+
+### Example
+
+``` json
+{
+    "name": "report-name"
+    "version": "20170912-0657-0b2174fd",
+    "path": "/v1/reports/report-name/20170912-0657-0b2174fd/status"
+}
+```
+
+## GET /reports/:name/:version/status/
+
+Get the status of a report.
+
+This works with all reports, not just those triggered as running via the API (though output fetching will not work the same way for manually triggered reports).
+
+Schema: [`Status.schema.json`](Status.schema.json)
+
+### Example
+
+```json
+{
+    "status": "success",
+    "output": {
+        "stderr": [
+            "[ name      ]  example",
+            "[ id        ]  20170912-091103-41c62920",
+            "[ id_file   ]  /var/folders/3z/86tv450j7kb4w5y4wpxj6d5r0000gn/T//RtmpozkWqn/fileaf521bb78e78",
+            "[ data      ]  dat: 20 x 2",
+            "[ start     ]  2017-09-12 09:11:03",
+            "[ end       ]  2017-09-12 09:11:03",
+            "[ artefact  ]  mygraph.png: b7de1d29f37d7913392832db6bc49c99",
+            "[ commit    ]  example/20170912-091103-41c62920",
+            "[ copy      ]",
+            "[ success   ]  :)",
+            "id:20170912-091103-41c62920"],
+        "stdout": [
+            "",
+            "> png(\"mygraph.png\")",
+            "",
+            "> par(mar = c(15, 4, 0.5, 0.5))",
+            "",
+            "> barplot(setNames(dat$number, dat$name), las = 2)",
+            "",
+            "> dev.off()",
+            "null device ",
+            "          1 "
+        ]
+    }
+}
+```
+
+## POST /reports/:name/:version/commit/
+
+Commit a draft report.
+
+This only makes sense if a report was run first in draft mode (e.g., with `?commit=false`) and the subsequently checked (which can't really be done via this interface!).
+
+It takes no parameters and no body, and returns nothing
+
+Schema: [`Commit.schema.json`](Commit.schema.json)
+
+### Example
+
+``` json
+null
+```
+
+## POST /reports/:name/:version/publish/
+
+Publish a report.  Sets the status of the "published" flag.  With no parameters sets the flag to `true` but reports can be unpublished by passing the query parameter `?value=false`.
+
+Schema: [`Publish.schema.json`](Publish.schema.json)
+
+### Example
+
+``` json
+true
+```

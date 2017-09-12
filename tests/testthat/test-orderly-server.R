@@ -4,7 +4,7 @@ test_that("rebuild", {
   r <- httr::POST(api_url("/v1/reports/rebuild/"))
   dat <- content(r)
   expect_equal(dat$status, "success")
-  expect_equal(dat$data, empty_named_list())
+  expect_null(dat$data)
   expect_equal(dat$errors, list())
 })
 
@@ -33,9 +33,12 @@ test_that("run", {
   expect_equal(httr::status_code(r), 200)
   dat <- content(r)
   expect_equal(dat$status, "success")
-  expect_is(dat$data, "character")
-  id <- dat$data
+  expect_is(dat$data, "list")
 
+  expect_true(setequal(names(dat$data), c("name", "version", "path")))
+  expect_equal(dat$data$name, "example")
+
+  id <- dat$data$version
   path <- readLines("orderly.server.path")
 
   dest <- file.path(path, "archive", "example", id)
@@ -55,8 +58,7 @@ test_that("run", {
   }
 
   expect_equal(dat$status, "success")
-  expect_equal(dat$data,
-               list(status = "archive", output = empty_named_list()))
+  expect_equal(dat$data, list(status = "archive", output = NULL))
 
   r <- httr::GET(api_url("/v1/reports/example/%s/status/", id),
                  query = list(output = TRUE))
@@ -75,8 +77,7 @@ test_that("run, commit", {
   expect_equal(httr::status_code(r), 200)
   dat <- content(r)
   expect_equal(dat$status, "success")
-  expect_is(dat$data, "character")
-  id <- dat$data
+  id <- dat$data$version
 
   dest <- file.path(path, "draft", "example", id)
   wait_for_path(file.path(dest, "orderly_run.yml"))
@@ -86,13 +87,13 @@ test_that("run, commit", {
   dat <- content(r)
   expect_equal(dat$status, "success")
   expect_equal(dat$data,
-               list(status = "draft", output = empty_named_list()))
+               list(status = "draft", output = NULL))
 
   r <- httr::POST(api_url("/v1/reports/example/%s/commit/", id))
   expect_equal(httr::status_code(r), 200)
   dat <- content(r)
   expect_equal(dat$status, "success")
-  expect_equal(dat$data, TRUE)
+  expect_null(dat$data)
 })
 
 test_that("publish", {
