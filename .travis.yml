@@ -9,3 +9,8 @@ before_script:
 
 r_github_packages:
   - vimc/orderly@i648
+
+addons:
+  apt:
+    packages:
+      - libv8-dev
