@@ -222,9 +222,7 @@ parse_path <- function(x) {
 as_logical <- function(x, name = deparse(substitute(x))) {
   switch(tolower(x),
          "true" = TRUE,
-         "yes" = TRUE,
          "false" = FALSE,
-         "no" = FALSE,
          stop(sprintf("Invalid input for '%s'", name)))
 }
 

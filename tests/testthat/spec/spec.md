@@ -11,7 +11,7 @@ I'm following the general points in the [montagu api](https://github.com/vimc/mo
 
 In addition
 
-* Query parameter that accept booleans are case insensitive and accept `true`, `false`, `yes` and `no`.
+* Query parameter that accept booleans are case insensitive and accept `true` and `false`.
 
 Some files are directly copied over (with only whitespace changes) from `montagu-api`:
 
