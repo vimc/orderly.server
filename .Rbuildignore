@@ -9,3 +9,4 @@
 ^Makefile$
 ^orderly\.server$
 ^orderly$
+^spec$
