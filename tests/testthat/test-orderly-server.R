@@ -39,24 +39,14 @@ test_that("run", {
   expect_equal(dat$data$name, "example")
 
   id <- dat$data$version
-  path <- readLines("orderly.server.path")
 
-  dest <- file.path(path, "archive", "example", id)
+  dest <- file.path(cache$server$path, "archive", "example", id)
   wait_for_path(dest)
+  wait_for_finished(id)
 
-  for (i in 1:10) {
-    r <- httr::GET(api_url("/v1/reports/example/%s/status/", id))
-    expect_equal(httr::status_code(r), 200)
-    dat <- content(r)
-    if (dat$data$status == "running") {
-      Sys.sleep(0.02)
-      message("...waiting")
-      next
-    } else {
-      break
-    }
-  }
-
+  r <- httr::GET(api_url("/v1/reports/example/%s/status/", id))
+  expect_equal(httr::status_code(r), 200)
+  dat <- content(r)
   expect_equal(dat$status, "success")
   expect_equal(dat$data, list(status = "archive", output = NULL))
 
@@ -70,8 +60,6 @@ test_that("run", {
 })
 
 test_that("run, commit", {
-  path <- readLines("orderly.server.path")
-
   r <- httr::POST(api_url("/v1/reports/example/run/"),
                   query = list(commit = FALSE))
   expect_equal(httr::status_code(r), 200)
@@ -79,8 +67,9 @@ test_that("run, commit", {
   expect_equal(dat$status, "success")
   id <- dat$data$version
 
-  dest <- file.path(path, "draft", "example", id)
+  dest <- file.path(cache$server$path, "draft", "example", id)
   wait_for_path(file.path(dest, "orderly_run.yml"))
+  wait_for_finished(id)
 
   r <- httr::GET(api_url("/v1/reports/example/%s/status/", id))
   expect_equal(httr::status_code(r), 200)
@@ -97,7 +86,7 @@ test_that("run, commit", {
 })
 
 test_that("publish", {
-  path <- readLines("orderly.server.path")
+  path <- cache$server$path
   id <- orderly::orderly_run("example", config = path, echo = FALSE)
   dest <- orderly::orderly_commit(id, config = path)
   pub <- file.path(dest, "orderly_published.yml")

@@ -26,45 +26,77 @@ wait_for_path <- function(path, ...) {
   wait_while(function() !file.exists(path), ...)
 }
 wait_for_process_termination <- function(process, ...) {
-  wait_while(function() process$is_alive(), ...)
+  wait_while(process$is_alive, ...)
+}
+wait_for_finished <- function(id, ...) {
+  is_running <- function() {
+    r <- httr::GET(api_url("/v1/reports/example/%s/status/", id))
+    identical(content(r)$data$status, "running")
+  }
+  wait_while(is_running, ...)
 }
 
 api_url <- function(path, ...) {
-  port <- readLines("orderly.server.port")
-  paste0("http://localhost:", port, sprintf(path, ...))
+  paste0("http://localhost:", cache$server$port, sprintf(path, ...))
 }
 
 cache <- new.env(parent = new.env())
 Sys.setenv(R_TESTS = "")
 
-start_test_server <- function(log = "orderly.server.log") {
-  ## TODO: done right we'd inherit a lot of env vars from parent R
-  ## (e.g., R_LIBS).  But this is done soon with new callr
-  if (file.exists("orderly.server.path")) {
-    file.remove("orderly.server.path")
+start_test_server <- function(log = "orderly.server.log", fork = TRUE) {
+  if (file.exists(log)) {
+    file.remove(log)
   }
-  Rscript <- file.path(R.home("bin"), "Rscript")
-  px <- processx::process$new(Rscript, "orderly.server.R",
-                              stdout = log, stderr = log)
-  message("waiting for process to start")
-  cache$px <- px
-  wait_for_path("orderly.server.path")
-  wait_for_path("orderly.server.port")
 
-  url <- sprintf("http://localhost:%s/", readLines("orderly.server.port"))
+  port <- 8123
+  url <- sprintf("http://localhost:%d/", port)
+
   server_not_up <- function() {
     isTRUE(tryCatch(httr::GET(url), error = function(e) TRUE))
   }
+  if (!server_not_up()) {
+    stop("Server already listening on port ", port)
+  }
+
+  path <- orderly:::prepare_orderly_example("interactive")
+
+  if (fork) {
+    cl <- parallel::makeCluster(1L, "FORK", outfile = log)
+    pid <- parallel::clusterEvalQ(cl, Sys.getpid())[[1]]
+    parallel:::sendCall(cl[[1L]], "server", list(path, port, "127.0.0.1", 50))
+
+    px <- NULL
+  } else {
+    writeLines(as.character(port), "orderly.server.port")
+    writeLines(path, "orderly.server.path")
+    writeLines(.libPaths(), "orderly.server.libs")
+    Rscript <- file.path(R.home("bin"), "Rscript")
+    px <- processx::process$new(Rscript, "orderly.server.R",
+                                stdout = log, stderr = log)
+    cl <- NULL
+  }
+
   message("waiting for server to be responsive")
   wait_while(server_not_up)
+
+  cache$server <- list(path = path, port = port, pid = pid, log = log,
+                       fork = fork, cl = cl, px = px)
 
   TRUE
 }
 
 stop_test_server <- function() {
-  if (!is.null(cache$px)) {
-    cache$px$kill(0)
-    file.remove("orderly.server.path")
+  if (!is.null(cache$server)) {
+    if (cache$server$fork) {
+      tools::pskill(cache$server$pid, tools::SIGINT)
+      Sys.sleep(0.15)
+      parallel::stopCluster(cache$server$cl)
+    } else {
+      cache$px$signal(tools::SIGINT)
+      Sys.sleep(0.15)
+      cache$px$kill()
+    }
+    rm(list = "server", envir = cache)
   }
 }
 
