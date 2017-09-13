@@ -38,3 +38,7 @@ curl -X GET http://localhost:8123/reports/example/20170911-165914-e9d6967d/statu
 curl -X POST http://localhost:8123/reports/example/20170911-165914-e9d6967d/publish
 # {"status":"success","data":true,"errors":[]}
 ```
+
+## Security
+
+This server lets people run arbitrary R code on your computer without authentication.
