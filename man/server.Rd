@@ -4,7 +4,7 @@
 \alias{server}
 \title{Run orderly server}
 \usage{
-server(path, port, host = "0.0.0.0")
+server(path, port, host = "0.0.0.0", poll_interrupt = NULL)
 }
 \arguments{
 \item{path}{Path to serve}
@@ -12,6 +12,8 @@ server(path, port, host = "0.0.0.0")
 \item{port}{Port to serve on}
 
 \item{host}{Optional}
+
+\item{poll_interrupt}{Interval (in ms) to poll for interrupt}
 }
 \description{
 Run orderly server

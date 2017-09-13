@@ -3,13 +3,17 @@
 ##' @param path Path to serve
 ##' @param port Port to serve on
 ##' @param host Optional
+##' @param poll_interrupt Interval (in ms) to poll for interrupt
 ##' @export
 ##' @importFrom httpuv runServer
 ##' @importFrom orderly orderly_runner
-server <- function(path, port, host = "0.0.0.0") {
+server <- function(path, port, host = "0.0.0.0", poll_interrupt = NULL) {
   message("Starting orderly server on port ", port)
   message("Orderly root: ", path)
-  httpuv::runServer(host, port, server_app(path))
+  if (is.null(poll_interrupt)) {
+    poll_interrupt <- if (interactive()) 100 else 1000
+  }
+  httpuv::runServer(host, port, server_app(path), poll_interrupt)
 }
 
 server_app <- function(path) {
