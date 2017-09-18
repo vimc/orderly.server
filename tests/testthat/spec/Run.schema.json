@@ -3,9 +3,9 @@
     "type": "object",
     "properties": {
         "name": { "type": "string" },
-        "version": { "$ref": "OrderlyId.schema.json" },
+        "key": { "type": "string" },
         "path": { "type": "string" },
     },
     "additionalProperties": false,
-    "required": ["name", "version", "path" ]
+    "required": ["name", "key", "path" ]
 }

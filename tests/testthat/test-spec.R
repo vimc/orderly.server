@@ -43,29 +43,20 @@ test_that("status", {
 
   info <- res$run$dest("example")
 
-  dest <- file.path(path, "archive", "example", info$version)
-  wait_for_path(dest)
+  runner <- environment(res$index$dest)$runner
 
-  ## No output:
-  data <- res$status$dest(info$name, info$version, FALSE)
-  json <- to_json(data)
-  expect_valid_json(json, "spec/Status.schema.json")
+  data <- res$status$dest(info$key)
 
-  ## With output:
-  data <- res$status$dest(info$name, info$version, TRUE)
-  json <- to_json(data)
-  expect_valid_json(json, "spec/Status.schema.json")
-})
+  expect_equal(runner$poll(), "create")
+  wait_for_path(file.path(runner$path_id, info$key))
+  id <- readLines(file.path(runner$path_id, info$key))
+  wait_for_process_termination(runner$process$px)
+  expect_equal(runner$poll(), "finish")
 
-test_that("commit", {
-  path <- tempfile()
-  res <- test_runner(path)
-
-  id <- orderly::orderly_run("example", config = path, echo = FALSE)
-
-  data <- res$commit$dest("example", id)
-  json <- to_json(data)
-  expect_valid_json(json, "spec/Commit.schema.json")
+  dat1 <- res$status$dest(info$key, FALSE)
+  dat2 <- res$status$dest(info$key, TRUE)
+  expect_valid_json(to_json(dat1), "spec/Status.schema.json")
+  expect_valid_json(to_json(dat2), "spec/Status.schema.json")
 })
 
 test_that("publish", {

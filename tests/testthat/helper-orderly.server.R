@@ -13,7 +13,7 @@ empty_named_list <- function() {
 }
 
 ## Copied from orderly's helpers
-wait_while <- function(continue, timeout = 1, poll = 0.02) {
+wait_while <- function(continue, timeout = 10, poll = 0.02) {
   t_quit <- Sys.time() + timeout
   while (continue()) {
     Sys.sleep(poll)
@@ -28,12 +28,20 @@ wait_for_path <- function(path, ...) {
 wait_for_process_termination <- function(process, ...) {
   wait_while(process$is_alive, ...)
 }
-wait_for_finished <- function(id, ...) {
+wait_for_finished <- function(key, ...) {
   is_running <- function() {
-    r <- httr::GET(api_url("/v1/reports/example/%s/status/", id))
-    identical(content(r)$data$status, "running")
+    r <- httr::GET(api_url("/v1/reports/%s/status/", key))
+    !(content(r)$data$status %in% c("success", "error"))
   }
   wait_while(is_running, ...)
+}
+wait_for_id <- function(key) {
+  url <- api_url("/v1/reports/%s/status/", key)
+  wait_while(function() {
+    r <- httr::GET(url)
+    version <- content(r)$data$version
+    is.null(version)
+  })
 }
 
 api_url <- function(path, ...) {
@@ -73,6 +81,7 @@ start_test_server <- function(log = "orderly.server.log", fork = TRUE) {
     Rscript <- file.path(R.home("bin"), "Rscript")
     px <- processx::process$new(Rscript, "orderly.server.R",
                                 stdout = log, stderr = log)
+    pid <- px$get_pid()
     cl <- NULL
   }
 

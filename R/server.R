@@ -13,13 +13,25 @@ server <- function(path, port, host = "0.0.0.0", poll_interrupt = NULL) {
   if (is.null(poll_interrupt)) {
     poll_interrupt <- if (interactive()) 100 else 1000
   }
-  httpuv::runServer(host, port, server_app(path), poll_interrupt)
+
+  app <- server_app(path)
+  server <- httpuv::startServer(host, port, app)
+  on.exit(httpuv::stopServer(server))
+  continue <- TRUE
+  while (continue) {
+    httpuv::service(poll_interrupt)
+    tryCatch(app$poll(),
+             error = function(e) NULL,
+             interrupt = function(e) continue <<- FALSE)
+  }
+  message("Server exiting")
 }
 
 server_app <- function(path) {
   runner <- orderly::orderly_runner(path)
   map <- server_endpoints(runner)
-  list(call = function(req) server_handler(req, map))
+  list(call = function(req) server_handler(req, map),
+       poll = runner$poll)
 }
 
 server_handler <- function(req, map) {
@@ -60,23 +72,20 @@ server_endpoints <- function(runner) {
          version = "0.0.0",
          endpoints = vapply(map, "[[", character(1), "path"))
   }
-  run <- function(name, parameters = NULL, commit = TRUE) {
-    version <- runner$run(name, parameters, commit)
+  run <- function(name, parameters = NULL, ref = NULL) {
+    key <- runner$queue(name, parameters, ref)
     list(name = name,
-         version = version,
-         path = sprintf("/v1/reports/%s/%s/status/", name, version))
+         key = key,
+         path = sprintf("/v1/reports/%s/status/", key))
   }
   ## Wrapper functions to do a version -> id mapping
-  status <- function(name, version, output = FALSE) {
-    ret <- runner$status(name, version, output)
+  status <- function(key, output = FALSE) {
+    ret <- runner$status(key, as_logical(output))
+    names(ret)[names(ret) == "id"] <- "version"
     if (is.null(ret$output)) {
       ret$output <- NA # maps to json 'null'
     }
     ret
-  }
-  commit <- function(name, version) {
-    runner$commit(name, version)
-    NA
   }
   publish <- function(name, version, value = TRUE) {
     runner$publish(name, version, as_logical(value))
@@ -105,19 +114,14 @@ server_endpoints <- function(runner) {
               list(name   = "run",
                    dest   = run,
                    path   = "/v1/reports/:name/run/",
-                   query  = c("parameters", "commit"),
+                   query  = c("parameters", "ref"),
                    post   = "parameters",
                    method = "POST"),
               list(name   = "status",
                    dest   = status,
-                   path   = "/v1/reports/:name/:version/status/",
+                   path   = "/v1/reports/:key/status/",
                    query  = "output",
                    method = "GET"),
-              list(name   = "commit",
-                   dest   = commit,
-                   path   = "/v1/reports/:name/:version/commit/",
-                   query  = NULL,
-                   method = "POST"),
               list(name   = "publish",
                    dest   = publish,
                    path   = "/v1/reports/:name/:version/publish/",

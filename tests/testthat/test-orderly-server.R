@@ -1,5 +1,13 @@
 context("orderly.server")
 
+test_that("root", {
+  r <- httr::GET(api_url("/"))
+  dat <- content(r)
+  expect_equal(dat$status, "success")
+  expect_equal(dat$errors, list())
+  expect_is(dat$data$endpoints, "character")
+})
+
 test_that("rebuild", {
   r <- httr::POST(api_url("/v1/reports/rebuild/"))
   dat <- content(r)
@@ -35,59 +43,44 @@ test_that("run", {
   expect_equal(dat$status, "success")
   expect_is(dat$data, "list")
 
-  expect_true(setequal(names(dat$data), c("name", "version", "path")))
+  expect_true(setequal(names(dat$data), c("name", "key", "path")))
   expect_equal(dat$data$name, "example")
+  expect_is(dat$data$key, "character")
+  expect_is(dat$data$path, "character")
 
-  id <- dat$data$version
+  ## Then we ask about status
+  wait_for_id(dat$data$key)
+  r <- httr::GET(api_url(dat$data$path))
+  expect_equal(httr::status_code(r), 200)
+  st <- content(r)
+  expect_equal(st$status, "success")
+  expect_is(st$data, "list")
+  id <- st$data$version
 
   dest <- file.path(cache$server$path, "archive", "example", id)
   wait_for_path(dest)
-  wait_for_finished(id)
+  wait_for_finished(dat$data$key)
 
-  r <- httr::GET(api_url("/v1/reports/example/%s/status/", id))
+  r <- httr::GET(api_url(dat$data$path))
   expect_equal(httr::status_code(r), 200)
-  dat <- content(r)
-  expect_equal(dat$status, "success")
-  expect_equal(dat$data, list(status = "archive", output = NULL))
+  st <- content(r)
+  expect_equal(st$status, "success")
+  cmp <- list(key = dat$data$key, status = "success",
+              version = id, output = NULL)
+  expect_equal(st$data, cmp)
 
-  r <- httr::GET(api_url("/v1/reports/example/%s/status/", id),
-                 query = list(output = TRUE))
+  r <- httr::GET(api_url(dat$data$path), query = list(output = TRUE))
   expect_equal(httr::status_code(r), 200)
-  dat <- content(r)
-  expect_equal(dat$status, "success")
-  expect_is(dat$data$output$stderr, "character")
-  expect_is(dat$data$output$stdout, "character")
-})
-
-test_that("run, commit", {
-  r <- httr::POST(api_url("/v1/reports/example/run/"),
-                  query = list(commit = FALSE))
-  expect_equal(httr::status_code(r), 200)
-  dat <- content(r)
-  expect_equal(dat$status, "success")
-  id <- dat$data$version
-
-  dest <- file.path(cache$server$path, "draft", "example", id)
-  wait_for_path(file.path(dest, "orderly_run.yml"))
-  wait_for_finished(id)
-
-  r <- httr::GET(api_url("/v1/reports/example/%s/status/", id))
-  expect_equal(httr::status_code(r), 200)
-  dat <- content(r)
-  expect_equal(dat$status, "success")
-  expect_equal(dat$data,
-               list(status = "draft", output = NULL))
-
-  r <- httr::POST(api_url("/v1/reports/example/%s/commit/", id))
-  expect_equal(httr::status_code(r), 200)
-  dat <- content(r)
-  expect_equal(dat$status, "success")
-  expect_null(dat$data)
+  st <- content(r)
+  expect_equal(st$status, "success")
+  expect_is(st$data$output$stderr, "character")
+  expect_is(st$data$output$stdout, "character")
 })
 
 test_that("publish", {
   path <- cache$server$path
   id <- orderly::orderly_run("example", config = path, echo = FALSE)
+  ## This is somewhat liable to failure due to db locking
   dest <- orderly::orderly_commit(id, config = path)
   pub <- file.path(dest, "orderly_published.yml")
 

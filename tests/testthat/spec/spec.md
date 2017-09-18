@@ -38,7 +38,7 @@ Try and run a report `:name`
 
 Accepts as `POST` body json that will be passed directly through to the report.  This is required when the report requires parameters and is not allowed for reports that do not allow parameters.
 
-Accepts the query parameter `commit` which can be set to `false` (e.g., `/reports/:name/run/?commit=false` to try running the report but not commit it.  This can be used for testing that the report compiles.
+Accepts the query parameter `ref`, to try running the report against a particular git reference (e.g., a branch or a commit).  This is not yet actually supported.
 
 Returns information to query the status of the report via the next endpoint
 
@@ -48,17 +48,17 @@ Schema: [`Run.schema.json`](Run.schema.json)
 
 ``` json
 {
-    "name": "report-name"
-    "version": "20170912-0657-0b2174fd",
-    "path": "/v1/reports/report-name/20170912-0657-0b2174fd/status"
+    "name": "report-name",
+    "key": "adjective_animal"
+    "path": "/v1/reports/adjective_animal/status"
 }
 ```
 
-## GET /reports/:name/:version/status/
+## GET /reports/:key/status/
 
 Get the status of a report.
 
-This works with all reports, not just those triggered as running via the API (though output fetching will not work the same way for manually triggered reports).
+This works only for reports that were queued by the runner itself/
 
 Schema: [`Status.schema.json`](Status.schema.json)
 
@@ -66,7 +66,9 @@ Schema: [`Status.schema.json`](Status.schema.json)
 
 ```json
 {
+    "key": "adjective_animal",
     "status": "success",
+    "version": "20170912-091103-41c62920",
     "output": {
         "stderr": [
             "[ name      ]  example",
@@ -94,22 +96,6 @@ Schema: [`Status.schema.json`](Status.schema.json)
         ]
     }
 }
-```
-
-## POST /reports/:name/:version/commit/
-
-Commit a draft report.
-
-This only makes sense if a report was run first in draft mode (e.g., with `?commit=false`) and the subsequently checked (which can't really be done via this interface!).
-
-It takes no parameters and no body, and returns nothing
-
-Schema: [`Commit.schema.json`](Commit.schema.json)
-
-### Example
-
-``` json
-null
 ```
 
 ## POST /reports/:name/:version/publish/
