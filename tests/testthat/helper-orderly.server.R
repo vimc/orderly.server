@@ -122,3 +122,7 @@ test_runner <- function(path = tempfile()) {
   orderly:::prepare_orderly_example("interactive", path)
   server_endpoints(orderly::orderly_runner(path))
 }
+
+read_json <- function(path, ...) {
+  jsonlite::fromJSON(paste(readLines(path), collapse = "\n"), ...)
+}

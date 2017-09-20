@@ -74,3 +74,31 @@ test_that("publish", {
   json <- to_json(data)
   expect_valid_json(json, "spec/Publish.schema.json")
 })
+
+test_that("git bits", {
+  git_run <- orderly:::git_run
+  path1 <- orderly:::unzip_git_demo()
+  path2 <- tempfile()
+  git_run(c("clone", "--", path1, path2), check = TRUE)
+  writeLines("new", file.path(path1, "new"))
+  git_run(c("add", "."), path1)
+  git_run(c("commit", "-m", "orderly"), path1)
+
+  sha1 <- orderly:::git_ref_to_sha("HEAD", path1)
+  sha2 <- orderly:::git_ref_to_sha("HEAD", path2)
+
+  runner <- server_endpoints(orderly::orderly_runner(path2))
+
+  data <- runner$git_status$dest()
+  expect_equal(data$hash, sha2)
+  expect_valid_json(to_json(data), "spec/GitStatus.schema.json")
+
+  data <- runner$git_fetch$dest()
+  expect_valid_json(to_json(data), "spec/GitFetch.schema.json")
+
+  data <- runner$git_pull$dest()
+  expect_valid_json(to_json(data), "spec/GitPull.schema.json")
+
+  data <- runner$git_status$dest()
+  expect_equal(data$hash, sha1)
+})

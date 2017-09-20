@@ -67,11 +67,16 @@ server_response <- function(data, errors, status) {
 }
 
 server_endpoints <- function(runner) {
+  ## TODO: get the error handling bits into here because otherwise
+  ## we're all over the show with errors.
   index <- function() {
     list(name = "orderly.server",
          version = "0.0.0",
          endpoints = vapply(map, "[[", character(1), "path"))
   }
+  ## NOTE: this ends up being exposed as a 'run' endpoint not a
+  ## 'queue' endpoint because in the underlying runner queue/poll are
+  ## separated but within the server both happen.
   run <- function(name, parameters = NULL, ref = NULL) {
     key <- runner$queue(name, parameters, ref)
     list(name = name,
@@ -93,6 +98,15 @@ server_endpoints <- function(runner) {
   rebuild <- function() {
     runner$rebuild()
     NA
+  }
+  git_fetch <- function() {
+    runner$git_fetch()$output
+  }
+  git_pull <- function() {
+    runner$git_pull()$output
+  }
+  git_status <- function() {
+    runner$git_status()[c("branch", "hash", "clean", "output")]
   }
 
   ## Order here matters because this will look through the first to
@@ -122,6 +136,21 @@ server_endpoints <- function(runner) {
                    path   = "/v1/reports/:key/status/",
                    query  = "output",
                    method = "GET"),
+              list(name   = "git_status",
+                   dest   = git_status,
+                   path   = "/v1/reports/git/status/",
+                   query  = NULL,
+                   method = "GET"),
+              list(name   = "git_fetch",
+                   dest   = git_fetch,
+                   path   = "/v1/reports/git/fetch/",
+                   query  = NULL,
+                   method = "POST"),
+              list(name   = "git_pull",
+                   dest   = git_pull,
+                   path   = "/v1/reports/git/pull/",
+                   query  = NULL,
+                   method = "POST"),
               list(name   = "publish",
                    dest   = publish,
                    path   = "/v1/reports/:name/:version/publish/",
@@ -234,6 +263,6 @@ as_logical <- function(x, name = deparse(substitute(x))) {
          stop(sprintf("Invalid input for '%s'", name)))
 }
 
-to_json <- function(x) {
-  jsonlite::toJSON(x, auto_unbox = TRUE)
+to_json <- function(x, ...) {
+  jsonlite::toJSON(x, auto_unbox = TRUE, ...)
 }

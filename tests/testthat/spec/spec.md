@@ -20,6 +20,8 @@ Some files are directly copied over (with only whitespace changes) from `montagu
 * `Index.schema.json`
 * `Response.schema.json`
 
+Unlike the montagu api, the examples (or really anything) in this file are not checked for correctness, but the json schema files are tested.
+
 ## POST /reports/rebuild/
 
 Force orderly to rebuild the index.  This is useful in cases where the index is corrupt (seen in failed restores), or during a schema migration.  It's a relatively harmless operation, though it might get a little slow when the store is large.  Returns nothing.
@@ -108,4 +110,49 @@ Schema: [`Publish.schema.json`](Publish.schema.json)
 
 ``` json
 true
+```
+
+## GET /reports/git/status/
+
+Get git status.  This does not quite map onto `git status` but includes output from `git status --porcelain=v1` along with branch and hash informationl.  When running on a server, ideally the `output` section will be an empty array (otherwise branch changing is disabled)
+
+## Example
+
+```json
+{
+  "branch": "master",
+  "hash": "1ed7a67351b03cddbb27d5cb8db184fbd8b2ab0c",
+  "clean": true,
+  "output": []
+}
+```
+
+## POST /reports/git/fetch/
+
+Fetch from remote git.  This is required before accessing an updated reference (e.g. a remote branch) or a hash not present in the local git tree.  It's always safe because it does not change the working tree
+
+## Example
+
+```json
+[
+  "From /tmp/RtmpT2bd1r/file138f7147a05/demo",
+  "   ba72f7a..ed3d168  master     -> origin/master"
+]
+```
+
+
+## POST /reports/git/pull/
+
+Pull from remote git.  This updates the working tree
+
+## Example
+
+```json
+[
+  "Updating ba72f7a..ed3d168",
+  "Fast-forward",
+  " new | 1 +",
+  " 1 file changed, 1 insertion(+)",
+  " create mode 100644 new"
+]
 ```
