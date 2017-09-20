@@ -7,7 +7,13 @@ main <- function(args = commandArgs(TRUE)) {
     optparse::make_option("--host",
                           help = "IP address owned by this server",
                           default = "0.0.0.0",
-                          type = "character"))
+                          type = "character"),
+    optparse::make_option("--no-ref",
+                          help = "Prevent git reference switching",
+                          type = "logical",
+                          default = FALSE,
+                          action = "store_true",
+                          dest = "no_ref"))
   parser <- optparse::OptionParser(
     option_list = opts,
     usage = "%prog [options] <path>")
@@ -16,7 +22,9 @@ main <- function(args = commandArgs(TRUE)) {
   path <- res$args[[1L]]
   port <- res$options$port
   host <- res$options$host
-  server(path, port, host)
+  allow_ref <- !res$options$no_ref
+
+  server(path, port, host, allow_ref = allow_ref)
 }
 
 is_directory <- function(x) {

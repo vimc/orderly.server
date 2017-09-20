@@ -4,17 +4,22 @@
 ##' @param port Port to serve on
 ##' @param host Optional
 ##' @param poll_interrupt Interval (in ms) to poll for interrupt
+##'
+##' @param allow_ref Allow git reference changing (passed through to
+##'   \code{orderly_runner}.
+##'
 ##' @export
 ##' @importFrom httpuv runServer
 ##' @importFrom orderly orderly_runner
-server <- function(path, port, host = "0.0.0.0", poll_interrupt = NULL) {
+server <- function(path, port, host = "0.0.0.0", poll_interrupt = NULL,
+                   allow_ref = TRUE) {
   message("Starting orderly server on port ", port)
   message("Orderly root: ", path)
   if (is.null(poll_interrupt)) {
     poll_interrupt <- if (interactive()) 100 else 1000
   }
 
-  app <- server_app(path)
+  app <- server_app(path, allow_ref)
   server <- httpuv::startServer(host, port, app)
   on.exit(httpuv::stopServer(server))
   continue <- TRUE
@@ -27,8 +32,8 @@ server <- function(path, port, host = "0.0.0.0", poll_interrupt = NULL) {
   message("Server exiting")
 }
 
-server_app <- function(path) {
-  runner <- orderly::orderly_runner(path)
+server_app <- function(path, allow_ref) {
+  runner <- orderly::orderly_runner(path, allow_ref)
   map <- server_endpoints(runner)
   list(call = function(req) server_handler(req, map),
        poll = runner$poll)
