@@ -1,4 +1,9 @@
 main <- function(args = commandArgs(TRUE)) {
+  args <- main_args(args)
+  do.call("server", args)
+}
+
+main_args <- function(args) {
   opts <- list(
     optparse::make_option("--port",
                           help = "Port to run on",
@@ -13,22 +18,22 @@ main <- function(args = commandArgs(TRUE)) {
                           type = "logical",
                           default = FALSE,
                           action = "store_true",
-                          dest = "no_ref"))
+                          dest = "no_ref"),
+    optparse::make_option("--go-signal",
+                          help = "Path for go signal (within path)",
+                          default = NULL,
+                          type = "character",
+                          dest = "go_signal"))
   parser <- optparse::OptionParser(
     option_list = opts,
     usage = "%prog [options] <path>")
   res <- optparse::parse_args(parser, args, positional_arguments = 1L)
 
-  path <- res$args[[1L]]
-  port <- res$options$port
-  host <- res$options$host
-  allow_ref <- !res$options$no_ref
-
-  server(path, port, host, allow_ref = allow_ref)
-}
-
-is_directory <- function(x) {
-  isTRUE(file.info(x, extra_cols = FALSE)$isdir)
+  list(path = res$args[[1L]],
+       port = res$options$port,
+       host = res$options$host,
+       allow_ref = !res$options$no_ref,
+       go_signal = res$options$go_signal)
 }
 
 write_script <- function(path) {
