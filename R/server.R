@@ -1,25 +1,37 @@
 ##' Run orderly server
 ##' @title Run orderly server
+##'
 ##' @param path Path to serve
+##'
 ##' @param port Port to serve on
+##'
 ##' @param host Optional
+##'
 ##' @param poll_interrupt Interval (in ms) to poll for interrupt
 ##'
 ##' @param allow_ref Allow git reference changing (passed through to
 ##'   \code{orderly_runner}.
 ##'
+##' @param go_signal If given, we poll for a file \code{go_signal}
+##'   (within \code{path}) before starting.  This is designed
+##'   primarily for use with docker where the data volume may not be
+##'   ready at the same time as the process container (and indeed
+##'   won't be if the container is used to provision the volume).
+##'   During this period the server will not respond to any http
+##'   requests.
+##'
 ##' @export
 ##' @importFrom httpuv runServer
 ##' @importFrom orderly orderly_runner
 server <- function(path, port, host = "0.0.0.0", poll_interrupt = NULL,
-                   allow_ref = TRUE) {
+                   allow_ref = TRUE, go_signal = NULL) {
   message("Starting orderly server on port ", port)
   message("Orderly root: ", path)
   if (is.null(poll_interrupt)) {
     poll_interrupt <- if (interactive()) 100 else 1000
   }
 
-  app <- server_app(path, allow_ref)
+  app <- server_app(path, allow_ref, go_signal)
   server <- httpuv::startServer(host, port, app)
   on.exit(httpuv::stopServer(server))
   continue <- TRUE
@@ -32,11 +44,27 @@ server <- function(path, port, host = "0.0.0.0", poll_interrupt = NULL,
   message("Server exiting")
 }
 
-server_app <- function(path, allow_ref) {
+server_app <- function(path, allow_ref, go_signal) {
+  wait_for_go_signal(path, go_signal)
   runner <- orderly::orderly_runner(path, allow_ref)
   map <- server_endpoints(runner)
   list(call = function(req) server_handler(req, map),
        poll = runner$poll)
+}
+
+wait_for_go_signal <- function(path, go_signal) {
+  if (is.null(go_signal)) {
+    return(invisible())
+  }
+  filename <- file.path(path, go_signal)
+  t0 <- Sys.time()
+  while (!file.exists(filename)) {
+    Sys.sleep(1)
+    t <- Sys.time()
+    dt <- time_diff_secs(t, t0)
+    message(sprintf("[%s] waiting for go signal (%s) for %s s",
+                    t, go_signal, dt))
+  }
 }
 
 server_handler <- function(req, map) {
@@ -270,4 +298,10 @@ as_logical <- function(x, name = deparse(substitute(x))) {
 
 to_json <- function(x, ...) {
   jsonlite::toJSON(x, auto_unbox = TRUE, ...)
+}
+
+time_diff_secs <- function(t, t0) {
+  dt <- t - t0
+  units(dt) <- "secs"
+  as.integer(dt)
 }
