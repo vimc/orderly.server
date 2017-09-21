@@ -62,9 +62,10 @@ wait_for_go_signal <- function(path, go_signal) {
     Sys.sleep(1)
     t <- Sys.time()
     dt <- time_diff_secs(t, t0)
-    message(sprintf("[%s] waiting for go signal (%s) for %s s",
+    message(sprintf("[%s] waiting for go signal (%s) for %d s",
                     t, go_signal, dt))
   }
+  message("Recieved go signal after %d s", time_diff_secs(Sys.time(), t0))
 }
 
 server_handler <- function(req, map) {
