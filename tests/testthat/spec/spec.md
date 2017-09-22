@@ -51,7 +51,7 @@ Schema: [`Run.schema.json`](Run.schema.json)
 ``` json
 {
     "name": "report-name",
-    "key": "adjective_animal"
+    "key": "adjective_animal",
     "path": "/v1/reports/adjective_animal/status"
 }
 ```
