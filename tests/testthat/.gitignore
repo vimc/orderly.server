@@ -1,4 +1,4 @@
-orderly.server.log
+orderly.server*.log
 orderly.server.path
 orderly.server.port
 orderly.server.libs

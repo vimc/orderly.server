@@ -3,6 +3,19 @@ test_server <- function(port = 8123) {
   server(path, port, "127.0.0.1")
 }
 
+prepare_git_demo2 <- function() {
+  git_run <- orderly:::git_run
+  path1 <- orderly:::unzip_git_demo()
+  path2 <- tempfile()
+  git_run(c("clone", "--", path1, path2), check = TRUE)
+  writeLines("new", file.path(path1, "new"))
+  git_run(c("add", "."), path1)
+  git_run(c("commit", "-m", "orderly"), path1)
+  file.copy(file.path(path1, "source.sqlite"),
+            file.path(path2, "source.sqlite"))
+  c(origin = path1, local = path2)
+}
+
 content <- function(r) {
   txt <- httr::content(r, "text", encoding = "UTF-8")
   jsonlite::fromJSON(txt, simplifyDataFrame = FALSE)
@@ -28,15 +41,15 @@ wait_for_path <- function(path, ...) {
 wait_for_process_termination <- function(process, ...) {
   wait_while(process$is_alive, ...)
 }
-wait_for_finished <- function(key, ...) {
+wait_for_finished <- function(key, server, ...) {
   is_running <- function() {
-    r <- httr::GET(api_url("/v1/reports/%s/status/", key))
+    r <- httr::GET(server$url("/v1/reports/%s/status/", key))
     !(content(r)$data$status %in% c("success", "error"))
   }
   wait_while(is_running, ...)
 }
-wait_for_id <- function(key) {
-  url <- api_url("/v1/reports/%s/status/", key)
+wait_for_id <- function(key, server) {
+  url <- server$url("/v1/reports/%s/status/", key)
   wait_while(function() {
     r <- httr::GET(url)
     version <- content(r)$data$version
@@ -44,19 +57,25 @@ wait_for_id <- function(key) {
   })
 }
 
-api_url <- function(path, ...) {
-  paste0("http://localhost:", cache$server$port, sprintf(path, ...))
+make_api_url <- function(port) {
+  force(port)
+  function(path, ...) {
+    paste0("http://localhost:", port, sprintf(path, ...))
+  }
 }
 
-cache <- new.env(parent = new.env())
 Sys.setenv(R_TESTS = "")
 
-start_test_server <- function(log = "orderly.server.log", fork = TRUE) {
+start_test_server <- function(path = NULL, port = 8123,
+                              log = NULL,
+                              fork = TRUE) {
+  if (is.null(log)) {
+    log <- sprintf("orderly.server.%d.log", port)
+  }
   if (file.exists(log)) {
     file.remove(log)
   }
 
-  port <- 8123
   url <- sprintf("http://localhost:%d/", port)
 
   server_not_up <- function() {
@@ -66,7 +85,9 @@ start_test_server <- function(log = "orderly.server.log", fork = TRUE) {
     stop("Server already listening on port ", port)
   }
 
-  path <- orderly:::prepare_orderly_example("interactive")
+  if (is.null(path)) {
+    path <- orderly:::prepare_orderly_example("interactive")
+  }
 
   if (fork) {
     cl <- parallel::makeCluster(1L, "FORK", outfile = log)
@@ -88,24 +109,20 @@ start_test_server <- function(log = "orderly.server.log", fork = TRUE) {
   message("waiting for server to be responsive")
   wait_while(server_not_up)
 
-  cache$server <- list(path = path, port = port, pid = pid, log = log,
-                       fork = fork, cl = cl, px = px)
-
-  TRUE
+  list(path = path, port = port, pid = pid, log = log,
+       fork = fork, cl = cl, px = px,
+       url = make_api_url(port))
 }
 
-stop_test_server <- function() {
-  if (!is.null(cache$server)) {
-    if (cache$server$fork) {
-      tools::pskill(cache$server$pid, tools::SIGINT)
-      Sys.sleep(0.15)
-      parallel::stopCluster(cache$server$cl)
-    } else {
-      cache$px$signal(tools::SIGINT)
-      Sys.sleep(0.15)
-      cache$px$kill()
-    }
-    rm(list = "server", envir = cache)
+stop_test_server <- function(server) {
+  if (server$fork) {
+    tools::pskill(server$pid, tools::SIGINT)
+    Sys.sleep(0.15)
+    parallel::stopCluster(server$cl)
+  } else {
+    server$px$signal(tools::SIGINT)
+    Sys.sleep(0.15)
+    server$px$kill()
   }
 }
 
