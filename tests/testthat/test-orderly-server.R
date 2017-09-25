@@ -130,34 +130,22 @@ test_that("git", {
   server <- start_test_server(path[["local"]])
   on.exit(stop_test_server(server))
 
-  content(httr::GET(server$url("/")))
+  sha <- vapply(path, orderly:::git_ref_to_sha, "", ref = "HEAD")
 
   r <- content(httr::GET(server$url("/v1/reports/git/status/")))
-
-  p <- file.path(path[["origin"]], "src", "minimal", "script.R")
-  txt <- readLines(p)
-  writeLines(c("# hello world", txt), p)
-  orderly:::git_run(c("add", "-u", "."), path[["origin"]])
-  orderly:::git_run(c("commit", "-m", "hello"), path[["origin"]])
-  sha <- vapply(path, orderly:::git_ref_to_sha, "", ref = "HEAD")
+  expect_equal(r$data$hash, sha[["local"]])
 
   r <- httr::POST(server$url("/v1/reports/minimal/run/?update=false"))
   dat <- content(r)
-
   wait_for_finished(dat$data$key, server)
 
-  expect_equal(vapply(path, orderly:::git_ref_to_sha, "", ref = "HEAD"),
-               sha)
-
-  ## I don't know what this bit actually does:
-  expect_equal(orderly:::git_ref_to_sha(sha[[1]], root = path[[1]]),
-               sha[[1]])
-  expect_equal(orderly:::git_ref_to_sha(sha[[1]], root = path[[2]]),
-               sha[[1]])
+  expect_equal(orderly:::git_ref_to_sha("HEAD", path[["local"]]),
+               sha[["local"]])
 
   r <- httr::POST(server$url("/v1/reports/minimal/run/"),
                   query = list(update = "false", ref = sha[["origin"]]))
   dat <- content(r)
+  expect_true(httr::status_code(r) >= 400)
   expect_equal(dat$status, "failure")
   expect_null(dat$data)
   expect_match(dat$errors, "Did not find git reference")
@@ -166,7 +154,6 @@ test_that("git", {
                sha[["local"]])
   expect_false(orderly:::git_ref_exists(sha[["origin"]], path[["local"]]))
 
-  # u <- ?ref=%s", sha[["origin"]])
   r <- httr::POST(server$url("/v1/reports/minimal/run/"),
                   query = list(ref = sha[["origin"]]))
   dat <- content(r)
@@ -174,5 +161,9 @@ test_that("git", {
 
   res <- content(httr::GET(server$url(content(r)$data$path),
                            query = list(output = TRUE)))
+  expect_match(res$data$output$stderr, sha[["origin"]], all = FALSE)
 
+  expect_equal(orderly:::git_ref_to_sha("HEAD", root = path[["local"]]),
+               sha[["local"]])
+  expect_true(orderly:::git_ref_exists(sha[["origin"]], path[["local"]]))
 })
