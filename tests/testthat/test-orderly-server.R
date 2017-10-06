@@ -126,7 +126,7 @@ test_that("publish", {
 })
 
 test_that("git", {
-  path <- prepare_git_demo2()
+  path <- prepare_orderly_git_demo()
   server <- start_test_server(path[["local"]])
   on.exit(stop_test_server(server))
 

@@ -3,19 +3,6 @@ test_server <- function(port = 8123) {
   server(path, port, "127.0.0.1")
 }
 
-prepare_git_demo2 <- function() {
-  git_run <- orderly:::git_run
-  path1 <- orderly:::unzip_git_demo()
-  path2 <- tempfile()
-  git_run(c("clone", "--", path1, path2), check = TRUE)
-  writeLines("new", file.path(path1, "new"))
-  git_run(c("add", "."), path1)
-  git_run(c("commit", "-m", "orderly"), path1)
-  file.copy(file.path(path1, "source.sqlite"),
-            file.path(path2, "source.sqlite"))
-  c(origin = path1, local = path2)
-}
-
 content <- function(r) {
   txt <- httr::content(r, "text", encoding = "UTF-8")
   jsonlite::fromJSON(txt, simplifyDataFrame = FALSE)
