@@ -1,24 +1,74 @@
 ##' Run orderly server
 ##' @title Run orderly server
+##'
 ##' @param path Path to serve
+##'
 ##' @param port Port to serve on
+##'
 ##' @param host Optional
+##'
+##' @param poll_interrupt Interval (in ms) to poll for interrupt
+##'
+##' @param allow_ref Allow git reference changing (passed through to
+##'   \code{orderly_runner}.
+##'
+##' @param go_signal If given, we poll for a file \code{go_signal}
+##'   (within \code{path}) before starting.  This is designed
+##'   primarily for use with docker where the data volume may not be
+##'   ready at the same time as the process container (and indeed
+##'   won't be if the container is used to provision the volume).
+##'   During this period the server will not respond to any http
+##'   requests.
+##'
 ##' @export
 ##' @importFrom httpuv runServer
 ##' @importFrom orderly orderly_runner
-server <- function(path, port, host = "0.0.0.0") {
+server <- function(path, port, host = "0.0.0.0", poll_interrupt = NULL,
+                   allow_ref = TRUE, go_signal = NULL) {
   message("Starting orderly server on port ", port)
   message("Orderly root: ", path)
-  httpuv::runServer(host, port, server_app(path))
+  if (is.null(poll_interrupt)) {
+    poll_interrupt <- if (interactive()) 100 else 1000
+  }
+
+  app <- server_app(path, allow_ref, go_signal)
+  server <- httpuv::startServer(host, port, app)
+  on.exit(httpuv::stopServer(server))
+  continue <- TRUE
+  while (continue) {
+    httpuv::service(poll_interrupt)
+    tryCatch(app$poll(),
+             error = function(e) NULL,
+             interrupt = function(e) continue <<- FALSE)
+  }
+  message("Server exiting")
 }
 
-server_app <- function(path) {
-  runner <- orderly::orderly_runner(path)
-  map <- server_endpoints()
-  list(call = function(req) server_handler(runner, req, map))
+server_app <- function(path, allow_ref, go_signal) {
+  wait_for_go_signal(path, go_signal)
+  runner <- orderly::orderly_runner(path, allow_ref)
+  map <- server_endpoints(runner)
+  list(call = function(req) server_handler(req, map),
+       poll = runner$poll)
 }
 
-server_handler <- function(runner, req, map) {
+wait_for_go_signal <- function(path, go_signal) {
+  if (is.null(go_signal)) {
+    return(invisible())
+  }
+  filename <- file.path(path, go_signal)
+  t0 <- Sys.time()
+  while (!file.exists(filename)) {
+    Sys.sleep(1)
+    t <- Sys.time()
+    dt <- time_diff_secs(t, t0)
+    message(sprintf("[%s] waiting for go signal (%s) for %d s",
+                    t, go_signal, dt))
+  }
+  message("Recieved go signal after %d s", time_diff_secs(Sys.time(), t0))
+}
+
+server_handler <- function(req, map) {
   orderly::orderly_log(req$REQUEST_METHOD, req$PATH_INFO)
 
   catch <- function(e) {
@@ -33,7 +83,7 @@ server_handler <- function(runner, req, map) {
       orderly::orderly_log(" `- args", paste(names(dat$args), collapse = ", "))
     }
     ret <- tryCatch(
-      server_response(do.call(runner[[dat$dest]], dat$args), list(), 200),
+      server_response(do.call(dat$dest, dat$args), list(), 200),
       error = catch)
   }
 
@@ -47,38 +97,104 @@ server_response <- function(data, errors, status) {
                errors = errors)
   list(status = status,
        headers = list("Content-Type" = "application/json"),
-       body = jsonlite::toJSON(body, auto_unbox = TRUE))
+       body = to_json(body))
 }
 
-server_endpoints <- function() {
+server_endpoints <- function(runner) {
+  ## TODO: get the error handling bits into here because otherwise
+  ## we're all over the show with errors.
+  index <- function() {
+    list(name = "orderly.server",
+         version = "0.0.0",
+         endpoints = vapply(map, "[[", character(1), "path"))
+  }
+  ## NOTE: this ends up being exposed as a 'run' endpoint not a
+  ## 'queue' endpoint because in the underlying runner queue/poll are
+  ## separated but within the server both happen.
+  run <- function(name, parameters = NULL, ref = NULL, update = TRUE) {
+    key <- runner$queue(name, parameters, ref, as_logical(update))
+    list(name = name,
+         key = key,
+         path = sprintf("/v1/reports/%s/status/", key))
+  }
+  ## Wrapper functions to do a version -> id mapping
+  status <- function(key, output = FALSE) {
+    ret <- runner$status(key, as_logical(output))
+    names(ret)[names(ret) == "id"] <- "version"
+    if (is.null(ret$output)) {
+      ret$output <- NA # maps to json 'null'
+    }
+    ret
+  }
+  publish <- function(name, version, value = TRUE) {
+    runner$publish(name, version, as_logical(value))
+  }
+  rebuild <- function() {
+    runner$rebuild()
+    NA
+  }
+  git_fetch <- function() {
+    runner$git_fetch()$output
+  }
+  git_pull <- function() {
+    runner$git_pull()$output
+  }
+  git_status <- function() {
+    runner$git_status()[c("branch", "hash", "clean", "output")]
+  }
+
   ## Order here matters because this will look through the first to
   ## the last, not anything clever with the least to most specific.
   ## For the endpoints listed here that's not a big deal.
   ##
   ## What is not dealt with here is any additional parameters; this is
   ## the case for run at least
-  map <- list(list(dest   = "rebuild",
-                   path   = "/reports/rebuild",
+  map <- list(list(name   = "index",
+                   dest   = index,
+                   path   = "/",
+                   query  = NULL,
+                   method = "GET"),
+              list(name   = "rebuild",
+                   dest   = rebuild,
+                   path   = "/v1/reports/rebuild/",
                    query  = NULL,
                    method = "POST"),
-              list(dest   = "run",
-                   path   = "/reports/:name/run",
-                   query  = c("parameters", "commit"),
+              ## This does mean if we have a report called 'git' we
+              ## won't be able to get it's status!
+              list(name   = "git_status",
+                   dest   = git_status,
+                   path   = "/v1/reports/git/status/",
+                   query  = NULL,
+                   method = "GET"),
+              list(name   = "git_fetch",
+                   dest   = git_fetch,
+                   path   = "/v1/reports/git/fetch/",
+                   query  = NULL,
+                   method = "POST"),
+              list(name   = "git_pull",
+                   dest   = git_pull,
+                   path   = "/v1/reports/git/pull/",
+                   query  = NULL,
+                   method = "POST"),
+              list(name   = "run",
+                   dest   = run,
+                   path   = "/v1/reports/:name/run/",
+                   query  = c("parameters", "ref", "update"),
                    post   = "parameters",
                    method = "POST"),
-              list(dest   = "status",
-                   path   = "/reports/:name/:version/status",
+              list(name   = "status",
+                   dest   = status,
+                   path   = "/v1/reports/:key/status/",
                    query  = "output",
                    method = "GET"),
-              list(dest   = "commit",
-                   path   = "/reports/:name/:version/commit",
-                   query  = NULL,
-                   method = "POST"),
-              list(dest   = "publish",
-                   path   = "/reports/:name/:version/publish",
+              list(name   = "publish",
+                   dest   = publish,
+                   path   = "/v1/reports/:name/:version/publish/",
                    query  = "value",
                    method = "POST"))
-  lapply(map, function(x) c(x, parse_path(x$path)))
+  res <- lapply(map, function(x) c(x, parse_path(x$path)))
+  names(res) <- vapply(map, "[[", character(1), "name")
+  res
 }
 
 server_match_endpoint <- function(path, map) {
@@ -127,14 +243,6 @@ parse_request <- function(req, map) {
       return(server_error_data("unknown-parameter", "Unknown query parameter",
                                405))
     }
-    if (dat$dest == "publish") {
-      ## Some ad-hoc type conversion for publish, making 'value' a logical
-      query$value <- as_logical(query$value)
-      if (is.na(query$value)) {
-      return(server_error_data("invalid-parameter", "value must be logical",
-                               405))
-      }
-    }
     dat$args <- c(dat$args, query)
   }
 
@@ -181,18 +289,5 @@ parse_path <- function(x) {
     }
   }
 
-  x <- sprintf("^%s$", x)
-
-  args[args == "version"] <- "id"
-
-  list(re = x, args = args)
-}
-
-as_logical <- function(x) {
-  switch(tolower(x),
-         "true" = TRUE,
-         "yes" = TRUE,
-         "false" = FALSE,
-         "no" = FALSE,
-         NA)
+  list(re = sprintf("^%s$", x), args = args)
 }

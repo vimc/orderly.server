@@ -13,7 +13,7 @@ empty_named_list <- function() {
 }
 
 ## Copied from orderly's helpers
-wait_while <- function(continue, timeout = 1, poll = 0.02) {
+wait_while <- function(continue, timeout = 10, poll = 0.02) {
   t_quit <- Sys.time() + timeout
   while (continue()) {
     Sys.sleep(poll)
@@ -26,34 +26,107 @@ wait_for_path <- function(path, ...) {
   wait_while(function() !file.exists(path), ...)
 }
 wait_for_process_termination <- function(process, ...) {
-  wait_while(function() process$is_alive(), ...)
+  wait_while(process$is_alive, ...)
+}
+wait_for_finished <- function(key, server, ...) {
+  is_running <- function() {
+    r <- httr::GET(server$url("/v1/reports/%s/status/", key))
+    !(content(r)$data$status %in% c("success", "error"))
+  }
+  wait_while(is_running, ...)
+}
+wait_for_id <- function(key, server) {
+  url <- server$url("/v1/reports/%s/status/", key)
+  wait_while(function() {
+    r <- httr::GET(url)
+    version <- content(r)$data$version
+    is.null(version)
+  })
 }
 
-api_url <- function(path, ...) {
-  port <- readLines("orderly.server.port")
-  paste0("http://localhost:", port, sprintf(path, ...))
+make_api_url <- function(port) {
+  force(port)
+  function(path, ...) {
+    paste0("http://localhost:", port, sprintf(path, ...))
+  }
 }
 
-cache <- new.env(parent = new.env())
 Sys.setenv(R_TESTS = "")
 
-start_test_server <- function(log = "orderly.server.log") {
-  ## TODO: done right we'd inherit a lot of env vars from parent R
-  ## (e.g., R_LIBS).  But this is done soon with new callr
-  if (file.exists("orderly.server.path")) {
-    file.remove("orderly.server.path")
+start_test_server <- function(path = NULL, port = 8123,
+                              log = NULL,
+                              fork = TRUE) {
+  if (is.null(log)) {
+    log <- sprintf("orderly.server.%d.log", port)
   }
-  Rscript <- file.path(R.home("bin"), "Rscript")
-  px <- processx::process$new(Rscript, "orderly.server.R",
-                              stdout = log, stderr = log)
-  cache$px <- px
-  wait_for_path("orderly.server.path")
-  TRUE
+  if (file.exists(log)) {
+    file.remove(log)
+  }
+
+  url <- sprintf("http://localhost:%d/", port)
+
+  server_not_up <- function() {
+    isTRUE(tryCatch(httr::GET(url), error = function(e) TRUE))
+  }
+  if (!server_not_up()) {
+    stop("Server already listening on port ", port)
+  }
+
+  if (is.null(path)) {
+    path <- orderly:::prepare_orderly_example("interactive")
+  }
+
+  if (fork) {
+    cl <- parallel::makeCluster(1L, "FORK", outfile = log)
+    pid <- parallel::clusterEvalQ(cl, Sys.getpid())[[1]]
+    parallel:::sendCall(cl[[1L]], "server", list(path, port, "127.0.0.1", 50))
+
+    px <- NULL
+  } else {
+    writeLines(as.character(port), "orderly.server.port")
+    writeLines(path, "orderly.server.path")
+    writeLines(.libPaths(), "orderly.server.libs")
+    Rscript <- file.path(R.home("bin"), "Rscript")
+    px <- processx::process$new(Rscript, "orderly.server.R",
+                                stdout = log, stderr = log)
+    pid <- px$get_pid()
+    cl <- NULL
+  }
+
+  message("waiting for server to be responsive")
+  wait_while(server_not_up)
+
+  list(path = path, port = port, pid = pid, log = log,
+       fork = fork, cl = cl, px = px,
+       url = make_api_url(port))
 }
 
-stop_test_server <- function() {
-  if (!is.null(cache$px)) {
-    cache$px$kill(0)
-    file.remove("orderly.server.path")
+stop_test_server <- function(server) {
+  if (server$fork) {
+    tools::pskill(server$pid, tools::SIGINT)
+    Sys.sleep(0.15)
+    parallel::stopCluster(server$cl)
+  } else {
+    server$px$signal(tools::SIGINT)
+    Sys.sleep(0.15)
+    server$px$kill()
   }
+}
+
+expect_valid_json <- function(json, schema) {
+  testthat::skip_if_not_installed("jsonvalidate")
+  testthat::expect_true(jsonvalidate::json_validate(json, schema))
+}
+
+expect_valid_response <- function(json, errors = list(), status = 200) {
+  expect_valid_json(json, "spec/Response.schema.json")
+}
+
+test_runner <- function(path = tempfile()) {
+  orderly:::prepare_orderly_example("interactive", path)
+  server_endpoints(orderly::orderly_runner(path))
+}
+
+read_json <- function(path, ...) {
+  jsonlite::fromJSON(paste(readLines(path), collapse = "\n"), ...)
 }

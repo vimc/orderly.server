@@ -4,7 +4,8 @@
 \alias{server}
 \title{Run orderly server}
 \usage{
-server(path, port, host = "0.0.0.0")
+server(path, port, host = "0.0.0.0", poll_interrupt = NULL,
+  allow_ref = TRUE, go_signal = NULL)
 }
 \arguments{
 \item{path}{Path to serve}
@@ -12,6 +13,19 @@ server(path, port, host = "0.0.0.0")
 \item{port}{Port to serve on}
 
 \item{host}{Optional}
+
+\item{poll_interrupt}{Interval (in ms) to poll for interrupt}
+
+\item{allow_ref}{Allow git reference changing (passed through to
+\code{orderly_runner}.}
+
+\item{go_signal}{If given, we poll for a file \code{go_signal}
+(within \code{path}) before starting.  This is designed
+primarily for use with docker where the data volume may not be
+ready at the same time as the process container (and indeed
+won't be if the container is used to provision the volume).
+During this period the server will not respond to any http
+requests.}
 }
 \description{
 Run orderly server
