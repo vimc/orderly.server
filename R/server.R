@@ -72,7 +72,10 @@ server_handler <- function(req, map) {
   orderly::orderly_log(req$REQUEST_METHOD, req$PATH_INFO)
 
   catch <- function(e) {
-    server_response(NA, e$message, 500)
+    dat <- server_error_data("orderly-error",
+                             paste("error while running orderly", e$message),
+                             500)
+    server_response(NA, dat$errors, dat$status)
   }
 
   dat <- parse_request(req, map)

@@ -148,7 +148,8 @@ test_that("git", {
   expect_true(httr::status_code(r) >= 400)
   expect_equal(dat$status, "failure")
   expect_null(dat$data)
-  expect_match(dat$errors, "Did not find git reference")
+  expect_equal(dat$errors[[1]]$code, "orderly-error")
+  expect_match(dat$errors[[1]]$message, "Did not find git reference")
 
   expect_equal(orderly:::git_ref_to_sha("HEAD", root = path[["local"]]),
                sha[["local"]])
@@ -166,4 +167,18 @@ test_that("git", {
   expect_equal(orderly:::git_ref_to_sha("HEAD", root = path[["local"]]),
                sha[["local"]])
   expect_true(orderly:::git_ref_exists(sha[["origin"]], path[["local"]]))
+})
+
+test_that("git error returns valid json", {
+  path <- orderly:::prepare_orderly_git_example()
+  server <- start_test_server(path[["local"]])
+  on.exit(stop_test_server(server))
+
+  ## runner <- server_endpoints(orderly::orderly_runner(path[["local"]]))
+  orderly:::git_run(c("remote", "remove", "origin"), root = path[["local"]])
+
+  r <- content(httr::GET(server$url("/v1/reports/git/status/")))
+  res <- httr::POST(server$url("/v1/reports/git/fetch/"))
+  json <- httr::content(res, "text", encoding = "UTF-8")
+  expect_valid_json(json, "spec/Response.schema.json")
 })
