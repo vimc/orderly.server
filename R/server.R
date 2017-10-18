@@ -28,7 +28,7 @@ server <- function(path, port, host = "0.0.0.0", poll_interrupt = NULL,
   message("Starting orderly server on port ", port)
   message("Orderly root: ", path)
   if (is.null(poll_interrupt)) {
-    poll_interrupt <- if (interactive()) 100 else 1000
+    poll_interrupt <- 100
   }
 
   app <- server_app(path, allow_ref, go_signal)
@@ -40,6 +40,7 @@ server <- function(path, port, host = "0.0.0.0", poll_interrupt = NULL,
     tryCatch(app$poll(),
              error = function(e) NULL,
              interrupt = function(e) continue <<- FALSE)
+    Sys.sleep(0.001)
   }
   message("Server exiting")
 }
