@@ -57,16 +57,19 @@ wait_for_go_signal <- function(path, go_signal) {
   if (is.null(go_signal)) {
     return(invisible())
   }
-  filename <- file.path(path, go_signal)
+  if (!grepl("^(/|[A-Z][a-z]:)", path)) {
+    go_signal <- file.path(path, go_signal)
+  }
   t0 <- Sys.time()
-  while (!file.exists(filename)) {
+  while (!file.exists(go_signal)) {
     Sys.sleep(1)
     t <- Sys.time()
     dt <- time_diff_secs(t, t0)
     message(sprintf("[%s] waiting for go signal (%s) for %d s",
                     t, go_signal, dt))
   }
-  message("Recieved go signal after %d s", time_diff_secs(Sys.time(), t0))
+  message(sprintf("Recieved go signal after %d s",
+                  time_diff_secs(Sys.time(), t0)))
 }
 
 server_handler <- function(req, map) {
