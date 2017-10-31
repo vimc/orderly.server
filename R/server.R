@@ -133,6 +133,9 @@ server_endpoints <- function(runner) {
     }
     ret
   }
+  kill <- function(key) {
+    runner$kill(key)
+  }
   publish <- function(name, version, value = TRUE) {
     runner$publish(name, version, as_logical(value))
   }
@@ -194,6 +197,10 @@ server_endpoints <- function(runner) {
                    path   = "/v1/reports/:key/status/",
                    query  = "output",
                    method = "GET"),
+              list(name   = "kill",
+                   dest   = kill,
+                   path   = "/v1/reports/:key/kill/",
+                   method = "DELETE"),
               list(name   = "publish",
                    dest   = publish,
                    path   = "/v1/reports/:name/:version/publish/",

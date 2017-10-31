@@ -47,16 +47,39 @@ test_that("status", {
 
   data <- res$status$dest(info$key)
 
-  expect_equal(runner$poll(), "create")
+  expect_equal(runner$poll(), structure("create", key = info$key))
   wait_for_path(file.path(runner$path_id, info$key))
   id <- readLines(file.path(runner$path_id, info$key))
   wait_for_process_termination(runner$process$px)
-  expect_equal(runner$poll(), "finish")
+  expect_equal(runner$poll(), structure("finish", key = info$key))
 
   dat1 <- res$status$dest(info$key, FALSE)
   dat2 <- res$status$dest(info$key, TRUE)
   expect_valid_json(to_json(dat1), "spec/Status.schema.json")
   expect_valid_json(to_json(dat2), "spec/Status.schema.json")
+})
+
+test_that("kill", {
+  path <- tempfile()
+  res <- test_runner(path)
+
+  info <- res$run$dest("interactive")
+
+  runner <- environment(res$index$dest)$runner
+
+  data <- res$status$dest(info$key)
+
+  expect_equal(runner$poll(), structure("create", key = info$key))
+  wait_for_path(file.path(runner$path_id, info$key))
+  id <- readLines(file.path(runner$path_id, info$key))
+
+  dat1 <- res$kill$dest(info$key)
+  dat2 <- res$kill$dest(info$key)
+  expect_valid_json(to_json(dat1), "spec/Kill.schema.json")
+  expect_valid_json(to_json(dat2), "spec/Kill.schema.json")
+  runner$poll()
+
+  expect_error(res$kill$dest(info$key), "Can't kill")
 })
 
 test_that("publish", {

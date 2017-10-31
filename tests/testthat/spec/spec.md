@@ -100,6 +100,18 @@ Schema: [`Status.schema.json`](Status.schema.json)
 }
 ```
 
+## DELETE /reports/:name/:version/kill/
+
+Kill a running report.  If the report was running then `true` will be returned.  Otherwise an error will be thrown.
+
+Schema: [`Kill.schema.json`](Kill.schema.json)
+
+### Example
+
+``` json
+true
+```
+
 ## POST /reports/:name/:version/publish/
 
 Publish a report.  Sets the status of the "published" flag.  With no parameters sets the flag to `true` but reports can be unpublished by passing the query parameter `?value=false`.
