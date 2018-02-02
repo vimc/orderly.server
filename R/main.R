@@ -8,7 +8,7 @@ main_args <- function(args) {
     optparse::make_option("--port",
                           help = "Port to run on",
                           type = "integer",
-                          default = "8123"),
+                          default = "8321"),
     optparse::make_option("--host",
                           help = "IP address owned by this server",
                           default = "0.0.0.0",
