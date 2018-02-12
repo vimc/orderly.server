@@ -1,4 +1,4 @@
-test_server <- function(port = 8123) {
+test_server <- function(port = 8321) {
   path <- orderly:::prepare_orderly_example("interactive")
   server(path, port, "127.0.0.1")
 }
@@ -53,7 +53,7 @@ make_api_url <- function(port) {
 
 Sys.setenv(R_TESTS = "")
 
-start_test_server <- function(path = NULL, port = 8123,
+start_test_server <- function(path = NULL, port = 8321,
                               log = NULL,
                               fork = TRUE) {
   if (is.null(log)) {

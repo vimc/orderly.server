@@ -14,4 +14,6 @@ RUN R CMD INSTALL /orderly.server && \
   Rscript -e 'orderly.server:::write_script("/usr/bin")' && \
   rm -rf /orderly.server
 
+EXPOSE 8321
+
 ENTRYPOINT ["orderly.server"]

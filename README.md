@@ -27,13 +27,13 @@ docker pull $IMAGE
 mkdir orderly
 docker run --rm --entrypoint Rscript -v ${PWD}/orderly:/orderly --user ${UID} $IMAGE -e 'orderly:::prepare_orderly_git_example("/orderly")'
 docker run --rm --entrypoint Rscript -v ${PWD}/orderly:/orderly --user ${UID} $IMAGE -e 'orderly::orderly_rebuild("/orderly")'
-docker run --rm -p 8123:8123 -v ${PWD}/orderly:/orderly --user ${UID} $IMAGE /orderly
+docker run --rm -p 8321:8321 -v ${PWD}/orderly:/orderly --user ${UID} $IMAGE /orderly
 ```
 
 then
 
 ```
-$ curl -s -X GET http://localhost:8123/ | jq
+$ curl -s -X GET http://localhost:8321/ | jq
 {
   "status": "success",
   "data": {
@@ -57,7 +57,7 @@ $ curl -s -X GET http://localhost:8123/ | jq
 Endpoints are shown in [the spec](tests/testthat/spec/spec.md)
 
 ```
-$ curl -s -X POST http://localhost:8123/v1/reports/example/run/ | jq
+$ curl -s -X POST http://localhost:8321/v1/reports/example/run/ | jq
 {
   "status": "success",
   "data": {
@@ -70,7 +70,7 @@ $ curl -s -X POST http://localhost:8123/v1/reports/example/run/ | jq
 ```
 
 ```
-$ curl -s -X GET http://localhost:8123/v1/reports/flirtatious_komododragon/status/?output=true | jq
+$ curl -s -X GET http://localhost:8321/v1/reports/flirtatious_komododragon/status/?output=true | jq
 {
   "status": "success",
   "data": {
@@ -112,7 +112,7 @@ $ curl -s -X GET http://localhost:8123/v1/reports/flirtatious_komododragon/statu
 Publish a report (or unpublish with `?value=false`)
 
 ```
-$ curl -s -X POST http://localhost:8123/v1/reports/example/20170920-110037-69eede6a/publish/ | jq
+$ curl -s -X POST http://localhost:8321/v1/reports/example/20170920-110037-69eede6a/publish/ | jq
 {
   "status": "success",
   "data": true,
@@ -123,7 +123,7 @@ $ curl -s -X POST http://localhost:8123/v1/reports/example/20170920-110037-69eed
 Rebuild the orderly index:
 
 ```
-$ curl -s -X POST http://localhost:8123/v1/reports/rebuild/ | jq
+$ curl -s -X POST http://localhost:8321/v1/reports/rebuild/ | jq
 {
   "status": "success",
   "data": null,
