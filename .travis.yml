@@ -8,7 +8,7 @@ before_script:
   - R CMD INSTALL .
 
 r_github_packages:
-  - vimc/orderly
+  - vimc/orderly@i1793
 
 addons:
   apt:
