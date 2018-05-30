@@ -40,7 +40,9 @@ Try and run a report `:name`
 
 Accepts as `POST` body json that will be passed directly through to the report.  This is required when the report requires parameters and is not allowed for reports that do not allow parameters.
 
-Accepts the query parameter `ref`, to try running the report against a particular git reference (e.g., a branch or a commit).  This is not yet actually supported.
+Accepts the query parameter `ref`, to try running the report against a particular git reference (e.g., a branch or a commit).
+
+Accepts the query parameter `timeout`, which sets the the number of seconds to wait before the job is terminated.  The default is 600s (10 minutes).
 
 Returns information to query the status of the report via the next endpoint
 
