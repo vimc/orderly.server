@@ -6,7 +6,6 @@ RUN apt-get update || apt-get update && apt-get install -y \
 RUN install2.r --error \
   httpuv \
   jsonlite \
-  processx \
   webutils
 
 COPY . /orderly.server
