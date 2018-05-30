@@ -1,8 +1,3 @@
-test_server <- function(port = 8321) {
-  path <- orderly:::prepare_orderly_example("interactive")
-  server(path, port, "127.0.0.1")
-}
-
 content <- function(r) {
   txt <- httr::content(r, "text", encoding = "UTF-8")
   jsonlite::fromJSON(txt, simplifyDataFrame = FALSE)
