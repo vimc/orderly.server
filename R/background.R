@@ -79,6 +79,10 @@ R6_orderly_server_background <- R6::R6Class(
       } else {
         "running"
       }
+    },
+
+    api_url = function(path, ...) {
+      paste0("http://localhost:", self$port, sprintf(path, ...))
     }
   ),
 
