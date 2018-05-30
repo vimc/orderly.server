@@ -14,6 +14,7 @@ R6_orderly_server_background <- R6::R6Class(
 
   public = list(
     path = NULL,
+    port = NULL,
     url = NULL,
     pid = NULL,
     log = NULL,
@@ -31,17 +32,9 @@ R6_orderly_server_background <- R6::R6Class(
       if (!private$server_not_up()) {
         stop("Server already listening on port ", port)
       }
+      self$port <- port
 
-      libs <- sprintf("c(%s)",
-                      paste(sprintf('"%s"', .libPaths()), collapse = ", "))
-      code <-
-        c(sprintf('path <- "%s"', path),
-          sprintf("port <- %d", port),
-          sprintf(".libPaths(%s)", libs),
-          'orderly.server::server(path, port, "127.0.0.1", poll_interrupt = 1)')
-      writeLines(code, file.path(path, "server.R"))
-
-      self$log <- log %||% sprintf("%s/orderly.server.%d.log", path, port)
+      self$log <- log %||% tempfile()
     },
 
     start = function() {
@@ -53,10 +46,20 @@ R6_orderly_server_background <- R6::R6Class(
       }
 
       Sys.setenv(R_TESTS = "")
+
+      libs <- sprintf("c(%s)",
+                      paste(sprintf('"%s"', .libPaths()), collapse = ", "))
+      code <-
+        c(sprintf('path <- "%s"', self$path),
+          sprintf("port <- %d", self$port),
+          sprintf(".libPaths(%s)", libs),
+          'orderly.server::server(path, port, "127.0.0.1", poll_interrupt = 1)')
+      path_server <- tempfile()
+      writeLines(code, path_server)
+
       unlink(self$log)
       Rscript <- file.path(R.home("bin"), "Rscript")
-      server <- file.path(self$path, "server.R")
-      self$pid <- sys::exec_background(Rscript, server,
+      self$pid <- sys::exec_background(Rscript, path_server,
                                        std_out = self$log, std_err = self$log)
 
       message("waiting for server to become responsive")
