@@ -11,6 +11,7 @@ Imports:
     jsonlite,
     optparse,
     orderly (>= 0.4.4),
+    processx,
     webutils
 Suggests:
     httr,

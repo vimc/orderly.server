@@ -3,9 +3,11 @@ FROM docker.montagu.dide.ic.ac.uk:5000/orderly:i1793
 RUN apt-get update || apt-get update && apt-get install -y \
   libcurl4-openssl-dev
 
+# processx is an orderly Suggests that we require for the server.
 RUN install2.r --error \
   httpuv \
   jsonlite \
+  processx \
   webutils
 
 COPY . /orderly.server
