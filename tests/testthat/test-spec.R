@@ -5,22 +5,26 @@ test_that("response: success", {
   expect_valid_json(json, "spec/Response.schema.json")
 })
 
+
 test_that("response: error", {
   dat <- server_error_data("my-code", "my description", 400)
   json <- server_response(NA, dat$errors, dat$status)$body
   expect_valid_json(json, "spec/Response.schema.json")
 })
 
+
 test_that("orderly id", {
   id <- "20170912-075922-332ab657"
   expect_valid_json(to_json(id), "spec/OrderlyId.schema.json")
 })
+
 
 test_that("index", {
   res <- test_runner()
   data <- res$index$dest()
   expect_valid_json(to_json(data), "spec/Index.schema.json")
 })
+
 
 test_that("rebuild", {
   res <- test_runner()
@@ -29,6 +33,7 @@ test_that("rebuild", {
   expect_valid_json(json, "spec/Rebuild.schema.json")
 })
 
+
 test_that("run", {
   res <- test_runner()
   data <- res$run$dest("example")
@@ -36,6 +41,7 @@ test_that("run", {
   json <- to_json(data)
   expect_valid_json(json, "spec/Run.schema.json")
 })
+
 
 test_that("status", {
   path <- tempfile()
@@ -59,6 +65,7 @@ test_that("status", {
   expect_valid_json(to_json(dat2), "spec/Status.schema.json")
 })
 
+
 test_that("kill", {
   path <- tempfile()
   res <- test_runner(path)
@@ -74,13 +81,12 @@ test_that("kill", {
   id <- readLines(file.path(runner$path_id, info$key))
 
   dat1 <- res$kill$dest(info$key)
-  dat2 <- res$kill$dest(info$key)
   expect_valid_json(to_json(dat1), "spec/Kill.schema.json")
-  expect_valid_json(to_json(dat2), "spec/Kill.schema.json")
   runner$poll()
 
   expect_error(res$kill$dest(info$key), "Can't kill")
 })
+
 
 test_that("publish", {
   path <- tempfile()
@@ -97,6 +103,7 @@ test_that("publish", {
   json <- to_json(data)
   expect_valid_json(json, "spec/Publish.schema.json")
 })
+
 
 test_that("git bits", {
   git_run <- orderly:::git_run
