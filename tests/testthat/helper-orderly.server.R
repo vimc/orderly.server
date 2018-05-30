@@ -13,15 +13,6 @@ empty_named_list <- function() {
 }
 
 ## Copied from orderly's helpers
-wait_while <- function(continue, timeout = 10, poll = 0.02) {
-  t_quit <- Sys.time() + timeout
-  while (continue()) {
-    Sys.sleep(poll)
-    if (Sys.time() > t_quit) {
-      stop("Timeout reached")
-    }
-  }
-}
 wait_for_path <- function(path, ...) {
   wait_while(function() !file.exists(path), ...)
 }
