@@ -6,14 +6,15 @@ License: MIT + file LICENSE
 Author: Rich FitzJohn
 Maintainer: Rich FitzJohn <rich.fitzjohn@gmail.com>
 Imports:
+    R6,
     httpuv,
     jsonlite,
     optparse,
     orderly (>= 0.4.4),
-    processx,
     webutils
 Suggests:
     httr,
     jsonvalidate,
+    sys,
     testthat
 RoxygenNote: 6.0.1
