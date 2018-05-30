@@ -52,6 +52,7 @@ R6_orderly_server_background <- R6::R6Class(
         stop("Server already listening on port ", port)
       }
 
+      Sys.setenv(R_TESTS = "")
       unlink(self$log)
       Rscript <- file.path(R.home("bin"), "Rscript")
       server <- file.path(self$path, "server.R")
