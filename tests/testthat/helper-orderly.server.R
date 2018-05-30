@@ -37,7 +37,7 @@ make_api_url <- function(port) {
   }
 }
 
-Sys.setenv(R_TESTS = "")
+
 
 start_test_server <- function(path = NULL, port = 8321,
                               log = NULL,
