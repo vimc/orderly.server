@@ -53,6 +53,7 @@ test_that("error handling: invalid url", {
 
 
 test_that("run", {
+  skip_on_travis()
   server <- start_test_server()
   on.exit(server$stop())
 
@@ -132,6 +133,7 @@ test_that("publish", {
 
 
 test_that("git", {
+  skip_on_travis()
   path <- orderly:::prepare_orderly_git_example()
   server <- start_test_server(path[["local"]])
   on.exit(server$stop())
