@@ -27,9 +27,7 @@ server <- function(path, port, host = "0.0.0.0", poll_interrupt = NULL,
                    allow_ref = TRUE, go_signal = NULL) {
   message("Starting orderly server on port ", port)
   message("Orderly root: ", path)
-  if (is.null(poll_interrupt)) {
-    poll_interrupt <- 100
-  }
+  poll_interrupt <- poll_interrupt %||% 100
 
   app <- server_app(path, allow_ref, go_signal)
   server <- httpuv::startServer(host, port, app)
