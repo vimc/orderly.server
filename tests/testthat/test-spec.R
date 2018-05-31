@@ -44,6 +44,7 @@ test_that("run", {
 
 
 test_that("status", {
+  skip_on_travis()
   path <- tempfile()
   res <- test_runner(path)
 
@@ -67,6 +68,7 @@ test_that("status", {
 
 
 test_that("kill", {
+  skip_on_travis()
   path <- tempfile()
   res <- test_runner(path)
 
