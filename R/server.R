@@ -116,8 +116,10 @@ server_endpoints <- function(runner) {
   ## NOTE: this ends up being exposed as a 'run' endpoint not a
   ## 'queue' endpoint because in the underlying runner queue/poll are
   ## separated but within the server both happen.
-  run <- function(name, parameters = NULL, ref = NULL, update = TRUE) {
-    key <- runner$queue(name, parameters, ref, as_logical(update))
+  run <- function(name, parameters = NULL, ref = NULL, update = TRUE,
+                  timeout = NULL) {
+    key <- runner$queue(name, parameters, ref, as_logical(update),
+                        timeout = as_integer(timeout, 600))
     list(name = name,
          key = key,
          path = sprintf("/v1/reports/%s/status/", key))
@@ -187,7 +189,7 @@ server_endpoints <- function(runner) {
               list(name   = "run",
                    dest   = run,
                    path   = "/v1/reports/:name/run/",
-                   query  = c("parameters", "ref", "update"),
+                   query  = c("parameters", "ref", "update", "timeout"),
                    post   = "parameters",
                    method = "POST"),
               list(name   = "status",
