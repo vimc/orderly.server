@@ -53,7 +53,6 @@ test_that("error handling: invalid url", {
 
 
 test_that("run", {
-  skip_on_travis()
   server <- start_test_server()
   on.exit(server$stop())
 
@@ -94,7 +93,7 @@ test_that("run", {
   st <- content(r)
   expect_equal(st$status, "success")
   expect_is(st$data$output$stderr, "character")
-  expect_is(st$data$output$stdout, "character")
+  expect_equal(length(st$data$output$stdout), 0)
 })
 
 
@@ -133,7 +132,6 @@ test_that("publish", {
 
 
 test_that("git", {
-  skip_on_travis()
   path <- orderly:::prepare_orderly_git_example()
   server <- start_test_server(path[["local"]])
   on.exit(server$stop())
@@ -146,18 +144,18 @@ test_that("git", {
   r <- httr::POST(server$api_url("/v1/reports/minimal/run/?update=false"))
   dat <- content(r)
   wait_for_finished(dat$data$key, server)
-
   expect_equal(orderly:::git_ref_to_sha("HEAD", path[["local"]]),
                sha[["local"]])
 
   r <- httr::POST(server$api_url("/v1/reports/minimal/run/"),
                   query = list(update = "false", ref = sha[["origin"]]))
   dat <- content(r)
-  expect_true(httr::status_code(r) >= 400)
-  expect_equal(dat$status, "failure")
-  expect_null(dat$data)
-  expect_equal(dat$errors[[1]]$code, "orderly-error")
-  expect_match(dat$errors[[1]]$message, "Did not find git reference")
+  wait_for_finished(dat$data$key, server)
+
+  r <- httr::GET(server$api_url(dat$data$path))
+  st <- content(r)
+  expect_equal(httr::status_code(r), 200)
+  expect_equal(st$data$status, "error")
 
   expect_equal(orderly:::git_ref_to_sha("HEAD", root = path[["local"]]),
                sha[["local"]])
