@@ -212,7 +212,7 @@ test_that("run report honours timeout", {
   expect_equal(st$data$status, "killed")
 
   r <- httr::POST(server$api_url("/v1/reports/count/run/"),
-                  query = list(timeout = 3))
+                  query = list(timeout = 60))
   expect_equal(httr::status_code(r), 200)
   dat <- content(r)
   wait_for_finished(dat$data$key, server)
