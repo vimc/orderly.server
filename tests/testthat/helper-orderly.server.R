@@ -23,7 +23,7 @@ wait_for_process_termination <- function(process, ...) {
 wait_for_finished <- function(key, server, ...) {
   is_running <- function() {
     r <- httr::GET(server$api_url("/v1/reports/%s/status/", key))
-    !(content(r)$data$status %in% c("success", "error"))
+    !(content(r)$data$status %in% c("success", "error", "killed"))
   }
   wait_while(is_running, ...)
 }

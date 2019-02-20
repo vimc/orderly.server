@@ -191,3 +191,33 @@ test_that("git error returns valid json", {
   json <- httr::content(res, "text", encoding = "UTF-8")
   expect_valid_json(json, "spec/Response.schema.json")
 })
+
+
+test_that("run report honours timeout", {
+  server <- start_test_server()
+  on.exit(server$stop())
+
+  p <- file.path(server$path, "src", "count", "parameters.json")
+  writeLines(jsonlite::toJSON(list(time = 2, poll = 0.1), auto_unbox = TRUE),
+             p)
+
+  r <- httr::POST(server$api_url("/v1/reports/count/run/"),
+                  query = list(timeout = 1))
+  expect_equal(httr::status_code(r), 200)
+  dat <- content(r)
+  wait_for_finished(dat$data$key, server)
+  r <- httr::GET(server$api_url(dat$data$path))
+  expect_equal(httr::status_code(r), 200)
+  st <- content(r)
+  expect_equal(st$data$status, "killed")
+
+  r <- httr::POST(server$api_url("/v1/reports/count/run/"),
+                  query = list(timeout = 3))
+  expect_equal(httr::status_code(r), 200)
+  dat <- content(r)
+  wait_for_finished(dat$data$key, server)
+  r <- httr::GET(server$api_url(dat$data$path))
+  expect_equal(httr::status_code(r), 200)
+  st <- content(r)
+  expect_equal(st$data$status, "success")
+})
