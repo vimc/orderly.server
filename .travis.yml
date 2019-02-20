@@ -6,6 +6,8 @@ r_packages:
   - covr
 before_script:
   - R CMD INSTALL .
+after_success:
+  - Rscript -e 'covr::codecov()'
 
 r_github_packages:
   - vimc/orderly
