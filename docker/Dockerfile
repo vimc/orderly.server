@@ -1,4 +1,4 @@
-FROM docker.montagu.dide.ic.ac.uk:5000/orderly:e1fd9ab
+FROM docker.montagu.dide.ic.ac.uk:5000/orderly:b9ea38c
 
 RUN apt-get update || apt-get update && apt-get install -y \
   libcurl4-openssl-dev
