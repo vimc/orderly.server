@@ -102,9 +102,9 @@ test_that("publish", {
   on.exit(server$stop())
 
   path <- server$path
-  id <- orderly::orderly_run("example", config = path, echo = FALSE)
+  id <- orderly::orderly_run("example", root = path, echo = FALSE)
   ## This is somewhat liable to failure due to db locking
-  dest <- orderly::orderly_commit(id, config = path)
+  dest <- orderly::orderly_commit(id, root = path)
   pub <- file.path(dest, "orderly_published.yml")
 
   r <- httr::POST(server$api_url("/v1/reports/example/%s/publish/", id))

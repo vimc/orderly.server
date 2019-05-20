@@ -94,8 +94,8 @@ test_that("publish", {
   path <- tempfile()
   res <- test_runner(path)
 
-  id <- orderly::orderly_run("example", config = path, echo = FALSE)
-  orderly::orderly_commit(id, "example", config = path)
+  id <- orderly::orderly_run("example", root = path, echo = FALSE)
+  orderly::orderly_commit(id, "example", root = path)
 
   data <- res$publish$dest("example", id)
   json <- to_json(data)
