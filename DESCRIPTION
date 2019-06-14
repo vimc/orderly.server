@@ -10,7 +10,7 @@ Imports:
     httpuv,
     jsonlite,
     optparse,
-    orderly (>= 0.6.4),
+    orderly (>= 0.7.0),
     processx,
     webutils
 Suggests:

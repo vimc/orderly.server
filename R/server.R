@@ -137,7 +137,8 @@ server_endpoints <- function(runner) {
     runner$kill(key)
   }
   publish <- function(name, version, value = TRUE) {
-    runner$publish(name, version, as_logical(value))
+    orderly:::legacy_orderly_publish(
+      name, version, as_logical(value), runner$config)
   }
   rebuild <- function() {
     runner$rebuild()
