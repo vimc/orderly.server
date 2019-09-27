@@ -118,6 +118,7 @@ server_endpoints <- function(runner) {
   ## separated but within the server both happen.
   run <- function(name, parameters = NULL, ref = NULL, update = TRUE,
                   timeout = NULL) {
+    parameters <- as_orderly_parameter_list(parameters)
     key <- runner$queue(name, parameters, ref, as_logical(update),
                         timeout = as_integer(timeout, 600))
     list(name = name,

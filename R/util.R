@@ -47,3 +47,17 @@ wait_while <- function(continue, timeout = 10, poll = 0.02) {
     }
   }
 }
+
+
+## Convert a json array of parameters into the format expected by
+## orderly >= 0.7.14
+as_orderly_parameter_list <- function(x) {
+  if (is.null(x) || is.na(x)) {
+    return(NULL)
+  }
+  x <- jsonlite::fromJSON(x, FALSE)
+  if (length(x) == 0) {
+    return(NULL)
+  }
+  sprintf("%s=%s", names(x), vapply(x, as.character, ""))
+}
