@@ -4,36 +4,21 @@ main <- function(args = commandArgs(TRUE)) {
 }
 
 main_args <- function(args) {
-  opts <- list(
-    optparse::make_option("--port",
-                          help = "Port to run on",
-                          type = "integer",
-                          default = "8321"),
-    optparse::make_option("--host",
-                          help = "IP address owned by this server",
-                          default = "0.0.0.0",
-                          type = "character"),
-    optparse::make_option("--no-ref",
-                          help = "Prevent git reference switching",
-                          type = "logical",
-                          default = FALSE,
-                          action = "store_true",
-                          dest = "no_ref"),
-    optparse::make_option("--go-signal",
-                          help = "Path for go signal (within path)",
-                          default = NULL,
-                          type = "character",
-                          dest = "go_signal"))
-  parser <- optparse::OptionParser(
-    option_list = opts,
-    usage = "%prog [options] <path>")
-  res <- optparse::parse_args(parser, args, positional_arguments = 1L)
+  doc <- "Usage:
+  orderly.server [options] <path>
 
-  list(path = res$args[[1L]],
-       port = res$options$port,
-       host = res$options$host,
-       allow_ref = !res$options$no_ref,
-       go_signal = res$options$go_signal)
+Options:
+  --port=PORT       Port to run on [default: 8321]
+  --host=HOST       IP address owned by this server [default: 0.0.0.0]
+  --no-ref          Prevent git reference switching
+  --go-signal=PATH  Relative path for go signal"
+  res <- docopt::docopt(doc, args)
+
+  list(path = res[["path"]],
+       port = as_integer(res[["port"]]),
+       host = res[["host"]],
+       allow_ref = !res[["no-ref"]],
+       go_signal = res[["go-signal"]])
 }
 
 write_script <- function(path) {

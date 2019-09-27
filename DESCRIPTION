@@ -9,7 +9,7 @@ Imports:
     R6,
     httpuv,
     jsonlite,
-    optparse,
+    docopt,
     orderly (>= 0.7.14),
     processx,
     webutils
