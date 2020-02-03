@@ -26,3 +26,18 @@ docker push $APP_PUBLIC_BRANCH_TAG
 docker push $APP_PUBLIC_COMMIT_TAG
 docker push $APP_PRIVATE_BRANCH_TAG
 docker push $APP_PRIVATE_COMMIT_TAG
+
+if [ $GIT_BRANCH = "master" ]; then
+    ORDERLY_VERSION=$(docker run --rm --entrypoint bash \
+                             $APP_PRIVATE_COMMIT_TAG \
+                             -c 'echo $ORDERLY_VERSION')
+
+    APP_PUBLIC_VERSION_TAG=$REGISTRY_PUBLIC/$NAME:v$ORDERLY_VERSION
+    APP_PRIVATE_VERSION_TAG=$REGISTRY_PRIVATE/$NAME:v$ORDERLY_VERSION
+
+    docker tag $APP_PRIVATE_COMMIT_TAG $APP_PUBLIC_VERSION_TAG
+    docker tag $APP_PRIVATE_COMMIT_TAG $APP_PRIVATE_VERSION_TAG
+
+    docker push $APP_PUBLIC_VERSION_TAG
+    docker push $APP_PRIVATE_VERSION_TAG
+fi
