@@ -10,3 +10,4 @@
 ^orderly\.server$
 ^orderly$
 ^spec$
+^buildkite$
