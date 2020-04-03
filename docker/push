@@ -9,7 +9,7 @@ docker push $TAG_BRANCH
 
 if [ $GIT_BRANCH == "master" ]; then
     ORDERLY_VERSION=$(docker run --rm --entrypoint bash \
-                             $APP_PRIVATE_COMMIT_TAG \
+                             $TAG_BRANCH \
                              -c 'echo $ORDERLY_VERSION')
     TAG_VERSION="${PACKAGE_ORG}/${PACKAGE_NAME}:${ORDERLY_VERSION}"
     TAG_LATEST="${PACKAGE_ORG}/${PACKAGE_NAME}:latest"
