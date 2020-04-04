@@ -16,7 +16,6 @@ if [ $GIT_BRANCH == "master" ]; then
                              $TAG_SHA \
                              -c 'echo $ORDERLY_VERSION')
     TAG_VERSION="${PACKAGE_ORG}/${PACKAGE_NAME}:${ORDERLY_VERSION}"
-    TAG_LATEST="${PACKAGE_ORG}/${PACKAGE_NAME}:latest"
     docker tag $TAG_SHA $TAG_LATEST
     docker tag $TAG_SHA $TAG_VERSION
     docker push $TAG_LATEST
