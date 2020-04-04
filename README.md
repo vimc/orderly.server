@@ -2,6 +2,7 @@
 
 [![Project Status: Concept – Minimal or no implementation has been done yet, or the repository is only intended to be a limited example, demo, or proof-of-concept.](http://www.repostatus.org/badges/latest/concept.svg)](http://www.repostatus.org/#concept)
 [![Build Status](https://travis-ci.org/vimc/orderly.server.svg?branch=master)](https://travis-ci.org/vimc/orderly.server)
+[![Build status](https://badge.buildkite.com/c35bbf7799cef2d70f8282aa6215ce1d67bc24f4a1981c308e.svg?branch=master)](https://buildkite.com/mrc-ide/orderly-dot-server)
 [![codecov.io](https://codecov.io/github/vimc/orderly.server/coverage.svg?branch=master)](https://codecov.io/github/vimc/orderly.server?branch=master)
 
 Server process to orchestrate running reports.  This is not in the [main package](https://github.com/vimc/orderly) because it may move into our [api](https://github.com/vimc/montagu-reporting-api) and because it drags in some dependencies that will never usually be needed.

@@ -1,8 +1,36 @@
 steps:
-  - label: "Build"
+  - label: ":construction_worker: Build"
     command: docker/build
 
   - wait
 
-  - label: "Push"
+  - label: ":shipit: Push"
     command: docker/push
+
+  - wait
+
+  # The next 3 steps trigger builds on the large images we use for
+  # downstream work: https://buildkite.com/docs/pipelines/trigger-step
+  #
+  # By default these will trigger only when orderly.server is on
+  # master - comment out the "branches:" key to make it always trigger
+  #
+  # By default these will trigger the master branch on the downstream
+  # repo - change the "branch:" key to use a feature branch
+  - trigger: "montagu-orderly"
+    label: ":rocket: build montagu image from updated orderly.server :syringe:"
+    branches: "master"
+    build:
+      branch: master
+
+  - trigger: "ncov-orderly"
+    label: ":rocket: build ncov image from updated orderly.server :microbe:"
+    branches: "master"
+    build:
+      branch: master
+
+  - trigger: "ebola-orderly"
+    label: ":rocket: build ebola image from updated orderly.server :biohazard_sign:"
+    branches: "master"
+    build:
+      branch: master
