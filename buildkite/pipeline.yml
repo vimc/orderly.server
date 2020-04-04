@@ -18,19 +18,19 @@ steps:
   # By default these will trigger the master branch on the downstream
   # repo - change the "branch:" key to use a feature branch
   - trigger: "montagu-orderly"
-    label: ":rocket: build montagu image from updated orderly.server :syringe:"
+    label: ":rocket: montagu image (from orderly.server) :syringe:"
     branches: "master"
     build:
       branch: master
 
   - trigger: "ncov-orderly"
-    label: ":rocket: build ncov image from updated orderly.server :microbe:"
+    label: ":rocket: ncov image (from orderly.server) :microbe:"
     branches: "master"
     build:
       branch: master
 
   - trigger: "ebola-orderly"
-    label: ":rocket: build ebola image from updated orderly.server :biohazard_sign:"
+    label: ":rocket: ebola image (from orderly.server) :biohazard_sign:"
     branches: "master"
     build:
       branch: master
