@@ -12,11 +12,17 @@ steps:
   - trigger: "montagu-orderly"
     label: ":rocket: build :syringe:"
     # branches: "master"
+    build:
+      branch: vimc-3627
 
   - trigger: "ncov-orderly"
     label: ":rocket: build :microbe:"
     # branches: "master"
+    build:
+      branch: mrc-1468
 
   - trigger: "ebola-orderly"
     label: ":rocket: build :biohazard_sign:"
     # branches: "master"
+    build:
+      branch: mrc-1467
