@@ -6,3 +6,17 @@ steps:
 
   - label: "Push"
     command: docker/push
+
+  - wait
+
+  - trigger: "montagu-orderly"
+    label: ":rocket: build :syringe:"
+    # branches: "master"
+
+  - trigger: "ncov-orderly"
+    label: ":rocket: build :microbe:"
+    # branches: "master"
+
+  - trigger: "ebola-orderly"
+    label: ":rocket: build :biohazard_sign:"
+    # branches: "master"
