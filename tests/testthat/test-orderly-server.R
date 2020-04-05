@@ -56,7 +56,8 @@ test_that("run", {
   server <- start_test_server()
   on.exit(server$stop())
 
-  r <- httr::POST(server$api_url("/v1/reports/example/run/"))
+  r <- httr::POST(server$api_url("/v1/reports/example/run/"),
+                  body = NULL, encode = "json")
   expect_equal(httr::status_code(r), 200)
   dat <- content(r)
   expect_equal(dat$status, "success")
