@@ -59,5 +59,6 @@ as_orderly_parameter_list <- function(x) {
   if (length(x) == 0) {
     return(NULL)
   }
-  sprintf("%s=%s", names(x), vapply(x, as.character, ""))
+  paste(sprintf("%s=%s", names(x), vapply(x, as.character, "")),
+        collapse = " ")
 }

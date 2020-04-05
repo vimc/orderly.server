@@ -219,3 +219,56 @@ test_that("run report honours timeout", {
   st <- content(r)
   expect_equal(st$data$status, "success")
 })
+
+
+test_that("pass parameters", {
+  server <- start_test_server()
+  on.exit(server$stop())
+
+  r <- httr::POST(server$api_url("/v1/reports/count_param/run/"),
+                  query = list(timeout = 60),
+                  body = list(time = 1, poll = 0.1),
+                  encode = "json")
+
+  expect_equal(httr::status_code(r), 200)
+  dat <- content(r)
+  expect_equal(dat$status, "success")
+  expect_is(dat$data, "list")
+
+  expect_true(setequal(names(dat$data), c("name", "key", "path")))
+  expect_equal(dat$data$name, "count_param")
+  expect_is(dat$data$key, "character")
+  expect_is(dat$data$path, "character")
+
+  ## Then we ask about status
+  wait_for_id(dat$data$key, server)
+  r <- httr::GET(server$api_url(dat$data$path))
+  expect_equal(httr::status_code(r), 200)
+  st <- content(r)
+  expect_equal(st$status, "success")
+  expect_is(st$data, "list")
+  id <- st$data$version
+
+  dest <- file.path(server$path, "archive", "count_param", id)
+  wait_for_path(dest)
+  wait_for_finished(dat$data$key, server)
+
+  r <- httr::GET(server$api_url(dat$data$path))
+  expect_equal(httr::status_code(r), 200)
+  st <- content(r)
+  expect_equal(st$status, "success")
+  cmp <- list(key = dat$data$key, status = "success",
+              version = id, output = NULL)
+  expect_equal(st$data, cmp)
+
+  r <- httr::GET(server$api_url(dat$data$path), query = list(output = TRUE))
+  expect_equal(httr::status_code(r), 200)
+  st <- content(r)
+  expect_equal(st$status, "success")
+  expect_is(st$data$output$stderr, "character")
+  expect_equal(length(st$data$output$stdout), 0)
+
+  ## parameters make it across
+  expect_match(st$data$output$stderr, "time: 1", fixed = TRUE, all = FALSE)
+  expect_match(st$data$output$stderr, "poll: 0.1", fixed = TRUE, all = FALSE)
+})
