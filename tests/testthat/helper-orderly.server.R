@@ -39,6 +39,16 @@ wait_for_id <- function(key, server) {
 }
 
 
+wait_for_finished_runner <- function(runner, key) {
+  is_running <- function() {
+    runner$poll()
+    status <- runner$status(key)$status
+    status %in% c("queued", "running")
+  }
+  wait_while(is_running)
+}
+
+
 start_test_server <- function(path = NULL, port = 8321, log = NULL) {
   path <- path %||% orderly:::prepare_orderly_example("interactive")
   server <- orderly_server_background(path, port, log)
@@ -50,6 +60,12 @@ start_test_server <- function(path = NULL, port = 8321, log = NULL) {
 test_runner <- function(path = tempfile()) {
   orderly:::prepare_orderly_example("interactive", path)
   server_endpoints(orderly::orderly_runner(path))
+}
+
+
+test_runner2 <- function(path = tempfile()) {
+  orderly:::prepare_orderly_example("interactive", path)
+  orderly::orderly_runner(path)
 }
 
 

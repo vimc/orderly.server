@@ -1,0 +1,8 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "OrderlyId",
+    "type": "string",
+    "minLength": 24,
+    "maxLength": 24,
+    "pattern": "^[0-9]{8}-[0-9]{6}-[0-9a-f]{8}$"
+}

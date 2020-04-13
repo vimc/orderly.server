@@ -47,3 +47,7 @@ wait_while <- function(continue, timeout = 10, poll = 0.02) {
     }
   }
 }
+
+scalar <- function(x) {
+  jsonlite::unbox(x)
+}

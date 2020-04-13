@@ -1,0 +1,18 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "Run",
+    "type": "object",
+    "properties": {
+        "name": {
+            "type": "string"
+        },
+        "key": {
+            "type": "string"
+        },
+        "path": {
+            "type": "string"
+        }
+   },
+    "required": ["name", "key", "path"],
+    "additionalProperties": false
+}
