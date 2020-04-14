@@ -88,3 +88,11 @@ expect_valid_response <- function(json, errors = list(), status = 200) {
 read_json <- function(path, ...) {
   jsonlite::fromJSON(paste(readLines(path), collapse = "\n"), ...)
 }
+
+
+## There is going to be some work here to keep these up-to-date:
+mock_runner <- function(keys = NULL, status = ...) {
+  list(
+    queue = mockery::mock(keys, cycle = TRUE),
+    keys = keys)
+}

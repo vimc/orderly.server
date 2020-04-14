@@ -122,34 +122,33 @@ test_that("git_fetch", {
 })
 
 
-## TODO: swap all of these for a mock runner which will be faster and
-## more reliable (as there are no side effects to deal with) though
-## testing the mocks is important.
 test_that("run", {
-  runner <- test_runner2()
+  key <- "key-1"
+  runner <- mock_runner(keys = key)
 
   res <- target_run(runner, "example")
-  d <- runner$data$get_df()
-  expect_equal(nrow(d), 1L)
-  expect_equal(res$name, scalar("example"))
-  expect_equal(res$key, scalar(d$key))
-  expect_equal(res$path,
-               scalar(sprintf("/v1/reports/%s/status/", d$key)))
+  expect_equal(
+    res,
+    list(name = scalar("example"),
+         key = scalar(key),
+         path = scalar(sprintf("/v1/reports/%s/status/", key))))
+  expect_equal(
+    mockery::mock_args(runner$queue)[[1]],
+    list("example", NULL, NULL, FALSE, timeout = 600))
 
   ## endpoint
   endpoint <- endpoint_run(runner)
   ## TODO: pkgapi bug - running endpoint$run() is 500 not 40x error
   res_endpoint <- endpoint$run("example")
   expect_equal(res_endpoint$status_code, 200)
+  expect_equal(res_endpoint$data, res)
 
   ## api
   api <- pkgapi::pkgapi$new()$handle(endpoint)
   res_api <- api$request("POST", "/v1/reports/example/run/")
   expect_equal(res_api$status, 200L)
   expect_equal(res_api$headers[["Content-Type"]], "application/json")
-  ## expect_equal(res_api$body, as.character(res_endpoint$body))
-
-  expect_equal(nrow(runner$data$get_df()), 3)
+  expect_equal(res_api$body, as.character(res_endpoint$body))
 })
 
 
