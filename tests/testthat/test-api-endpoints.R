@@ -19,13 +19,11 @@ test_that("index", {
 
 
 test_that("rebuild", {
-  runner <- test_runner2()
+  runner <- mock_runner()
 
   ## First test the basic output:
-  res_target <- testthat::evaluate_promise(
-    target_rebuild(runner))
-  expect_null(res_target$result, NA)
-  expect_equal(res_target$messages, "[ rebuild    ]  db\n")
+  res_target <- target_rebuild(runner)
+  expect_null(res_target)
 
   ## endpoint
   endpoint <- endpoint_rebuild(runner)
