@@ -106,7 +106,8 @@ target_status <- function(runner, key, output = FALSE) {
   ret <- list(key = scalar(res$key),
               status = scalar(res$status),
               version = scalar(res$id))
-  if (output) {
+  ## TODO(VIMC-3654): the 'queue' path here should move elsewhere
+  if (output || res$status == "queued") {
     ret$output <- lapply(res$output, as.character)
   } else {
     ret$output <- NA # maps to json 'null'

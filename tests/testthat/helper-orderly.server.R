@@ -91,8 +91,8 @@ read_json <- function(path, ...) {
 
 
 ## There is going to be some work here to keep these up-to-date:
-mock_runner <- function(keys = NULL, status = ...) {
+mock_runner <- function(keys = NULL, status = NULL) {
   list(
     queue = mockery::mock(keys, cycle = TRUE),
-    keys = keys)
+    status = mockery::mock(status, cycle = TRUE))
 }

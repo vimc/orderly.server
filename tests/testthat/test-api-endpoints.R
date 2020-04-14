@@ -152,95 +152,144 @@ test_that("run", {
 })
 
 
-test_that("status - queued", {
-  runner <- test_runner2()
-  key <- runner$queue("example")
+test_that("status - queued behind nothing", {
+  ## See mock.R
+  key <- "key-1"
+  status <- list(key = key, status = "queued", id = NA_character_,
+                 output = list(stdout = character(), stderr = NULL))
 
-  res1 <- target_status(runner, key)
-  res2 <- target_status(runner, key, TRUE)
+  runner <- mock_runner(key, status)
+
+  res <- target_status(runner, key)
   expect_equal(
-    res1,
-    list(key = scalar(key),
-         status = scalar("queued"),
-         version = scalar(NA_character_),
-         output = NA))
-  expect_equal(
-    res2,
+    res,
     list(key = scalar(key),
          status = scalar("queued"),
          version = scalar(NA_character_),
          output = list(stdout = character(0), stderr = character(0))))
 
+  expect_equal(mockery::mock_args(runner$status)[[1]], list(key, FALSE))
+
   ## endpoint
   endpoint <- endpoint_status(runner)
-  res1_endpoint <- endpoint$run(key)
-  expect_equal(res1_endpoint$status_code, 200)
-  expect_equal(res1_endpoint$content_type, "application/json")
-  expect_equal(res1_endpoint$data, res1)
-
-  res2_endpoint <- endpoint$run(key, TRUE)
-  expect_equal(res2_endpoint$status_code, 200)
-  expect_equal(res2_endpoint$content_type, "application/json")
-  expect_equal(res2_endpoint$data, res2)
+  res_endpoint <- endpoint$run(key)
+  expect_equal(res_endpoint$status_code, 200)
+  expect_equal(res_endpoint$content_type, "application/json")
+  expect_equal(res_endpoint$data, res)
+  expect_equal(mockery::mock_args(runner$status)[[2]], list(key, FALSE))
 
   ## api
   api <- pkgapi::pkgapi$new()$handle(endpoint)
-  res1_api <- api$request("GET", sprintf("/v1/reports/%s/status/", key))
-  expect_equal(res1_api$status, 200L)
-  expect_equal(res1_api$headers[["Content-Type"]], "application/json")
-  expect_equal(res1_api$body, as.character(res1_endpoint$body))
-
-  res2_api <- api$request("GET", sprintf("/v1/reports/%s/status/", key),
-                          list(output = TRUE))
-  expect_equal(res2_api$status, 200L)
-  expect_equal(res2_api$headers[["Content-Type"]], "application/json")
-  expect_equal(res2_api$body, as.character(res2_endpoint$body))
+  res_api <- api$request("GET", sprintf("/v1/reports/%s/status/", key))
+  expect_equal(res_api$status, 200L)
+  expect_equal(res_api$headers[["Content-Type"]], "application/json")
+  expect_equal(res_api$body, as.character(res_endpoint$body))
+  expect_equal(mockery::mock_args(runner$status)[[3]], list(key, FALSE))
 })
 
 
-test_that("status - completed", {
-  runner <- test_runner2()
-  key <- runner$queue("example")
-  wait_for_finished_runner(runner, key)
-  dat <- runner$status(key, TRUE)
+test_that("status - queued", {
+  ## See mock.R
+  key <- "key-3"
+  status <- list(
+    key = key, status = "queued", id = NA_character_,
+    output = list(stdout = sprintf("queued:key-%d:example", 1:2),
+                  stderr = NULL))
 
-  res1 <- target_status(runner, key)
-  res2 <- target_status(runner, key, TRUE)
+  runner <- mock_runner(key, status)
+
+  res <- target_status(runner, key)
   expect_equal(
-    res1,
+    res,
     list(key = scalar(key),
-         status = scalar("success"),
-         version = scalar(dat$id),
-         output = NA))
-  expect_equal(
-    res2,
-    list(key = scalar(key),
-         status = scalar("success"),
-         version = scalar(dat$id),
-         output = dat$output))
+         status = scalar("queued"),
+         version = scalar(NA_character_),
+         output = list(stdout = status$output$stdout, stderr = character(0))))
+  expect_equal(mockery::mock_args(runner$status)[[1]], list(key, FALSE))
 
   ## endpoint
   endpoint <- endpoint_status(runner)
-  res1_endpoint <- endpoint$run(key)
-  expect_equal(res1_endpoint$status_code, 200)
-  expect_equal(res1_endpoint$content_type, "application/json")
-  expect_equal(res1_endpoint$data, res1)
-
-  res2_endpoint <- endpoint$run(key, TRUE)
-  expect_equal(res2_endpoint$status_code, 200)
-  expect_equal(res2_endpoint$content_type, "application/json")
-  expect_equal(res2_endpoint$data, res2)
+  res_endpoint <- endpoint$run(key)
+  expect_equal(res_endpoint$status_code, 200)
+  expect_equal(res_endpoint$content_type, "application/json")
+  expect_equal(res_endpoint$data, res)
+  expect_equal(mockery::mock_args(runner$status)[[2]], list(key, FALSE))
 
   ## api
   api <- pkgapi::pkgapi$new()$handle(endpoint)
-  res1_api <- api$request("GET", sprintf("/v1/reports/%s/status/", key))
-  expect_equal(res1_api$status, 200L)
-  expect_equal(res1_api$headers[["Content-Type"]], "application/json")
-  expect_equal(res1_api$body, as.character(res1_endpoint$body))
+  res_api <- api$request("GET", sprintf("/v1/reports/%s/status/", key))
+  expect_equal(res_api$status, 200L)
+  expect_equal(res_api$headers[["Content-Type"]], "application/json")
+  expect_equal(res_api$body, as.character(res_endpoint$body))
+  expect_equal(mockery::mock_args(runner$status)[[3]], list(key, FALSE))
+})
 
-  res2_api <- api$request("GET", sprintf("/v1/reports/%s/status/", key),
-                          list(output = TRUE))
-  expect_equal(res2_api$status, 200L)
-  expect_equal(res2_api$headers[["Content-Type"]], "application/json")
-  expect_equal(res2_api$body, as.character(res2_endpoint$body))
+
+test_that("status - completed, no log", {
+  key <- "key-1"
+  id <- "20200414-123013-a1df28f7"
+  status <- list(key = key, status = "success", id = id, output = NULL)
+
+  runner <- mock_runner(key, status)
+
+  res <- target_status(runner, key)
+  expect_equal(
+    res,
+    list(key = scalar(key),
+         status = scalar("success"),
+         version = scalar(id),
+         output = NA_character_))
+  expect_equal(mockery::mock_args(runner$status)[[1]], list(key, FALSE))
+
+  ## endpoint
+  endpoint <- endpoint_status(runner)
+  res_endpoint <- endpoint$run(key)
+  expect_equal(res_endpoint$status_code, 200)
+  expect_equal(res_endpoint$content_type, "application/json")
+  expect_equal(res_endpoint$data, res)
+  expect_equal(mockery::mock_args(runner$status)[[2]], list(key, FALSE))
+
+  ## api
+  api <- pkgapi::pkgapi$new()$handle(endpoint)
+  res_api <- api$request("GET", sprintf("/v1/reports/%s/status/", key))
+  expect_equal(res_api$status, 200L)
+  expect_equal(res_api$headers[["Content-Type"]], "application/json")
+  expect_equal(res_api$body, as.character(res_endpoint$body))
+  expect_equal(mockery::mock_args(runner$status)[[3]], list(key, FALSE))
+})
+
+
+test_that("status - completed, with log", {
+  key <- "key-1"
+  id <- "20200414-123013-a1df28f7"
+  status <- list(key = key, status = "success", id = id,
+                 output = list(stdout = character(0),
+                               stderr = readLines("example/success.txt")))
+  runner <- mock_runner(key, status)
+
+  res <- target_status(runner, key, TRUE)
+  expect_equal(
+    res,
+    list(key = scalar(key),
+         status = scalar("success"),
+         version = scalar(id),
+         output = status$output))
+  expect_equal(mockery::mock_args(runner$status)[[1]], list(key, TRUE))
+
+  ## endpoint
+  endpoint <- endpoint_status(runner)
+  res_endpoint <- endpoint$run(key, TRUE)
+  expect_equal(res_endpoint$status_code, 200)
+  expect_equal(res_endpoint$content_type, "application/json")
+  expect_equal(res_endpoint$data, res)
+  expect_equal(mockery::mock_args(runner$status)[[2]], list(key, TRUE))
+
+  ## api
+  api <- pkgapi::pkgapi$new()$handle(endpoint)
+  res_api <- api$request("GET", sprintf("/v1/reports/%s/status/", key),
+                         query = list(output = TRUE))
+  expect_equal(res_api$status, 200L)
+  expect_equal(res_api$headers[["Content-Type"]], "application/json")
+  expect_equal(res_api$body, as.character(res_endpoint$body))
+  expect_equal(mockery::mock_args(runner$status)[[3]], list(key, TRUE))
 })
