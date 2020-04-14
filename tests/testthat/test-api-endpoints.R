@@ -102,15 +102,15 @@ test_that("git_pull", {
 
 
 test_that("git_fetch", {
-  path <- orderly:::prepare_orderly_git_example()
-  runner <- orderly::orderly_runner(path[["local"]])
+  git_fetch <- list(
+    success = TRUE, code = 0,
+    output = c("From upstream",
+               "   0fc0d08..0ec7621  master     -> origin/master"))
+  runner <- mock_runner(git_fetch = git_fetch)
 
   ## First test the basic output:
-  res <- testthat::evaluate_promise(
-    target_git_fetch(runner))
-  res_target <- res$result
-  cmp <- sub(".*\\]  ", "", strsplit(res$messages[[2]], "\n")[[1]])
-  expect_equal(res_target, cmp)
+  res <- target_git_fetch(runner)
+  expect_equal(res, git_fetch$output)
 
   ## endpoint
   endpoint <- endpoint_git_fetch(runner)
