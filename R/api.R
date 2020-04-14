@@ -122,13 +122,17 @@ endpoint_status <- function(runner) {
     returning = returning_json("Status"))
 }
 
+## TODO: The kill endpoint should not error, but return better data
+## here (as in success TRUE/FALSE, message)
 target_kill <- function(runner, key) {
-  runner$kill(key)
+  tryCatch(
+    jsonlite::unbox(runner$kill(key)),
+    error = function(e) pkgapi::pkgapi_stop(e$message))
 }
 
 endpoint_kill <- function(runner) {
   pkgapi::pkgapi_endpoint$new(
-    "DELETE", "/v1/reports/<key>/kill/", target_key,
+    "DELETE", "/v1/reports/<key>/kill/", target_kill,
     pkgapi::pkgapi_state(runner = runner),
     returning = returning_json("Kill"))
 }

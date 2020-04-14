@@ -97,6 +97,7 @@ mock_runner <- function(keys = NULL, status = NULL, git_status = NULL,
     rebuild = mockery::mock(TRUE, cycle = TRUE),
     queue = mockery::mock(keys, cycle = TRUE),
     status = mockery::mock(status, cycle = TRUE),
+    kill = mockery::mock(TRUE, cycle = TRUE),
     git_status = mockery::mock(git_status, cycle = TRUE),
     git_fetch = mockery::mock(git_fetch, cycle = TRUE),
     git_pull = mockery::mock(git_pull, cycle = TRUE))
