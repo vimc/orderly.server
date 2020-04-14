@@ -46,8 +46,6 @@ test_that("git_status", {
                      hash = "bc1afbf30ed83297b4da4dbb8a1930bcab746ac1")
   runner <- mock_runner(git_status = git_status)
 
-  runner$git_status()
-
   ## First test the basic output:
   res_target <- target_git_status(runner)
   expect_equal(mockery::mock_args(runner$git_status)[[1]], list())
@@ -75,21 +73,24 @@ test_that("git_status", {
 
 
 test_that("git_pull", {
-  path <- orderly:::prepare_orderly_git_example()
-  runner <- orderly::orderly_runner(path[["local"]])
+  git_pull <- list(
+    success = TRUE, code = 0,
+    output = c("From upstream",
+               "   0fc0d08..0ec7621  master     -> origin/master",
+               "Updating 0fc0d08..0ec7621",
+               "Fast-forward", " new | 1 +",
+               " 1 file changed, 1 insertion(+)",
+               " create mode 100644 new"))
+  runner <- mock_runner(git_pull = git_pull)
 
-  ## First test the basic output:
-  res <- testthat::evaluate_promise(
-    target_git_pull(runner))
-  res_target <- res$result
-  cmp <- sub(".*\\]  ", "", strsplit(res$messages[[2]], "\n")[[1]])
-  expect_equal(res_target, cmp)
+  res <- target_git_pull(runner)
+  expect_equal(res, git_pull$output)
 
   ## endpoint
   endpoint <- endpoint_git_pull(runner)
   res_endpoint <- endpoint$run()
   expect_equal(res_endpoint$status_code, 200)
-  expect_is(res_endpoint$data, "character")
+  expect_equal(res_endpoint$data, res)
 
   ## api
   api <- pkgapi::pkgapi$new()$handle(endpoint)
