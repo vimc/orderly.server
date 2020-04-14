@@ -41,23 +41,28 @@ test_that("rebuild", {
 
 
 test_that("git_status", {
-  path <- orderly:::prepare_orderly_git_example()
-  runner <- orderly::orderly_runner(path[["local"]])
+  git_status <- list(success = TRUE, code = 0, output = character(0),
+                     clean = TRUE, branch = "master",
+                     hash = "bc1afbf30ed83297b4da4dbb8a1930bcab746ac1")
+  runner <- mock_runner(git_status = git_status)
 
-  cmp <- runner$git_status()
+  runner$git_status()
 
   ## First test the basic output:
   res_target <- target_git_status(runner)
-  expect_equal(res_target$branch, scalar("master"))
-  expect_equal(res_target$hash, scalar(cmp$hash))
-  expect_equal(res_target$clean, scalar(TRUE))
-  expect_equal(res_target$output, character(0))
+  expect_equal(mockery::mock_args(runner$git_status)[[1]], list())
+  expect_equal(res_target,
+               list(branch = scalar("master"),
+                    hash = scalar(git_status$hash),
+                    clean = scalar(TRUE),
+                    output = character(0)))
 
   ## endpoint
   endpoint <- endpoint_git_status(runner)
   res_endpoint <- endpoint$run()
   expect_equal(res_endpoint$status_code, 200)
   expect_equal(res_endpoint$data, res_target)
+  expect_equal(mockery::mock_args(runner$git_status)[[1]], list())
 
   ## api
   api <- pkgapi::pkgapi$new()$handle(endpoint)
@@ -65,6 +70,7 @@ test_that("git_status", {
   expect_equal(res_api$status, 200L)
   expect_equal(res_api$headers[["Content-Type"]], "application/json")
   expect_equal(res_api$body, as.character(res_endpoint$body))
+  expect_equal(mockery::mock_args(runner$git_status)[[1]], list())
 })
 
 
@@ -236,7 +242,7 @@ test_that("status - completed, no log", {
     list(key = scalar(key),
          status = scalar("success"),
          version = scalar(id),
-         output = NA_character_))
+         output = NULL))
   expect_equal(mockery::mock_args(runner$status)[[1]], list(key, FALSE))
 
   ## endpoint
