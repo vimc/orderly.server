@@ -1,3 +1,5 @@
+Sys.setenv(PKGAPI_VALIDATE = "true")
+
 content <- function(r) {
   txt <- httr::content(r, "text", encoding = "UTF-8")
   jsonlite::fromJSON(txt, simplifyDataFrame = FALSE)
