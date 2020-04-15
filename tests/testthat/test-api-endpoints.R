@@ -19,22 +19,10 @@ test_that("index", {
 test_that("rebuild", {
   runner <- mock_runner()
 
-  ## First test the basic output:
   res_target <- target_rebuild(runner)
   expect_null(res_target)
 
-  ## endpoint
-  endpoint <- endpoint_rebuild(runner)
-  res_endpoint <- endpoint$run()
-  expect_equal(res_endpoint$status_code, 200)
-  expect_null(res_endpoint$data)
-
-  ## api
-  api <- pkgapi::pkgapi$new()$handle(endpoint)
-  res_api <- api$request("POST", "/v1/reports/rebuild/")
-  expect_equal(res_api$status, 200L)
-  expect_equal(res_api$headers[["Content-Type"]], "application/json")
-  expect_equal(res_api$body, as.character(res_endpoint$body))
+  expect_simple_endpoint_runs(endpoint_rebuild(runner), res_target)
 })
 
 
@@ -53,20 +41,11 @@ test_that("git_status", {
                     clean = scalar(TRUE),
                     output = character(0)))
 
-  ## endpoint
-  endpoint <- endpoint_git_status(runner)
-  res_endpoint <- endpoint$run()
-  expect_equal(res_endpoint$status_code, 200)
-  expect_equal(res_endpoint$data, res_target)
-  expect_equal(mockery::mock_args(runner$git_status)[[1]], list())
+  expect_simple_endpoint_runs(endpoint_git_status(runner), res_target)
 
-  ## api
-  api <- pkgapi::pkgapi$new()$handle(endpoint)
-  res_api <- api$request("GET", "/v1/reports/git/status/")
-  expect_equal(res_api$status, 200L)
-  expect_equal(res_api$headers[["Content-Type"]], "application/json")
-  expect_equal(res_api$body, as.character(res_endpoint$body))
   expect_equal(mockery::mock_args(runner$git_status)[[1]], list())
+  expect_equal(mockery::mock_args(runner$git_status)[[2]], list())
+  expect_equal(mockery::mock_args(runner$git_status)[[3]], list())
 })
 
 
@@ -84,18 +63,11 @@ test_that("git_pull", {
   res <- target_git_pull(runner)
   expect_equal(res, git_pull$output)
 
-  ## endpoint
-  endpoint <- endpoint_git_pull(runner)
-  res_endpoint <- endpoint$run()
-  expect_equal(res_endpoint$status_code, 200)
-  expect_equal(res_endpoint$data, res)
+  expect_simple_endpoint_runs(endpoint_git_pull(runner), res)
 
-  ## api
-  api <- pkgapi::pkgapi$new()$handle(endpoint)
-  res_api <- api$request("POST", "/v1/reports/git/pull/")
-  expect_equal(res_api$status, 200L)
-  expect_equal(res_api$headers[["Content-Type"]], "application/json")
-  expect_equal(res_api$body, as.character(res_endpoint$body))
+  expect_equal(mockery::mock_args(runner$git_pull)[[1]], list())
+  expect_equal(mockery::mock_args(runner$git_pull)[[2]], list())
+  expect_equal(mockery::mock_args(runner$git_pull)[[3]], list())
 })
 
 
@@ -110,18 +82,11 @@ test_that("git_fetch", {
   res <- target_git_fetch(runner)
   expect_equal(res, git_fetch$output)
 
-  ## endpoint
-  endpoint <- endpoint_git_fetch(runner)
-  res_endpoint <- endpoint$run()
-  expect_equal(res_endpoint$status_code, 200)
-  expect_is(res_endpoint$data, "character")
+  expect_simple_endpoint_runs(endpoint_git_fetch(runner), res)
 
-  ## api
-  api <- pkgapi::pkgapi$new()$handle(endpoint)
-  res_api <- api$request("POST", "/v1/reports/git/fetch/")
-  expect_equal(res_api$status, 200L)
-  expect_equal(res_api$headers[["Content-Type"]], "application/json")
-  expect_equal(res_api$body, as.character(res_endpoint$body))
+  expect_equal(mockery::mock_args(runner$git_fetch)[[1]], list())
+  expect_equal(mockery::mock_args(runner$git_fetch)[[2]], list())
+  expect_equal(mockery::mock_args(runner$git_fetch)[[3]], list())
 })
 
 

@@ -104,3 +104,21 @@ mock_runner <- function(keys = NULL, status = NULL, git_status = NULL,
     git_fetch = mockery::mock(git_fetch, cycle = TRUE),
     git_pull = mockery::mock(git_pull, cycle = TRUE))
 }
+
+
+## This is an experiment to reduce duplication in the testing.  It
+## does not work for endpoints that take any args as these come
+## through in two places, nor does it work for endpoints that have
+## *path* args because $request() does not work there.
+expect_simple_endpoint_runs <- function(endpoint, data, status_code = 200,
+                                        content_type = "application/json") {
+  res_endpoint <- endpoint$run()
+  res_api <- endpoint$request()
+
+  testthat::expect_equal(res_endpoint$status_code, status_code)
+  testthat::expect_equal(res_endpoint$data, data)
+
+  testthat::expect_equal(res_api$status, status_code)
+  testthat::expect_equal(res_api$headers[["Content-Type"]], content_type)
+  expect_equal(res_api$body, as.character(res_endpoint$body))
+}
