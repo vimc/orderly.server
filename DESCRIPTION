@@ -16,6 +16,7 @@ Imports:
 Suggests:
     httr,
     jsonvalidate,
+    mockery,
     sys,
     testthat
 RoxygenNote: 6.0.1
