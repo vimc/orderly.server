@@ -1,4 +1,4 @@
-FROM vimc/orderly:vimc-3698
+FROM vimc/orderly:master
 
 RUN apt-get update || apt-get update && apt-get install -y \
   libcurl4-openssl-dev \

@@ -10,7 +10,7 @@ Imports:
     httpuv,
     jsonlite,
     docopt,
-    orderly (>= 1.1.14),
+    orderly (>= 1.1.34),
     processx,
     webutils
 Suggests:
