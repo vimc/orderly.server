@@ -273,3 +273,28 @@ test_that("pass parameters", {
   expect_match(st$data$output$stderr, "time: 1", fixed = TRUE, all = FALSE)
   expect_match(st$data$output$stderr, "poll: 0.1", fixed = TRUE, all = FALSE)
 })
+
+test_that("run can specify instance", {
+  ## We're interested in testing that orderly.server passes instance arg
+  ## to the runner$queue arg - we can do this via mocks
+  mock_queue <- mockery::mock(TRUE)
+  mock_runner <- list(
+    queue = mock_queue
+  )
+
+  res <- server_endpoints(mock_runner)
+
+  expect_equal(res$run$query, c("parameters", "ref", "instance", "update",
+                                "timeout"))
+
+  data <- res$run$dest("example", instance = "instance")
+
+  mockery::expect_called(mock_queue, 1)
+  args <- mockery::mock_args(mock_queue)[[1]]
+  expect_equal(args[[1]], "example")
+  expect_equal(args[[2]], NULL)
+  expect_equal(args[[3]], NULL)
+  expect_equal(args[[4]], "instance")
+  expect_equal(args[[5]], TRUE)
+  expect_equal(args$timeout, 600)
+})
