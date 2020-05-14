@@ -1,13 +1,15 @@
 build_api <- function(runner) {
+  force(runner)
   api <- pkgapi::pkgapi$new()
   api$handle(endpoint_index(runner))
   api$handle(endpoint_rebuild(runner))
   api$handle(endpoint_git_status(runner))
   api$handle(endpoint_git_fetch(runner))
   api$handle(endpoint_git_pull(runner))
-  api$handle(endpoint_git_run(runner))
-  api$handle(endpoint_git_status(runner))
-  api$handle(endpoint_git_kill(runner))
+  api$handle(endpoint_run(runner))
+  api$handle(endpoint_status(runner))
+  api$handle(endpoint_kill(runner))
+  api$registerHook("preroute", function(req) runner$poll())
   api
 }
 
