@@ -27,19 +27,12 @@ server <- function(path, port, host = "0.0.0.0", poll_interrupt = NULL,
                    allow_ref = TRUE, go_signal = NULL) {
   message("Starting orderly server on port ", port)
   message("Orderly root: ", path)
-  poll_interrupt <- poll_interrupt %||% 100
 
-  app <- server_app(path, allow_ref, go_signal)
-  server <- httpuv::startServer(host, port, app)
-  on.exit(httpuv::stopServer(server))
-  continue <- TRUE
-  while (continue) {
-    httpuv::service(poll_interrupt)
-    tryCatch(app$poll(),
-             error = function(e) NULL,
-             interrupt = function(e) continue <<- FALSE)
-    Sys.sleep(0.001)
-  }
+  wait_for_go_signal(path, go_signal)
+  runner <- orderly::orderly_runner(path, allow_ref)
+  api <- build_api(runner)
+  api$run(host, port)
+
   message("Server exiting")
 }
 

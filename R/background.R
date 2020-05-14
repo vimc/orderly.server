@@ -37,6 +37,10 @@ R6_orderly_server_background <- R6::R6Class(
       self$log <- log %||% tempfile()
     },
 
+    finalize = function() {
+      self$stop()
+    },
+
     start = function() {
       if (!is.null(self$pid)) {
         stop("Server already set up")
@@ -69,6 +73,7 @@ R6_orderly_server_background <- R6::R6Class(
 
     stop = function() {
       if (!is.null(self$pid)) {
+        message("Stopping server")
         tools::pskill(self$pid, tools::SIGINT)
         Sys.sleep(0.15)
         tools::pskill(self$pid, tools::SIGKILL)
