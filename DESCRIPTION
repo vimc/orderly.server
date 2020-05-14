@@ -11,7 +11,7 @@ Imports:
     jsonlite,
     docopt,
     orderly (>= 1.1.34),
-    pkgapi (>= 0.0.2),
+    pkgapi (>= 0.0.7),
     processx,
     webutils
 Suggests:
