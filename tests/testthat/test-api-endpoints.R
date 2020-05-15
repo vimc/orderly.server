@@ -320,3 +320,31 @@ test_that("kill - failure", {
   expect_equal(res_api$body, as.character(res_endpoint$body))
   expect_equal(mockery::mock_args(runner$kill)[[3]], list(key))
 })
+
+
+test_that("run can specify instance", {
+  ## We're interested in testing that orderly.server passes instance arg
+  ## to the runner$queue arg
+  key <- "key-1"
+  runner <- mock_runner(keys = key)
+
+  res <- target_run(runner, "example", timeout = 100, instance = "myinstance")
+  expect_equal(
+    res,
+    list(name = scalar("example"),
+         key = scalar(key),
+         path = scalar(sprintf("/v1/reports/%s/status/", key))))
+  expect_equal(
+    mockery::mock_args(runner$queue)[[1]],
+    list("example", NULL, NULL, "myinstance", TRUE, timeout = 100))
+
+  ## and via the api
+  endpoint <- endpoint_run(runner)
+  api <- pkgapi::pkgapi$new()$handle(endpoint)
+
+  res_api <- api$request("POST", "/v1/reports/example/run/",
+                         list(timeout = 100, instance = "myinstance"))
+  expect_equal(
+    mockery::mock_args(runner$queue)[[2]],
+    list("example", NULL, NULL, "myinstance", TRUE, timeout = 100))
+})

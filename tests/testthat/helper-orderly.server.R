@@ -52,7 +52,7 @@ wait_for_finished_runner <- function(runner, key) {
 
 
 start_test_server <- function(path = NULL, port = 8321, log = NULL) {
-  path <- path %||% orderly:::prepare_orderly_example("interactive")
+  path <- path %||% orderly::orderly_example("interactive")
   server <- orderly_server_background(path, port, log)
   server$start()
   server

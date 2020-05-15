@@ -7,7 +7,7 @@ test_that("root", {
   r <- httr::GET(server$api_url("/"))
   dat <- content(r)
   expect_equal(dat$status, "success")
-  expect_equal(dat$errors, list())
+  expect_equal(dat$errors, NULL)
   expect_is(dat$data$endpoints, "character")
 })
 
@@ -20,21 +20,23 @@ test_that("rebuild", {
   dat <- content(r)
   expect_equal(dat$status, "success")
   expect_null(dat$data)
-  expect_equal(dat$errors, list())
+  expect_equal(dat$errors, NULL)
 })
 
 
+## TODO: this changes the response schema from what orderly.server
+## produced before (was code/message now is error/detail)
 test_that("error handling: invalid method", {
   server <- start_test_server()
   on.exit(server$stop())
 
   r <- httr::GET(server$api_url("/v1/reports/rebuild/"))
-  expect_equal(httr::status_code(r), 405L)
+  expect_equal(httr::status_code(r), 404L)
   dat <- content(r)
   expect_equal(dat$status, "failure")
   expect_equal(length(dat$errors), 1L)
-  expect_equal(dat$errors[[1]]$code, "invalid-method")
-  expect_is(dat$errors[[1]]$message, "character")
+  expect_equal(dat$errors[[1]]$error, "NOT_FOUND")
+  expect_is(dat$errors[[1]]$detail, "character")
 })
 
 
@@ -47,8 +49,8 @@ test_that("error handling: invalid url", {
   dat <- content(r)
   expect_equal(dat$status, "failure")
   expect_equal(length(dat$errors), 1L)
-  expect_equal(dat$errors[[1]]$code, "unknown-endpoint")
-  expect_is(dat$errors[[1]]$message, "character")
+  expect_equal(dat$errors[[1]]$error, "NOT_FOUND")
+  expect_is(dat$errors[[1]]$detail, "character")
 })
 
 
@@ -95,40 +97,6 @@ test_that("run", {
   expect_equal(st$status, "success")
   expect_is(st$data$output$stderr, "character")
   expect_equal(length(st$data$output$stdout), 0)
-})
-
-
-test_that("publish", {
-  server <- start_test_server()
-  on.exit(server$stop())
-
-  path <- server$path
-  id <- orderly::orderly_run("example", root = path, echo = FALSE)
-  ## This is somewhat liable to failure due to db locking
-  dest <- orderly::orderly_commit(id, root = path)
-  pub <- file.path(dest, "orderly_published.yml")
-
-  r <- httr::POST(server$api_url("/v1/reports/example/%s/publish/", id))
-  expect_equal(httr::status_code(r), 200)
-  dat <- content(r)
-  expect_true(dat$data)
-
-  expect_true(file.exists(pub))
-  expect_equal(orderly:::yaml_read(pub), list(published = TRUE))
-
-  r <- httr::POST(server$api_url("/v1/reports/example/%s/publish/", id),
-                  query = list(value = TRUE))
-  expect_equal(httr::status_code(r), 200)
-  dat <- content(r)
-  expect_true(dat$data)
-  expect_equal(orderly:::yaml_read(pub), list(published = TRUE))
-
-  r <- httr::POST(server$api_url("/v1/reports/example/%s/publish/", id),
-                  query = list(value = FALSE))
-  expect_equal(httr::status_code(r), 200)
-  dat <- content(r)
-  expect_false(dat$data)
-  expect_equal(orderly:::yaml_read(pub), list(published = FALSE))
 })
 
 
@@ -272,29 +240,4 @@ test_that("pass parameters", {
   ## parameters make it across
   expect_match(st$data$output$stderr, "time: 1", fixed = TRUE, all = FALSE)
   expect_match(st$data$output$stderr, "poll: 0.1", fixed = TRUE, all = FALSE)
-})
-
-test_that("run can specify instance", {
-  ## We're interested in testing that orderly.server passes instance arg
-  ## to the runner$queue arg - we can do this via mocks
-  mock_queue <- mockery::mock(TRUE)
-  mock_runner <- list(
-    queue = mock_queue
-  )
-
-  res <- server_endpoints(mock_runner)
-
-  expect_equal(res$run$query, c("parameters", "ref", "instance", "update",
-                                "timeout"))
-
-  data <- res$run$dest("example", instance = "instance")
-
-  mockery::expect_called(mock_queue, 1)
-  args <- mockery::mock_args(mock_queue)[[1]]
-  expect_equal(args[[1]], "example")
-  expect_equal(args[[2]], NULL)
-  expect_equal(args[[3]], NULL)
-  expect_equal(args[[4]], "instance")
-  expect_equal(args[[5]], TRUE)
-  expect_equal(args$timeout, 600)
 })
