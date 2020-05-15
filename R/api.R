@@ -88,9 +88,9 @@ endpoint_git_pull <- function(runner) {
 }
 
 target_run <- function(runner, name, parameters = NULL, ref = NULL,
-                       instance = NULL, update = TRUE, timeout = NULL) {
-  key <- runner$queue(name, parameters, ref, instance, as_logical(update),
-                      timeout = as_integer(timeout, 600))
+                       instance = NULL, update = TRUE, timeout = 600) {
+  key <- runner$queue(name, parameters, ref, instance, update,
+                      timeout = timeout)
   list(name = scalar(name),
        key = scalar(key),
        path = scalar(sprintf("/v1/reports/%s/status/", key)))
@@ -108,7 +108,7 @@ endpoint_run <- function(runner) {
 }
 
 target_status <- function(runner, key, output = FALSE) {
-  res <- runner$status(key, as_logical(output))
+  res <- runner$status(key, output)
   ret <- list(key = scalar(res$key),
               status = scalar(res$status),
               version = scalar(res$id),

@@ -2,26 +2,6 @@ is_directory <- function(x) {
   isTRUE(file.info(x, extra_cols = FALSE)$isdir)
 }
 
-as_logical <- function(x, name = deparse(substitute(x))) {
-  switch(tolower(x),
-         "true" = TRUE,
-         "false" = FALSE,
-         stop(sprintf("Invalid input for '%s'", name)))
-}
-
-as_integer <- function(x, default, name = deparse(substitute(x))) {
-  if (is.null(x)) {
-    default
-  } else {
-    ok <- is.character(x) && length(x) == 1L && !is.na(x) &&
-      grepl("^[0-9]+$", x)
-    if (!ok) {
-      stop(sprintf("Invalid input for '%s'", name))
-    }
-    as.integer(x)
-  }
-}
-
 to_json <- function(x, ...) {
   jsonlite::toJSON(x, auto_unbox = TRUE, ...)
 }
