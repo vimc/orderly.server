@@ -100,6 +100,7 @@ endpoint_run <- function(runner) {
   pkgapi::pkgapi_endpoint$new(
     "POST", "/v1/reports/<name>/run/", target_run,
     pkgapi::pkgapi_input_query(ref = "string",
+                               instance = "string",
                                update = "logical",
                                timeout = "integer"),
     pkgapi::pkgapi_input_body_json("parameters", "parameters", schema_root()),
