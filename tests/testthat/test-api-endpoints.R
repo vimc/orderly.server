@@ -102,18 +102,19 @@ test_that("run", {
          path = scalar(sprintf("/v1/reports/%s/status/", key))))
   expect_equal(
     mockery::mock_args(runner$queue)[[1]],
-    list("example", NULL, NULL, FALSE, timeout = 600))
+    list("example", NULL, NULL, NULL, TRUE, timeout = 600))
 
   ## endpoint
   endpoint <- endpoint_run(runner)
   ## TODO: pkgapi bug - running endpoint$run() is 500 not 40x error
-  res_endpoint <- endpoint$run("example")
+  res_endpoint <- endpoint$run("example", timeout = 600)
   expect_equal(res_endpoint$status_code, 200)
   expect_equal(res_endpoint$data, res)
 
   ## api
   api <- pkgapi::pkgapi$new()$handle(endpoint)
-  res_api <- api$request("POST", "/v1/reports/example/run/")
+  res_api <- api$request("POST", "/v1/reports/example/run/",
+                         list(timeout = 600))
   expect_equal(res_api$status, 200L)
   expect_equal(res_api$headers[["Content-Type"]], "application/json")
   expect_equal(res_api$body, as.character(res_endpoint$body))
