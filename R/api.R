@@ -88,7 +88,7 @@ endpoint_git_pull <- function(runner) {
 }
 
 target_run <- function(runner, name, parameters = NULL, ref = NULL,
-                       instance = NULL, update = FALSE, timeout = NULL) {
+                       instance = NULL, update = TRUE, timeout = NULL) {
   key <- runner$queue(name, parameters, ref, instance, as_logical(update),
                       timeout = as_integer(timeout, 600))
   list(name = scalar(name),
