@@ -9,7 +9,11 @@ build_api <- function(runner) {
   api$handle(endpoint_run(runner))
   api$handle(endpoint_status(runner))
   api$handle(endpoint_kill(runner))
-  api$registerHook("preroute", function(req) runner$poll())
+  ## TODO: we need to prevent these hooks throwing errors, or force
+  ## them to throw errors of the correct type - that needs doing in
+  ## pkgapi (RESIDE-163)
+  api$registerHook("preroute", function(req)
+    tryCatch(runner$poll(), error = function(e) NULL))
   api
 }
 
