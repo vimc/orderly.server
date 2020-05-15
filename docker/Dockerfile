@@ -5,7 +5,9 @@ RUN apt-get update || apt-get update && apt-get install -y \
   openssh-client
 
 # processx is an orderly Suggests that we require for the server.
-RUN install2.r --error --repos https://vimc.github.io/drat \
+RUN install2.r --error \
+  --repos https://cloud.r-project.org \
+  --repos https://vimc.github.io/drat \
   jsonlite \
   jsonvalidate \
   pkgapi \
