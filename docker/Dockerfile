@@ -7,6 +7,7 @@ RUN apt-get update || apt-get update && apt-get install -y \
 # processx is an orderly Suggests that we require for the server.
 RUN install2.r --error --repos https://vimc.github.io/drat \
   jsonlite \
+  jsonvalidate \
   pkgapi \
   processx \
   webutils
