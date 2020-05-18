@@ -9,7 +9,6 @@ RUN install2.r --error \
   --repos https://cloud.r-project.org \
   --repos https://vimc.github.io/drat \
   jsonlite \
-  jsonvalidate \
   pkgapi \
   processx \
   webutils
