@@ -12,6 +12,7 @@ after_success:
 r_github_packages:
   - vimc/orderly
   - reside-ic/pkgapi
+  - ropensci/jsonvalidate
 
 addons:
   apt:

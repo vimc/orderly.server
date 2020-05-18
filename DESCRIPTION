@@ -16,7 +16,7 @@ Imports:
     webutils
 Suggests:
     httr,
-    jsonvalidate,
+    jsonvalidate (>= 1.2.2),
     mockery,
     sys,
     testthat
