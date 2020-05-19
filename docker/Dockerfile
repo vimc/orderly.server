@@ -2,6 +2,7 @@ FROM vimc/orderly:master
 
 RUN apt-get update || apt-get update && apt-get install -y \
   libcurl4-openssl-dev \
+  libv8-dev \
   openssh-client
 
 # processx is an orderly Suggests that we require for the server.
