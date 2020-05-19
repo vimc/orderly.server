@@ -4,8 +4,14 @@
 \alias{server}
 \title{Run orderly server}
 \usage{
-server(path, port, host = "0.0.0.0", poll_interrupt = NULL,
-  allow_ref = TRUE, go_signal = NULL)
+server(
+  path,
+  port,
+  host = "0.0.0.0",
+  poll_interrupt = NULL,
+  allow_ref = TRUE,
+  go_signal = NULL
+)
 }
 \arguments{
 \item{path}{Path to serve}

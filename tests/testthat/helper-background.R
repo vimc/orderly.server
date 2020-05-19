@@ -1,9 +1,3 @@
-##' Primarily for testing, start a server in the background
-##' @title Start a background orderly.server
-##' @param path Path to an orderly root
-##' @param port Port to listen on
-##' @param log Path to log to
-##' @export
 orderly_server_background <- function(path, port = 8321, log = NULL) {
   R6_orderly_server_background$new(path, port, log)
 }
