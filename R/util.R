@@ -2,9 +2,6 @@ is_directory <- function(x) {
   isTRUE(file.info(x, extra_cols = FALSE)$isdir)
 }
 
-to_json <- function(x, ...) {
-  jsonlite::toJSON(x, auto_unbox = TRUE, ...)
-}
 
 time_diff_secs <- function(t, t0) {
   dt <- t - t0

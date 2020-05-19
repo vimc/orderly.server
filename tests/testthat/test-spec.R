@@ -1,5 +1,11 @@
 context("spec")
 
+
+to_json <- function(x, ...) {
+  jsonlite::toJSON(x, auto_unbox = TRUE, ...)
+}
+
+
 test_that("response: success", {
   skip("old spec")
   json <- server_response(NULL, list(), 200)$body
