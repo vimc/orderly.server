@@ -48,3 +48,13 @@ test_that("write script", {
   expect_equal(basename(res), "orderly.server")
   expect_true(file.exists(res))
 })
+
+
+test_that("pass arguments to server", {
+  mock_server <- mockery::mock(NULL)
+  with_mock("orderly.server:::server" = mock_server,
+            main("path"))
+  expect_equal(
+    mockery::mock_args(mock_server)[[1]],
+    main_args("path"))
+})
