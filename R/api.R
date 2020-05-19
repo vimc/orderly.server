@@ -103,7 +103,7 @@ endpoint_run <- function(runner) {
                                instance = "string",
                                update = "logical",
                                timeout = "integer"),
-    pkgapi::pkgapi_input_body_json("parameters", "parameters", schema_root()),
+    pkgapi::pkgapi_input_body_json("parameters", "Parameters", schema_root()),
     pkgapi::pkgapi_state(runner = runner),
     returning = returning_json("Run"))
 }
