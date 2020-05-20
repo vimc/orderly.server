@@ -144,11 +144,11 @@ test_that("git", {
 
 
 test_that("git error returns valid json", {
-  path <- orderly:::prepare_orderly_git_example()
+  path <- orderly_prepare_orderly_git_example()
   server <- start_test_server(path[["local"]])
   on.exit(server$stop())
 
-  orderly:::git_run(c("remote", "remove", "origin"), root = path[["local"]])
+  orderly_git_run(c("remote", "remove", "origin"), root = path[["local"]])
 
   r <- content(httr::GET(server$api_url("/v1/reports/git/status/")))
   res <- httr::POST(server$api_url("/v1/reports/git/fetch/"))

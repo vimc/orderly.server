@@ -52,13 +52,13 @@ wait_for_finished_runner <- function(runner, key) {
 
 
 test_runner <- function(path = tempfile()) {
-  orderly:::prepare_orderly_example("interactive", path)
+  orderly_prepare_orderly_example("interactive", path)
   server_endpoints(orderly::orderly_runner(path))
 }
 
 
 test_runner2 <- function(path = tempfile()) {
-  orderly:::prepare_orderly_example("interactive", path)
+  orderly_prepare_orderly_example("interactive", path)
   orderly::orderly_runner(path)
 }
 
@@ -120,4 +120,5 @@ expect_simple_endpoint_runs <- function(endpoint, data, status_code = 200,
 orderly_prepare_orderly_git_example <- orderly:::prepare_orderly_git_example
 orderly_git_ref_to_sha <- orderly:::git_ref_to_sha
 orderly_git_ref_exists <- orderly:::git_ref_exists
+orderly_git_run <- orderly:::git_run
 ## nolint end
