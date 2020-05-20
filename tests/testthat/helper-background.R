@@ -46,10 +46,10 @@ orderly_server_background <- R6::R6Class(
         stop("Server already listening on port ", port)
       }
 
-      Sys.setenv(R_TESTS = "")
-
+      Sys.setenv(R_TESTS = "") # nolint
+      lib_paths <- .libPaths() # nolint
       libs <- sprintf("c(%s)",
-                      paste(sprintf('"%s"', .libPaths()), collapse = ", "))
+                      paste(sprintf('"%s"', lib_paths), collapse = ", "))
       code <-
         c(sprintf('path <- "%s"', self$path),
           sprintf("port <- %d", self$port),
