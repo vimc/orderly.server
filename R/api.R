@@ -27,10 +27,20 @@ returning_json <- function(schema) {
   pkgapi::pkgapi_returning_json(schema, schema_root())
 }
 
+## For compatibility only
 target_index <- function() {
   list(name = scalar("orderly.server"),
-       version = scalar("0.0.0"),
-       endpoints = c("comming", "soon"))
+       version = scalar(as.character(packageVersion("orderly.server"))),
+       endpoints = c(
+         "/",
+         "/v1/reports/:key/kill/",
+         "/v1/reports/:key/status/",
+         "/v1/reports/:name/run/",
+         "/v1/reports/git/fetch/",
+         "/v1/reports/git/pull/",
+         "/v1/reports/git/status/",
+         "/v1/reports/rebuild/"
+       ))
 }
 
 endpoint_index <- function(runner) {
