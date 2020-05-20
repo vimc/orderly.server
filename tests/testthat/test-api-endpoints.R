@@ -8,7 +8,8 @@ test_that("index", {
                     endpoints = c("comming", "soon"))
   expect_equal(endpoint$target(), expected)
 
-  api <- pkgapi::pkgapi$new()$handle(endpoint)
+  runner <- mock_runner()
+  api <- build_api(runner)
   res <- api$request("GET", "/")
   expect_equal(res$status, 200L)
   expect_equal(res$headers[["Content-Type"]], "application/json")
@@ -112,7 +113,7 @@ test_that("run", {
   expect_equal(res_endpoint$data, res)
 
   ## api
-  api <- pkgapi::pkgapi$new()$handle(endpoint)
+  api <- build_api(runner)
   res_api <- api$request("POST", "/v1/reports/example/run/",
                          list(timeout = 600))
   expect_equal(res_api$status, 200L)
@@ -148,7 +149,7 @@ test_that("status - queued behind nothing", {
   expect_equal(mockery::mock_args(runner$status)[[2]], list(key, FALSE))
 
   ## api
-  api <- pkgapi::pkgapi$new()$handle(endpoint)
+  api <- build_api(runner)
   res_api <- api$request("GET", sprintf("/v1/reports/%s/status/", key))
   expect_equal(res_api$status, 200L)
   expect_equal(res_api$headers[["Content-Type"]], "application/json")
@@ -185,7 +186,7 @@ test_that("status - queued", {
   expect_equal(mockery::mock_args(runner$status)[[2]], list(key, FALSE))
 
   ## api
-  api <- pkgapi::pkgapi$new()$handle(endpoint)
+  api <- build_api(runner)
   res_api <- api$request("GET", sprintf("/v1/reports/%s/status/", key))
   expect_equal(res_api$status, 200L)
   expect_equal(res_api$headers[["Content-Type"]], "application/json")
@@ -219,7 +220,7 @@ test_that("status - completed, no log", {
   expect_equal(mockery::mock_args(runner$status)[[2]], list(key, FALSE))
 
   ## api
-  api <- pkgapi::pkgapi$new()$handle(endpoint)
+  api <- build_api(runner)
   res_api <- api$request("GET", sprintf("/v1/reports/%s/status/", key))
   expect_equal(res_api$status, 200L)
   expect_equal(res_api$headers[["Content-Type"]], "application/json")
@@ -254,7 +255,7 @@ test_that("status - completed, with log", {
   expect_equal(mockery::mock_args(runner$status)[[2]], list(key, TRUE))
 
   ## api
-  api <- pkgapi::pkgapi$new()$handle(endpoint)
+  api <- build_api(runner)
   res_api <- api$request("GET", sprintf("/v1/reports/%s/status/", key),
                          query = list(output = TRUE))
   expect_equal(res_api$status, 200L)
@@ -281,7 +282,7 @@ test_that("kill - successful", {
   expect_equal(mockery::mock_args(runner$kill)[[2]], list(key))
 
   ## api
-  api <- pkgapi::pkgapi$new()$handle(endpoint)
+  api <- build_api(runner)
   res_api <- api$request("DELETE", sprintf("/v1/reports/%s/kill/", key))
   expect_equal(res_api$status, 200L)
   expect_equal(res_api$headers[["Content-Type"]], "application/json")
@@ -313,7 +314,7 @@ test_that("kill - failure", {
   expect_equal(mockery::mock_args(runner$kill)[[2]], list(key))
 
   ## api
-  api <- pkgapi::pkgapi$new()$handle(endpoint)
+  api <- build_api(runner)
   res_api <- api$request("DELETE", sprintf("/v1/reports/%s/kill/", key))
   expect_equal(res_api$status, 400L)
   expect_equal(res_api$headers[["Content-Type"]], "application/json")
@@ -340,7 +341,7 @@ test_that("run can specify instance", {
 
   ## and via the api
   endpoint <- endpoint_run(runner)
-  api <- pkgapi::pkgapi$new()$handle(endpoint)
+  api <- build_api(runner)
 
   res_api <- api$request("POST", "/v1/reports/example/run/",
                          list(timeout = 100, instance = "myinstance"))
