@@ -114,3 +114,10 @@ expect_simple_endpoint_runs <- function(endpoint, data, status_code = 200,
   testthat::expect_equal(res_api$headers[["Content-Type"]], content_type)
   expect_equal(res_api$body, as.character(res_endpoint$body))
 }
+
+
+## nolint start
+orderly_prepare_orderly_git_example <- orderly:::prepare_orderly_git_example
+orderly_git_ref_to_sha <- orderly:::git_ref_to_sha
+orderly_git_ref_exists <- orderly:::git_ref_exists
+## nolint end

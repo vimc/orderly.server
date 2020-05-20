@@ -9,9 +9,9 @@ build_api <- function(runner) {
   api$handle(endpoint_run(runner))
   api$handle(endpoint_status(runner))
   api$handle(endpoint_kill(runner))
-  ## TODO: we need to prevent these hooks throwing errors, or force
-  ## them to throw errors of the correct type - that needs doing in
-  ## pkgapi (RESIDE-163)
+  ## RESIDE-163: we need to prevent these hooks throwing errors, or
+  ## force them to throw errors of the correct type - that needs doing
+  ## in pkgapi
   api$registerHook("preroute", function(req)
     tryCatch(runner$poll(), error = function(e) NULL))
   api
@@ -125,7 +125,7 @@ target_status <- function(runner, key, output = FALSE) {
               status = scalar(res$status),
               version = scalar(res$id),
               output = NULL)
-  ## TODO(VIMC-3654): the 'queue' path here should move elsewhere
+  ## VIMC-3654: the 'queue' path here should move elsewhere
   if (output || res$status == "queued") {
     ret$output <- lapply(res$output, as.character)
   }
@@ -140,8 +140,8 @@ endpoint_status <- function(runner) {
     returning = returning_json("Status.schema"))
 }
 
-## TODO: The kill endpoint should not error, but return better data
-## here (as in success TRUE/FALSE, message)
+## VIMC-3885: The kill endpoint should not error, but return better
+## data here (as in success TRUE/FALSE, message)
 target_kill <- function(runner, key) {
   tryCatch(
     jsonlite::unbox(runner$kill(key)),

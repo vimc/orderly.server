@@ -107,7 +107,7 @@ test_that("run", {
 
   ## endpoint
   endpoint <- endpoint_run(runner)
-  ## TODO: pkgapi bug - running endpoint$run() is 500 not 40x error
+  ## RESIDE-166: running endpoint$run() is 500 not 40x error (pkgapi bug)
   res_endpoint <- endpoint$run("example", timeout = 600)
   expect_equal(res_endpoint$status_code, 200)
   expect_equal(res_endpoint$data, res)
