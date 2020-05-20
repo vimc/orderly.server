@@ -37,21 +37,14 @@ server <- function(path, port, host = "0.0.0.0", poll_interrupt = NULL,
 }
 
 
-wait_for_go_signal <- function(path, go_signal) {
+wait_for_go_signal <- function(path, go_signal, timeout = 600, poll = 1) {
   if (is.null(go_signal)) {
     return(invisible())
   }
-  if (!grepl("^(/|[A-Z][a-z]:)", path)) {
+  if (!grepl("^(/|[A-Z][a-z]:)", go_signal)) {
     go_signal <- file.path(path, go_signal)
   }
-  t0 <- Sys.time()
-  while (!file.exists(go_signal)) {
-    Sys.sleep(1)
-    t <- Sys.time()
-    dt <- time_diff_secs(t, t0)
-    message(sprintf("[%s] waiting for go signal (%s) for %d s",
-                    t, go_signal, dt))
-  }
-  message(sprintf("Recieved go signal after %d s",
-                  time_diff_secs(Sys.time(), t0)))
+  message(sprintf("Waiting for go signal at '%s'", go_signal))
+  elapsed <- wait_while(function() !file.exists(go_signal), timeout, poll)
+  message(sprintf("Recieved go signal after %s", format(elapsed, digits = 1)))
 }
