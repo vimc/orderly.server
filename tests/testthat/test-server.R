@@ -34,3 +34,49 @@ test_that("Wait for a go signal if provided", {
   expect_match(msg[[1]], "Waiting for go signal at")
   expect_match(msg[[2]], "Recieved go signal after 1")
 })
+
+
+test_that("run server", {
+  api <- list(run = mockery::mock())
+  runner <- mock_runner()
+
+  mock_wait_for_go_signal <- mockery::mock()
+  mock_orderly_runner <- mockery::mock(runner)
+  mock_build_api <- mockery::mock(api)
+
+  path <- tempfile()
+  port <- 1234
+  host <- "127.0.0.1"
+  allow_ref <- FALSE
+  go_signal <- "go"
+
+  msg <- capture_messages(
+    with_mock(
+      wait_for_go_signal = mock_wait_for_go_signal,
+      "orderly::orderly_runner" = mock_orderly_runner,
+      build_api = mock_build_api,
+      server(path, port, host, allow_ref, go_signal)))
+  expect_match(msg[[1]], "Starting orderly server on port 1234")
+  expect_match(msg[[2]], "Orderly root:")
+  expect_match(msg[[3]], "Server exiting")
+
+  mockery::expect_called(mock_wait_for_go_signal, 1)
+  expect_equal(
+    mockery::mock_args(mock_wait_for_go_signal)[[1]],
+    list(path, go_signal))
+
+  mockery::expect_called(mock_orderly_runner, 1)
+  expect_equal(
+    mockery::mock_args(mock_orderly_runner)[[1]],
+    list(path, allow_ref))
+
+  mockery::expect_called(mock_build_api, 1)
+  expect_equal(
+    mockery::mock_args(mock_build_api)[[1]],
+    list(runner))
+
+  mockery::expect_called(api$run, 1)
+  expect_equal(
+    mockery::mock_args(api$run)[[1]],
+    list(host, port))
+})
