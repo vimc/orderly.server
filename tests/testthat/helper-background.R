@@ -1,3 +1,11 @@
+start_test_server <- function(path = NULL, port = 8321, log = NULL) {
+  path <- path %||% orderly::orderly_example("interactive")
+  server <- orderly_server_background(path, port, log)
+  server$start()
+  server
+}
+
+
 orderly_server_background <- function(path, port = 8321, log = NULL) {
   R6_orderly_server_background$new(path, port, log)
 }

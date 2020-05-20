@@ -11,6 +11,7 @@ is_directory <- function(x) {
 wait_while <- function(continue, timeout = 10, poll = 0.02) {
   t_start <- Sys.time()
   t_quit <- t_start + timeout
+  now <- t_start
   while (continue()) {
     Sys.sleep(poll)
     now <- Sys.time()
