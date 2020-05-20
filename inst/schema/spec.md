@@ -1,26 +1,6 @@
 # orderly.server API
 
-I'm following the general points in the [montagu api](https://github.com/vimc/montagu-api/blob/master/spec/spec.md)
-
-* all data is returned in JSON format
-* `POST` data must be sent in JSON format
-* The canonical form for all URLs (not including query string) ends in a slash: `/`
-* The API will be versioned via URL. So for version 1, all URLs will begin /v1/. e.g. http://.../v1/reports/
-
-* When a POST results in the creation of a new object, the API returns a response in the standard format (see below) with the 'data' field being the URL that identifies the new resource _(this one not done; but I don't think it's done in the main api either: the only case that is really relevant here is `run` and I'm returning hopefully enough)_
-
-In addition
-
-* Query parameter that accept booleans are case insensitive and accept `true` and `false`.
-
-Some files are directly copied over (with only whitespace changes) from `montagu-api`:
-
-* `Error.schema.json`
-* `ErrorCode.schema.json`
-* `Index.schema.json`
-* `Response.schema.json`
-
-Unlike the montagu api, the examples (or really anything) in this file are not checked for correctness, but the json schema files are tested.
+This API is built on top of [`pkgapi`](https://reside-ic.github.io/pkgapi) (itself influenced by [`hintr`](https://github.com/mrc-ide/hintr) and [montagu api](https://github.com/vimc/montagu-api/blob/master/spec/spec.md)).
 
 ## POST /reports/rebuild/
 

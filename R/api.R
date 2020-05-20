@@ -36,7 +36,7 @@ target_index <- function() {
 endpoint_index <- function(runner) {
   pkgapi::pkgapi_endpoint$new(
     "GET", "/", target_index,
-    returning = returning_json("Index"))
+    returning = returning_json("Index.schema"))
 }
 
 target_rebuild <- function(runner) {
@@ -48,7 +48,7 @@ endpoint_rebuild <- function(runner) {
   pkgapi::pkgapi_endpoint$new(
     "POST", "/v1/reports/rebuild/", target_rebuild,
     pkgapi::pkgapi_state(runner = runner),
-    returning = returning_json("Rebuild"))
+    returning = returning_json("Rebuild.schema"))
 }
 
 target_git_status <- function(runner) {
@@ -62,7 +62,7 @@ endpoint_git_status <- function(runner) {
   endpoint_git_status <- pkgapi::pkgapi_endpoint$new(
     "GET", "/v1/reports/git/status/", target_git_status,
     pkgapi::pkgapi_state(runner = runner),
-    returning = returning_json("GitStatus"))
+    returning = returning_json("GitStatus.schema"))
 }
 
 target_git_fetch <- function(runner) {
@@ -73,7 +73,7 @@ endpoint_git_fetch <- function(runner) {
   pkgapi::pkgapi_endpoint$new(
     "POST", "/v1/reports/git/fetch/", target_git_fetch,
     pkgapi::pkgapi_state(runner = runner),
-    returning = returning_json("GitFetch"))
+    returning = returning_json("GitFetch.schema"))
 }
 
 target_git_pull <- function(runner) {
@@ -84,7 +84,7 @@ endpoint_git_pull <- function(runner) {
   pkgapi::pkgapi_endpoint$new(
     "POST", "/v1/reports/git/pull/", target_git_pull,
     pkgapi::pkgapi_state(runner = runner),
-    returning = returning_json("GitPull"))
+    returning = returning_json("GitPull.schema"))
 }
 
 target_run <- function(runner, name, parameters = NULL, ref = NULL,
@@ -103,9 +103,10 @@ endpoint_run <- function(runner) {
                                instance = "string",
                                update = "logical",
                                timeout = "integer"),
-    pkgapi::pkgapi_input_body_json("parameters", "Parameters", schema_root()),
+    pkgapi::pkgapi_input_body_json("parameters", "Parameters.schema",
+                                   schema_root()),
     pkgapi::pkgapi_state(runner = runner),
-    returning = returning_json("Run"))
+    returning = returning_json("Run.schema"))
 }
 
 target_status <- function(runner, key, output = FALSE) {
@@ -126,7 +127,7 @@ endpoint_status <- function(runner) {
     "GET", "/v1/reports/<key>/status/", target_status,
     pkgapi::pkgapi_input_query(output = "logical"),
     pkgapi::pkgapi_state(runner = runner),
-    returning = returning_json("Status"))
+    returning = returning_json("Status.schema"))
 }
 
 ## TODO: The kill endpoint should not error, but return better data
@@ -141,5 +142,5 @@ endpoint_kill <- function(runner) {
   pkgapi::pkgapi_endpoint$new(
     "DELETE", "/v1/reports/<key>/kill/", target_kill,
     pkgapi::pkgapi_state(runner = runner),
-    returning = returning_json("Kill"))
+    returning = returning_json("Kill.schema"))
 }

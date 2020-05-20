@@ -13,7 +13,7 @@
                     "type": "null"
                 },
                 {
-                    "$ref": "OrderlyId.json"
+                    "$ref": "OrderlyId.schema.json"
                 }
             ]
         },
