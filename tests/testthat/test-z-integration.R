@@ -150,13 +150,11 @@ test_that("git error returns valid json", {
   server <- start_test_server(path[["local"]])
   on.exit(server$stop())
 
-  ## runner <- server_endpoints(orderly::orderly_runner(path[["local"]]))
   orderly:::git_run(c("remote", "remove", "origin"), root = path[["local"]])
 
   r <- content(httr::GET(server$api_url("/v1/reports/git/status/")))
   res <- httr::POST(server$api_url("/v1/reports/git/fetch/"))
   json <- httr::content(res, "text", encoding = "UTF-8")
-  ## expect_valid_json(json, "spec/Response.schema.json")
 })
 
 

@@ -3,7 +3,7 @@ is_directory <- function(x) {
 }
 
 
-`%||%` <- function(a, b) {
+`%||%` <- function(a, b) { # nolint
   if (is.null(a)) b else a
 }
 

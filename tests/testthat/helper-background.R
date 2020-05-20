@@ -1,17 +1,12 @@
 start_test_server <- function(path = NULL, port = 8321, log = NULL) {
   path <- path %||% orderly::orderly_example("interactive")
-  server <- orderly_server_background(path, port, log)
+  server <- orderly_server_background$new(path, port, log)
   server$start()
   server
 }
 
 
-orderly_server_background <- function(path, port = 8321, log = NULL) {
-  R6_orderly_server_background$new(path, port, log)
-}
-
-
-R6_orderly_server_background <- R6::R6Class(
+orderly_server_background <- R6::R6Class(
   "orderly_server_background",
 
   public = list(
@@ -64,8 +59,8 @@ R6_orderly_server_background <- R6::R6Class(
       writeLines(code, path_server)
 
       unlink(self$log)
-      Rscript <- file.path(R.home("bin"), "Rscript")
-      self$pid <- sys::exec_background(Rscript, path_server,
+      rscript <- file.path(R.home("bin"), "Rscript")
+      self$pid <- sys::exec_background(rscript, path_server,
                                        std_out = self$log, std_err = self$log)
 
       message("waiting for server to become responsive")
