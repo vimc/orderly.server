@@ -4,14 +4,7 @@
 \alias{server}
 \title{Run orderly server}
 \usage{
-server(
-  path,
-  port,
-  host = "0.0.0.0",
-  poll_interrupt = NULL,
-  allow_ref = TRUE,
-  go_signal = NULL
-)
+server(path, port, host = "0.0.0.0", allow_ref = TRUE, go_signal = NULL)
 }
 \arguments{
 \item{path}{Path to serve}
@@ -19,8 +12,6 @@ server(
 \item{port}{Port to serve on}
 
 \item{host}{Optional}
-
-\item{poll_interrupt}{Interval (in ms) to poll for interrupt}
 
 \item{allow_ref}{Allow git reference changing (passed through to
 \code{orderly_runner}.}

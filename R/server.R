@@ -7,8 +7,6 @@
 ##'
 ##' @param host Optional
 ##'
-##' @param poll_interrupt Interval (in ms) to poll for interrupt
-##'
 ##' @param allow_ref Allow git reference changing (passed through to
 ##'   \code{orderly_runner}.
 ##'
@@ -23,8 +21,8 @@
 ##' @export
 ##' @importFrom httpuv runServer
 ##' @importFrom orderly orderly_runner
-server <- function(path, port, host = "0.0.0.0", poll_interrupt = NULL,
-                   allow_ref = TRUE, go_signal = NULL) {
+server <- function(path, port, host = "0.0.0.0", allow_ref = TRUE,
+                   go_signal = NULL) {
   message("Starting orderly server on port ", port)
   message("Orderly root: ", path)
 
@@ -37,7 +35,7 @@ server <- function(path, port, host = "0.0.0.0", poll_interrupt = NULL,
 }
 
 
-wait_for_go_signal <- function(path, go_signal, timeout = 600, poll = 1) {
+wait_for_go_signal <- function(path, go_signal) {
   if (is.null(go_signal)) {
     return(invisible())
   }
@@ -45,6 +43,8 @@ wait_for_go_signal <- function(path, go_signal, timeout = 600, poll = 1) {
     go_signal <- file.path(path, go_signal)
   }
   message(sprintf("Waiting for go signal at '%s'", go_signal))
+  timeout <- 600
+  poll <- 1
   elapsed <- wait_while(function() !file.exists(go_signal), timeout, poll)
   message(sprintf("Recieved go signal after %s", format(elapsed, digits = 1)))
 }
