@@ -4,8 +4,9 @@
 [![Build Status](https://travis-ci.org/vimc/orderly.server.svg?branch=master)](https://travis-ci.org/vimc/orderly.server)
 [![Build status](https://badge.buildkite.com/c35bbf7799cef2d70f8282aa6215ce1d67bc24f4a1981c308e.svg?branch=master)](https://buildkite.com/mrc-ide/orderly-dot-server)
 [![codecov.io](https://codecov.io/github/vimc/orderly.server/coverage.svg?branch=master)](https://codecov.io/github/vimc/orderly.server?branch=master)
+[![CodeFactor](https://www.codefactor.io/repository/github/vimc/orderly.server/badge)](https://www.codefactor.io/repository/github/vimc/orderly.server)
 
-Server process to orchestrate running reports.  This is not in the [main package](https://github.com/vimc/orderly) because it may move into our [api](https://github.com/vimc/montagu-reporting-api) and because it drags in some dependencies that will never usually be needed.
+Server process to orchestrate running reports.  This is not in the [main package](https://github.com/vimc/orderly) because it drags in some dependencies that will never usually be needed.
 
 Endpoints are shown in [the spec](inst/schema/spec.md)
 
