@@ -1,6 +1,5 @@
 main <- function(args = commandArgs(TRUE)) {
   args <- main_args(args)
-  ## server(args$path, args$port, args$host, args$allow_ref, args$go_signal)
   do.call("server", args)
 }
 
