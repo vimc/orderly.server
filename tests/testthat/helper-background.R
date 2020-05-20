@@ -59,7 +59,7 @@ R6_orderly_server_background <- R6::R6Class(
         c(sprintf('path <- "%s"', self$path),
           sprintf("port <- %d", self$port),
           sprintf(".libPaths(%s)", libs),
-          'orderly.server::server(path, port, "127.0.0.1", poll_interrupt = 1)')
+          'orderly.server::server(path, port, "127.0.0.1")')
       path_server <- tempfile()
       writeLines(code, path_server)
 

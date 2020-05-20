@@ -5,7 +5,7 @@ test_that("Don't wait if the go signal path is NULL", {
   dt <- as.difftime(1, units = "secs")
   mock_wait_while <- mockery::mock(dt, cycle = TRUE)
   expect_silent(
-    with_mock("wait_while" = mock_wait_while,
+    with_mock("orderly.server:::wait_while" = mock_wait_while,
               wait_for_go_signal(path, NULL)))
   mockery::expect_called(mock_wait_while, 0)
 })
@@ -19,7 +19,7 @@ test_that("Wait for a go signal if provided", {
   dt <- as.difftime(1, units = "secs")
   mock_wait_while <- mockery::mock(dt, cycle = TRUE)
   msg <- capture_messages(
-    with_mock("wait_while" = mock_wait_while,
+    with_mock("orderly.server:::wait_while" = mock_wait_while,
               wait_for_go_signal(path, go)))
   mockery::expect_called(mock_wait_while, 1)
   args <- mockery::mock_args(mock_wait_while)[[1]]
@@ -52,9 +52,9 @@ test_that("run server", {
 
   msg <- capture_messages(
     with_mock(
-      wait_for_go_signal = mock_wait_for_go_signal,
+      "orderly.server:::wait_for_go_signal" = mock_wait_for_go_signal,
       "orderly::orderly_runner" = mock_orderly_runner,
-      build_api = mock_build_api,
+      "orderly.server:::build_api" = mock_build_api,
       server(path, port, host, allow_ref, go_signal)))
   expect_match(msg[[1]], "Starting orderly server on port 1234")
   expect_match(msg[[2]], "Orderly root:")
