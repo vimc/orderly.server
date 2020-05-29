@@ -349,3 +349,84 @@ test_that("run can specify instance", {
     mockery::mock_args(runner$queue)[[2]],
     list("example", NULL, NULL, "myinstance", TRUE, timeout = 100))
 })
+
+test_that("run-metadata", {
+  config <- list(
+    changelog = data.frame(
+      id = c("internal", "public"),
+      public = c(FALSE, TRUE),
+      stringsAsFactors = FALSE
+    ),
+    database = list(
+      source = list(
+        instances = list(
+          production = list(
+            dbname = "production.sqlite"
+          ),
+          staging = list(
+            dbname = "staging.sqlite"
+          )
+        )
+      )
+    )
+  )
+  runner <- mock_runner(config = config)
+  endpoint <- endpoint_run_metadata(runner)
+
+  res <- endpoint$target()
+  expect_equal(res$instances_supported, scalar(TRUE))
+  expect_equal(res$git_supported, scalar(TRUE))
+  expect_equal(res$instances, c(scalar("production"), scalar("staging")))
+  expect_equal(res$changelog_types, c(scalar("public")))
+
+  ## test again
+  api <- build_api(runner)
+  res <- api$request("GET", "/run-metadata")
+  expect_equal(res$status, 200L)
+  expect_equal(res$headers[["Content-Type"]], "application/json")
+  expect_equal(res$body, as.character(endpoint$run()$body))
+})
+
+test_that("run-metadata pulls information from runner", {
+  path <- orderly::orderly_example("minimal")
+  runner <- orderly::orderly_runner(path)
+
+  expect_equal(target_run_metadata(runner), list(
+    instances_supported = scalar(FALSE),
+    git_supported = scalar(FALSE),
+    instances = NULL,
+    changelog_types = NULL
+  ))
+
+  ## Example with all enabled
+  yml <- c("database:",
+           "  source:",
+           "    driver: RSQLite::SQLite",
+           "    args:",
+           "      dbname: source.sqlite",
+           "      user: user",
+           "    instances:",
+           "      production:",
+           "        host: production.montagu.dide.ic.ac.uk",
+           "        port: 5432",
+           "        password: pwd",
+           "      staging:",
+           "        host: support.montagu.dide.ic.ac.uk",
+           "        port: 5432",
+           "        password: pwd",
+           "changelog:",
+           "  internal:",
+           "    public: false",
+           "  external:",
+           "    public: true"
+           )
+  writeLines(yml, file.path(path, "orderly_config,yml"))
+  runner <- orderly::orderly_runner(path)
+  expect_equal(target_run_metadata(runner), list(
+    instances_supported = scalar(FALSE),
+    git_supported = scalar(FALSE),
+    instances = NULL,
+    changelog_types = NULL
+  ))
+
+})

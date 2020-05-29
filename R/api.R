@@ -9,6 +9,7 @@ build_api <- function(runner) {
   api$handle(endpoint_run(runner))
   api$handle(endpoint_status(runner))
   api$handle(endpoint_kill(runner))
+  api$handle(endpoint_run_metadata(runner))
   ## RESIDE-163: we need to prevent these hooks throwing errors, or
   ## force them to throw errors of the correct type - that needs doing
   ## in pkgapi
@@ -153,4 +154,29 @@ endpoint_kill <- function(runner) {
     "DELETE", "/v1/reports/<key>/kill/", target_kill,
     pkgapi::pkgapi_state(runner = runner),
     returning = returning_json("Kill.schema"))
+}
+
+target_run_metadata <- function(runner) {
+  changelog <- runner$config$changelog$id[runner$config$changelog$public]
+  if (length(changelog) > 0) {
+    changelog <- vcapply(changelog, scalar, USE.NAMES = FALSE)
+  }
+  instances <- names(runner$config$database$source$instances)
+  if (length(instances) > 0) {
+    vcapply(instances, scalar, USE.NAMES = FALSE)
+  }
+  list(
+    instances_supported = scalar(length(instances) > 0),
+    git_supported = scalar(isTRUE(runner$has_git)),
+    instances = instances,
+    changelog_types = changelog
+  )
+}
+
+endpoint_run_metadata <- function(runner) {
+ pkgapi::pkgapi_endpoint$new(
+   "GET", "/run-metadata", target_run_metadata,
+   pkgapi::pkgapi_state(runner = runner),
+   returning = returning_json("RunMetadata.schema")
+ )
 }

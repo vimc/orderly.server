@@ -1,0 +1,28 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "RunMetadata",
+    "type": "object",
+    "properties": {
+        "instances_supported": {
+            "type": "boolean"
+        },
+        "git_supported": {
+            "type": "boolean"
+        },
+        "instances": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "changelog_types": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        }
+   },
+    "required": ["instances_supported", "git_supported", "instances",
+                 "changelog_types"],
+    "additionalProperties": false
+}
