@@ -15,7 +15,7 @@ Options:
   res <- docopt::docopt(doc, args)
 
   list(path = res[["path"]],
-       port = as_integer(res[["port"]]),
+       port = as.integer(res[["port"]]),
        host = res[["host"]],
        allow_ref = !res[["no-ref"]],
        go_signal = res[["go-signal"]])

@@ -1,11 +1,14 @@
 # orderly.server
 
-[![Project Status: Concept – Minimal or no implementation has been done yet, or the repository is only intended to be a limited example, demo, or proof-of-concept.](http://www.repostatus.org/badges/latest/concept.svg)](http://www.repostatus.org/#concept)
+[![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
 [![Build Status](https://travis-ci.org/vimc/orderly.server.svg?branch=master)](https://travis-ci.org/vimc/orderly.server)
 [![Build status](https://badge.buildkite.com/c35bbf7799cef2d70f8282aa6215ce1d67bc24f4a1981c308e.svg?branch=master)](https://buildkite.com/mrc-ide/orderly-dot-server)
 [![codecov.io](https://codecov.io/github/vimc/orderly.server/coverage.svg?branch=master)](https://codecov.io/github/vimc/orderly.server?branch=master)
+[![CodeFactor](https://www.codefactor.io/repository/github/vimc/orderly.server/badge)](https://www.codefactor.io/repository/github/vimc/orderly.server)
 
-Server process to orchestrate running reports.  This is not in the [main package](https://github.com/vimc/orderly) because it may move into our [api](https://github.com/vimc/montagu-reporting-api) and because it drags in some dependencies that will never usually be needed.
+Server process to orchestrate running reports.  This is not in the [main package](https://github.com/vimc/orderly) because it drags in some dependencies that will never usually be needed.
+
+Endpoints are shown in [the spec](inst/schema/spec.md)
 
 Current API:
 
@@ -17,7 +20,6 @@ GET  /v1/reports/:key/status/
 GET  /v1/reports/git/status/
 POST /v1/reports/git/fetch/
 POST /v1/reports/git/pull/
-POST /v1/reports/:name/:version/publish/
 ```
 
 All the query stuff is already dealt with in [montagu-reporting-api](https://github.com/vimc/montagu-reporting-api) and will not be duplicated here.
@@ -47,15 +49,12 @@ $ curl -s -X GET http://localhost:8321/ | jq
       "/v1/reports/:key/status/",
       "/v1/reports/git/status/",
       "/v1/reports/git/fetch/",
-      "/v1/reports/git/pull/",
-      "/v1/reports/:name/:version/publish/"
+      "/v1/reports/git/pull/"
     ]
   },
   "errors": []
 }
 ```
-
-Endpoints are shown in [the spec](tests/testthat/spec/spec.md)
 
 ```
 $ curl -s -X POST http://localhost:8321/v1/reports/example/run/ | jq
@@ -106,17 +105,6 @@ $ curl -s -X GET http://localhost:8321/v1/reports/flirtatious_komododragon/statu
       ]
     }
   },
-  "errors": []
-}
-```
-
-Publish a report (or unpublish with `?value=false`)
-
-```
-$ curl -s -X POST http://localhost:8321/v1/reports/example/20170920-110037-69eede6a/publish/ | jq
-{
-  "status": "success",
-  "data": true,
   "errors": []
 }
 ```

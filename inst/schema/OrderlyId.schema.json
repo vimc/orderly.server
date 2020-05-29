@@ -1,5 +1,6 @@
 {
-    "id": "ErrorCode",
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "OrderlyId",
     "type": "string",
     "minLength": 24,
     "maxLength": 24,
