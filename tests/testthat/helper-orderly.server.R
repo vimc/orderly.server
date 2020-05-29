@@ -51,18 +51,6 @@ wait_for_finished_runner <- function(runner, key) {
 }
 
 
-test_runner <- function(path = tempfile()) {
-  orderly_prepare_orderly_example("interactive", path)
-  server_endpoints(orderly::orderly_runner(path))
-}
-
-
-test_runner2 <- function(path = tempfile()) {
-  orderly_prepare_orderly_example("interactive", path)
-  orderly::orderly_runner(path)
-}
-
-
 expect_valid_json <- function(json, schema) {
   testthat::skip_if_not_installed("jsonvalidate")
   if (packageVersion("jsonvalidate") <= "1.1.0") {
