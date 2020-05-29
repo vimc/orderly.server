@@ -65,7 +65,7 @@ test_runner2 <- function(path = tempfile()) {
 
 expect_valid_json <- function(json, schema) {
   testthat::skip_if_not_installed("jsonvalidate")
-  if (packageVersion("jsonvalidate") <= "1.1.0") {
+  if (utils::packageVersion("jsonvalidate") <= "1.1.0") {
     valid <- jsonvalidate::json_validate(json, schema)
   } else {
     valid <- jsonvalidate::json_validate(json, schema, engine = "ajv")

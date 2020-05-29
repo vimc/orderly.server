@@ -31,7 +31,7 @@ returning_json <- function(schema) {
 ## For compatibility only
 target_index <- function() {
   list(name = scalar("orderly.server"),
-       version = scalar(as.character(packageVersion("orderly.server"))),
+       version = scalar(as.character(utils::packageVersion("orderly.server"))),
        endpoints = c(
          "/",
          "/v1/reports/:key/kill/",
