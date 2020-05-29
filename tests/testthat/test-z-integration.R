@@ -237,3 +237,20 @@ test_that("pass parameters", {
   expect_match(st$data$output$stderr, "time: 1", fixed = TRUE, all = FALSE)
   expect_match(st$data$output$stderr, "poll: 0.1", fixed = TRUE, all = FALSE)
 })
+
+test_that("run-metadata", {
+  path <- orderly_prepare_orderly_git_example()
+  server <- start_test_server(path[["local"]])
+  on.exit(server$stop())
+
+  r <- content(httr::GET(server$api_url("/run-metadata")))
+
+  expect_equal(r$status, "success")
+  expect_null(r$errors)
+  expect_equal(names(r$data), c("instances_supported", "git_supported",
+                                "instances", "changelog_types"))
+  expect_false(r$data$instances_supported)
+  expect_true(r$data$git_supported)
+  expect_null(r$data$instances)
+  expect_equal(r$data$changelog_types, c(scalar("public")))
+})
