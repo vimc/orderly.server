@@ -53,7 +53,7 @@ wait_for_finished_runner <- function(runner, key) {
 
 expect_valid_json <- function(json, schema) {
   testthat::skip_if_not_installed("jsonvalidate")
-  if (packageVersion("jsonvalidate") <= "1.1.0") {
+  if (utils::packageVersion("jsonvalidate") <= "1.1.0") {
     valid <- jsonvalidate::json_validate(json, schema)
   } else {
     valid <- jsonvalidate::json_validate(json, schema, engine = "ajv")
@@ -74,7 +74,8 @@ read_json <- function(path, ...) {
 
 ## There is going to be some work here to keep these up-to-date:
 mock_runner <- function(keys = NULL, status = NULL, git_status = NULL,
-                        git_fetch = NULL, git_pull = NULL) {
+                        git_fetch = NULL, git_pull = NULL, config = NULL,
+                        has_git = TRUE) {
   list(
     rebuild = mockery::mock(TRUE, cycle = TRUE),
     queue = mockery::mock(keys, cycle = TRUE),
@@ -82,7 +83,9 @@ mock_runner <- function(keys = NULL, status = NULL, git_status = NULL,
     kill = mockery::mock(TRUE, cycle = TRUE),
     git_status = mockery::mock(git_status, cycle = TRUE),
     git_fetch = mockery::mock(git_fetch, cycle = TRUE),
-    git_pull = mockery::mock(git_pull, cycle = TRUE))
+    git_pull = mockery::mock(git_pull, cycle = TRUE),
+    config = config,
+    has_git = has_git)
 }
 
 
@@ -110,3 +113,7 @@ orderly_git_ref_to_sha <- orderly:::git_ref_to_sha
 orderly_git_ref_exists <- orderly:::git_ref_exists
 orderly_git_run <- orderly:::git_run
 ## nolint end
+
+version_info <- function() {
+  scalar(as.character(utils::packageVersion("orderly.server")))
+}
