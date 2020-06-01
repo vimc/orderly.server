@@ -125,3 +125,7 @@ orderly_git_ref_to_sha <- orderly:::git_ref_to_sha
 orderly_git_ref_exists <- orderly:::git_ref_exists
 orderly_git_run <- orderly:::git_run
 ## nolint end
+
+version_info <- function() {
+  scalar(as.character(utils::packageVersion("orderly.server")))
+}

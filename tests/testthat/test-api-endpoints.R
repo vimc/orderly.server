@@ -5,7 +5,7 @@ test_that("index", {
 
   res <- endpoint$target()
   expect_equal(res$name, scalar("orderly.server"))
-  expect_equal(res$version, scalar("0.2.1"))
+  expect_equal(res$version, version_info())
   expect_true("/v1/reports/:key/status/" %in% res$endpoints)
 
   runner <- mock_runner()
