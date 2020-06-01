@@ -161,12 +161,21 @@ target_run_metadata <- function(runner) {
   if (length(changelog) > 0) {
     changelog <- vcapply(changelog, scalar, USE.NAMES = FALSE)
   }
-  instances <- names(runner$config$database$source$instances)
-  if (length(instances) > 0) {
-    vcapply(instances, scalar, USE.NAMES = FALSE)
+
+  databases <- names(runner$config$database)
+  instances <- NULL
+  if (length(databases) > 0) {
+    instances <- lapply(databases, function(db) {
+      instances <- names(runner$config$database[[db]]$instances)
+      instances <- instances %||% c()
+      vcapply(instances, scalar, USE.NAMES = FALSE)
+    })
+    names(instances) <- databases
   }
+
   list(
-    instances_supported = scalar(length(instances) > 0),
+    name = scalar(runner$config$server_options()$name),
+    instances_supported = scalar(any(viapply(instances, length) > 0)),
     git_supported = scalar(isTRUE(runner$has_git)),
     instances = instances,
     changelog_types = changelog

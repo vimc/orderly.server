@@ -3,6 +3,9 @@
     "id": "RunMetadata",
     "type": "object",
     "properties": {
+        "name": {
+            "type": [ "string", "null" ]
+        },
         "instances_supported": {
             "type": "boolean"
         },
@@ -10,9 +13,12 @@
             "type": "boolean"
         },
         "instances": {
-            "type": "array",
-            "items": {
-                "type": "string"
+            "type": "object",
+            "additionalProperties": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
             }
         },
         "changelog_types": {
@@ -22,7 +28,7 @@
             }
         }
    },
-    "required": ["instances_supported", "git_supported", "instances",
+    "required": ["name", "instances_supported", "git_supported", "instances",
                  "changelog_types"],
     "additionalProperties": false
 }

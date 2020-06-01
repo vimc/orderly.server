@@ -29,3 +29,7 @@ scalar <- function(x) {
 vcapply <- function(X, FUN, ...) { # nolint
   vapply(X, FUN, character(1), ...)
 }
+
+viapply <- function(X, FUN, ...) { # nolint
+  vapply(X, FUN, integer(1), ...)
+}

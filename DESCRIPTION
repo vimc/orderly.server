@@ -19,6 +19,7 @@ Suggests:
     jsonvalidate (>= 1.2.2),
     mockery,
     sys,
-    testthat
+    testthat,
+    utils
 RoxygenNote: 7.0.2
 Encoding: UTF-8

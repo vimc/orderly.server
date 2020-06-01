@@ -247,10 +247,11 @@ test_that("run-metadata", {
 
   expect_equal(r$status, "success")
   expect_null(r$errors)
-  expect_equal(names(r$data), c("instances_supported", "git_supported",
+  expect_equal(names(r$data), c("name", "instances_supported", "git_supported",
                                 "instances", "changelog_types"))
+  expect_null(r$data$name)
   expect_false(r$data$instances_supported)
   expect_true(r$data$git_supported)
-  expect_null(r$data$instances)
+  expect_equal(r$data$instances, list(source = list()))
   expect_equal(r$data$changelog_types, c(scalar("public")))
 })
