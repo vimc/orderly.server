@@ -25,3 +25,11 @@ wait_while <- function(continue, timeout = 10, poll = 0.02) {
 scalar <- function(x) {
   jsonlite::unbox(x)
 }
+
+vcapply <- function(X, FUN, ...) { # nolint
+  vapply(X, FUN, character(1), ...)
+}
+
+viapply <- function(X, FUN, ...) { # nolint
+  vapply(X, FUN, integer(1), ...)
+}
