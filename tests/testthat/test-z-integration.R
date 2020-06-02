@@ -255,3 +255,19 @@ test_that("run-metadata", {
   expect_equal(r$data$instances, list(source = list()))
   expect_equal(r$data$changelog_types, c(scalar("public")))
 })
+
+test_that("git/branches", {
+  path <- orderly_prepare_orderly_git_example()
+  server <- start_test_server(path[["local"]])
+  on.exit(server$stop())
+
+  r <- content(httr::GET(server$api_url("/git/branches")))
+
+  expect_equal(r$status, "success")
+  expect_null(r$errors)
+  expect_length(r$data, 3)
+  expect_equal(names(r$data[[1]]), c("name", "last_commit"))
+  expect_equal(r$data[[1]]$name, "master")
+  expect_equal(r$data[[2]]$name, "origin/other")
+  expect_equal(r$data[[3]]$name, "other")
+})
