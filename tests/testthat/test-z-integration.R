@@ -265,9 +265,8 @@ test_that("git/branches", {
 
   expect_equal(r$status, "success")
   expect_null(r$errors)
-  expect_length(r$data, 3)
-  expect_equal(names(r$data[[1]]), c("name", "last_commit"))
+  expect_length(r$data, 2)
+  expect_equal(names(r$data[[1]]), c("name", "last_commit", "last_commit_age"))
   expect_equal(r$data[[1]]$name, "master")
-  expect_equal(r$data[[2]]$name, "origin/other")
-  expect_equal(r$data[[3]]$name, "other")
+  expect_equal(r$data[[2]]$name, "other")
 })

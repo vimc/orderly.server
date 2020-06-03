@@ -584,6 +584,7 @@ test_that("git branches endpoint", {
     name = c("master", "dev-branch"),
     last_commit = c("Mon Jun 1 16:00:41 2020 +0100",
                     "Mon Jun 4 12:32:41 2020 +0100"),
+    last_commit_age = c(601, 1643),
     stringsAsFactors = FALSE)
   runner <- mock_runner(git_branches_no_merged = branch_data)
   endpoint <- endpoint_git_branches(runner)

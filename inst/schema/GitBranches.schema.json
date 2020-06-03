@@ -6,9 +6,10 @@
         "type": "object",
         "properties": {
             "name": { "type": "string" },
-            "last_commit": { "type": "string" }
+            "last_commit": { "type": "string" },
+            "last_commit_age": { "type": "integer" }
         },
-        "required": ["name", "last_commit"],
+        "required": ["name", "last_commit", "last_commit_age"],
         "additionalProperties": false
     }
 }
