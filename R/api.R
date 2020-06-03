@@ -100,7 +100,6 @@ endpoint_git_pull <- function(runner) {
 }
 
 target_git_branches <- function(runner) {
-  browser()
   runner$git_branches_no_merged(include_master = TRUE)
 }
 
