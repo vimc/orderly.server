@@ -7,7 +7,7 @@ test_that("root", {
   r <- httr::GET(server$api_url("/"))
   dat <- content(r)
   expect_equal(dat$status, "success")
-  expect_equal(dat$errors, list())
+  expect_equal(dat$errors, NULL)
   expect_is(dat$data$endpoints, "character")
 })
 
@@ -20,7 +20,7 @@ test_that("rebuild", {
   dat <- content(r)
   expect_equal(dat$status, "success")
   expect_null(dat$data)
-  expect_equal(dat$errors, list())
+  expect_equal(dat$errors, NULL)
 })
 
 
@@ -29,12 +29,12 @@ test_that("error handling: invalid method", {
   on.exit(server$stop())
 
   r <- httr::GET(server$api_url("/v1/reports/rebuild/"))
-  expect_equal(httr::status_code(r), 405L)
+  expect_equal(httr::status_code(r), 404L)
   dat <- content(r)
   expect_equal(dat$status, "failure")
   expect_equal(length(dat$errors), 1L)
-  expect_equal(dat$errors[[1]]$code, "invalid-method")
-  expect_is(dat$errors[[1]]$message, "character")
+  expect_equal(dat$errors[[1]]$error, "NOT_FOUND")
+  expect_is(dat$errors[[1]]$detail, "character")
 })
 
 
@@ -47,8 +47,8 @@ test_that("error handling: invalid url", {
   dat <- content(r)
   expect_equal(dat$status, "failure")
   expect_equal(length(dat$errors), 1L)
-  expect_equal(dat$errors[[1]]$code, "unknown-endpoint")
-  expect_is(dat$errors[[1]]$message, "character")
+  expect_equal(dat$errors[[1]]$error, "NOT_FOUND")
+  expect_is(dat$errors[[1]]$detail, "character")
 })
 
 
@@ -98,46 +98,12 @@ test_that("run", {
 })
 
 
-test_that("publish", {
-  server <- start_test_server()
-  on.exit(server$stop())
-
-  path <- server$path
-  id <- orderly::orderly_run("example", root = path, echo = FALSE)
-  ## This is somewhat liable to failure due to db locking
-  dest <- orderly::orderly_commit(id, root = path)
-  pub <- file.path(dest, "orderly_published.yml")
-
-  r <- httr::POST(server$api_url("/v1/reports/example/%s/publish/", id))
-  expect_equal(httr::status_code(r), 200)
-  dat <- content(r)
-  expect_true(dat$data)
-
-  expect_true(file.exists(pub))
-  expect_equal(orderly:::yaml_read(pub), list(published = TRUE))
-
-  r <- httr::POST(server$api_url("/v1/reports/example/%s/publish/", id),
-                  query = list(value = TRUE))
-  expect_equal(httr::status_code(r), 200)
-  dat <- content(r)
-  expect_true(dat$data)
-  expect_equal(orderly:::yaml_read(pub), list(published = TRUE))
-
-  r <- httr::POST(server$api_url("/v1/reports/example/%s/publish/", id),
-                  query = list(value = FALSE))
-  expect_equal(httr::status_code(r), 200)
-  dat <- content(r)
-  expect_false(dat$data)
-  expect_equal(orderly:::yaml_read(pub), list(published = FALSE))
-})
-
-
 test_that("git", {
-  path <- orderly:::prepare_orderly_git_example()
+  path <- orderly_prepare_orderly_git_example()
   server <- start_test_server(path[["local"]])
   on.exit(server$stop())
 
-  sha <- vapply(path, orderly:::git_ref_to_sha, "", ref = "HEAD")
+  sha <- vapply(path, orderly_git_ref_to_sha, "", ref = "HEAD")
 
   r <- content(httr::GET(server$api_url("/v1/reports/git/status/")))
   expect_equal(r$data$hash, sha[["local"]])
@@ -145,7 +111,7 @@ test_that("git", {
   r <- httr::POST(server$api_url("/v1/reports/minimal/run/?update=false"))
   dat <- content(r)
   wait_for_finished(dat$data$key, server)
-  expect_equal(orderly:::git_ref_to_sha("HEAD", path[["local"]]),
+  expect_equal(orderly_git_ref_to_sha("HEAD", path[["local"]]),
                sha[["local"]])
 
   r <- httr::POST(server$api_url("/v1/reports/minimal/run/"),
@@ -158,9 +124,9 @@ test_that("git", {
   expect_equal(httr::status_code(r), 200)
   expect_equal(st$data$status, "error")
 
-  expect_equal(orderly:::git_ref_to_sha("HEAD", root = path[["local"]]),
+  expect_equal(orderly_git_ref_to_sha("HEAD", root = path[["local"]]),
                sha[["local"]])
-  expect_false(orderly:::git_ref_exists(sha[["origin"]], path[["local"]]))
+  expect_false(orderly_git_ref_exists(sha[["origin"]], path[["local"]]))
 
   r <- httr::POST(server$api_url("/v1/reports/minimal/run/"),
                   query = list(ref = sha[["origin"]]))
@@ -171,24 +137,22 @@ test_that("git", {
                            query = list(output = TRUE)))
   expect_match(res$data$output$stderr, sha[["origin"]], all = FALSE)
 
-  expect_equal(orderly:::git_ref_to_sha("HEAD", root = path[["local"]]),
+  expect_equal(orderly_git_ref_to_sha("HEAD", root = path[["local"]]),
                sha[["local"]])
-  expect_true(orderly:::git_ref_exists(sha[["origin"]], path[["local"]]))
+  expect_true(orderly_git_ref_exists(sha[["origin"]], path[["local"]]))
 })
 
 
 test_that("git error returns valid json", {
-  path <- orderly:::prepare_orderly_git_example()
+  path <- orderly_prepare_orderly_git_example()
   server <- start_test_server(path[["local"]])
   on.exit(server$stop())
 
-  ## runner <- server_endpoints(orderly::orderly_runner(path[["local"]]))
-  orderly:::git_run(c("remote", "remove", "origin"), root = path[["local"]])
+  orderly_git_run(c("remote", "remove", "origin"), root = path[["local"]])
 
   r <- content(httr::GET(server$api_url("/v1/reports/git/status/")))
   res <- httr::POST(server$api_url("/v1/reports/git/fetch/"))
   json <- httr::content(res, "text", encoding = "UTF-8")
-  expect_valid_json(json, "spec/Response.schema.json")
 })
 
 
@@ -274,27 +238,20 @@ test_that("pass parameters", {
   expect_match(st$data$output$stderr, "poll: 0.1", fixed = TRUE, all = FALSE)
 })
 
-test_that("run can specify instance", {
-  ## We're interested in testing that orderly.server passes instance arg
-  ## to the runner$queue arg - we can do this via mocks
-  mock_queue <- mockery::mock(TRUE)
-  mock_runner <- list(
-    queue = mock_queue
-  )
+test_that("run-metadata", {
+  path <- orderly_prepare_orderly_git_example()
+  server <- start_test_server(path[["local"]])
+  on.exit(server$stop())
 
-  res <- server_endpoints(mock_runner)
+  r <- content(httr::GET(server$api_url("/run-metadata")))
 
-  expect_equal(res$run$query, c("parameters", "ref", "instance", "update",
-                                "timeout"))
-
-  data <- res$run$dest("example", instance = "instance")
-
-  mockery::expect_called(mock_queue, 1)
-  args <- mockery::mock_args(mock_queue)[[1]]
-  expect_equal(args[[1]], "example")
-  expect_equal(args[[2]], NULL)
-  expect_equal(args[[3]], NULL)
-  expect_equal(args[[4]], "instance")
-  expect_equal(args[[5]], TRUE)
-  expect_equal(args$timeout, 600)
+  expect_equal(r$status, "success")
+  expect_null(r$errors)
+  expect_equal(names(r$data), c("name", "instances_supported", "git_supported",
+                                "instances", "changelog_types"))
+  expect_null(r$data$name)
+  expect_false(r$data$instances_supported)
+  expect_true(r$data$git_supported)
+  expect_equal(r$data$instances, list(source = list()))
+  expect_equal(r$data$changelog_types, c(scalar("public")))
 })

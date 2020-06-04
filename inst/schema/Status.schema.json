@@ -1,4 +1,5 @@
 {
+    "$schema": "http://json-schema.org/draft-04/schema#",
     "id": "Status",
     "type": "object",
     "properties": {
@@ -8,13 +9,19 @@
         },
         "version": {
             "oneOf": [
-                {"type": "null"},
-                {"$ref": "OrderlyId.schema.json"}
+                {
+                    "type": "null"
+                },
+                {
+                    "$ref": "OrderlyId.schema.json"
+                }
             ]
         },
         "output": {
             "oneOf": [
-                {"type": "null"},
+                {
+                    "type": "null"
+                },
                 {
                     "type": "object",
                     "properties": {

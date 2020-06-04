@@ -1,1 +1,1 @@
-tests/testthat/spec/
+inst/schema

@@ -2,12 +2,15 @@ FROM vimc/orderly:master
 
 RUN apt-get update || apt-get update && apt-get install -y \
   libcurl4-openssl-dev \
+  libv8-dev \
   openssh-client
 
 # processx is an orderly Suggests that we require for the server.
 RUN install2.r --error \
-  httpuv \
+  --repos https://cloud.r-project.org \
+  --repos https://vimc.github.io/drat \
   jsonlite \
+  pkgapi \
   processx \
   webutils
 

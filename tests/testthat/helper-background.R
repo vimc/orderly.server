@@ -1,15 +1,12 @@
-##' Primarily for testing, start a server in the background
-##' @title Start a background orderly.server
-##' @param path Path to an orderly root
-##' @param port Port to listen on
-##' @param log Path to log to
-##' @export
-orderly_server_background <- function(path, port = 8321, log = NULL) {
-  R6_orderly_server_background$new(path, port, log)
+start_test_server <- function(path = NULL, port = 8321, log = NULL) {
+  path <- path %||% orderly::orderly_example("interactive")
+  server <- orderly_server_background$new(path, port, log)
+  server$start()
+  server
 }
 
 
-R6_orderly_server_background <- R6::R6Class(
+orderly_server_background <- R6::R6Class(
   "orderly_server_background",
 
   public = list(
@@ -37,6 +34,10 @@ R6_orderly_server_background <- R6::R6Class(
       self$log <- log %||% tempfile()
     },
 
+    finalize = function() {
+      self$stop()
+    },
+
     start = function() {
       if (!is.null(self$pid)) {
         stop("Server already set up")
@@ -45,21 +46,21 @@ R6_orderly_server_background <- R6::R6Class(
         stop("Server already listening on port ", port)
       }
 
-      Sys.setenv(R_TESTS = "")
-
+      Sys.setenv(R_TESTS = "") # nolint
+      lib_paths <- .libPaths() # nolint
       libs <- sprintf("c(%s)",
-                      paste(sprintf('"%s"', .libPaths()), collapse = ", "))
+                      paste(sprintf('"%s"', lib_paths), collapse = ", "))
       code <-
         c(sprintf('path <- "%s"', self$path),
           sprintf("port <- %d", self$port),
           sprintf(".libPaths(%s)", libs),
-          'orderly.server::server(path, port, "127.0.0.1", poll_interrupt = 1)')
+          'orderly.server::server(path, port, "127.0.0.1")')
       path_server <- tempfile()
       writeLines(code, path_server)
 
       unlink(self$log)
-      Rscript <- file.path(R.home("bin"), "Rscript")
-      self$pid <- sys::exec_background(Rscript, path_server,
+      rscript <- file.path(R.home("bin"), "Rscript")
+      self$pid <- sys::exec_background(rscript, path_server,
                                        std_out = self$log, std_err = self$log)
 
       message("waiting for server to become responsive")
@@ -69,6 +70,7 @@ R6_orderly_server_background <- R6::R6Class(
 
     stop = function() {
       if (!is.null(self$pid)) {
+        message("Stopping server")
         tools::pskill(self$pid, tools::SIGINT)
         Sys.sleep(0.15)
         tools::pskill(self$pid, tools::SIGKILL)

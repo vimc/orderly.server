@@ -11,3 +11,5 @@
 ^orderly$
 ^spec$
 ^buildkite$
+^\.lintr$
+^\.hadolint\.yaml$

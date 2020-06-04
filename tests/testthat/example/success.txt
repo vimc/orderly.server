@@ -1,0 +1,23 @@
+[ name       ]  example
+[ id         ]  20200414-123013-a1df28f7
+[ id_file    ]  /var/folders/z7/c2kx_kt96zn2tt_6179bkc4m0000gp/T//RtmpfuWBkp/file1b3723ae81ab/runner/id/unhygenic_ostrich
+[ data       ]  source => dat: 20 x 2
+[ start      ]  2020-04-14 12:30:14
+
+> png("mygraph.png")
+
+> par(mar = c(15, 4, 0.5, 0.5))
+
+> barplot(setNames(dat$number, dat$name), las = 2)
+
+> dev.off()
+null device
+          1
+[ end        ]  2020-04-14 12:30:14
+[ elapsed    ]  Ran report in 0.03502607 secs
+[ artefact   ]  mygraph.png: 4a3f4c9ae4d54c3f4e9aa4d5abd46a7c
+[ commit     ]  example/20200414-123013-a1df28f7
+[ copy       ]
+[ import     ]  example:20200414-123013-a1df28f7
+[ success    ]  :)
+id:20200414-123013-a1df28f7
