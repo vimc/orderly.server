@@ -6,6 +6,7 @@ build_api <- function(runner) {
   api$handle(endpoint_git_status(runner))
   api$handle(endpoint_git_fetch(runner))
   api$handle(endpoint_git_pull(runner))
+  api$handle(endpoint_git_branches(runner))
   api$handle(endpoint_run(runner))
   api$handle(endpoint_status(runner))
   api$handle(endpoint_kill(runner))
@@ -96,6 +97,17 @@ endpoint_git_pull <- function(runner) {
     "POST", "/v1/reports/git/pull/", target_git_pull,
     pkgapi::pkgapi_state(runner = runner),
     returning = returning_json("GitPull.schema"))
+}
+
+target_git_branches <- function(runner) {
+  runner$git_branches_no_merged(include_master = TRUE)
+}
+
+endpoint_git_branches <- function(runner) {
+  pkgapi::pkgapi_endpoint$new(
+    "GET", "/git/branches", target_git_branches,
+    pkgapi::pkgapi_state(runner = runner),
+    returning = returning_json("GitBranches.schema"))
 }
 
 target_run <- function(runner, name, parameters = NULL, ref = NULL,
