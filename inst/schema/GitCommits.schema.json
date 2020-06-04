@@ -1,0 +1,15 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "GitCommits",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "id": { "type": "string" },
+            "date_time": { "type": "string" },
+            "age": { "type": "integer" }
+        },
+        "required": ["id", "date_time", "age"],
+        "additionalProperties": false
+    }
+}

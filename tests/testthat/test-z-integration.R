@@ -270,3 +270,17 @@ test_that("git/branches", {
   expect_equal(r$data[[1]]$name, "master")
   expect_equal(r$data[[2]]$name, "other")
 })
+
+test_that("git/commits", {
+  path <- orderly_prepare_orderly_git_example()
+  server <- start_test_server(path[["local"]])
+  on.exit(server$stop())
+
+  r <- content(httr::GET(server$api_url("/git/commits?master")))
+
+  expect_equal(r$status, "success")
+  expect_null(r$errors)
+  expect_length(r$data, 2)
+  expect_equal(names(r$data[[1]]), c("name", "date_time", "age"))
+  ## TODO: Add some checks for name, date_time, age etc.
+})
