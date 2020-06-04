@@ -276,11 +276,21 @@ test_that("git/commits", {
   server <- start_test_server(path[["local"]])
   on.exit(server$stop())
 
-  r <- content(httr::GET(server$api_url("/git/commits?master")))
+  r <- content(httr::GET(server$api_url("/git/commits?branch=master")))
 
   expect_equal(r$status, "success")
   expect_null(r$errors)
-  expect_length(r$data, 2)
-  expect_equal(names(r$data[[1]]), c("name", "date_time", "age"))
-  ## TODO: Add some checks for name, date_time, age etc.
+  expect_length(r$data, 1)
+  expect_equal(names(r$data[[1]]), c("id", "date_time", "age"))
+  expect_type(r$data[[1]]$id, "character")
+  expect_match(r$data[[1]]$date_time,
+               "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$")
+  expect_type(r$data[[1]]$age, "integer")
+
+  other_r <- content(httr::GET(server$api_url("/git/commits?branch=other")))
+
+  expect_equal(other_r$status, "success")
+  expect_null(other_r$errors)
+  expect_length(other_r$data, 1)
+  expect_true(other_r$data[[1]]$id != r$data[[1]]$id)
 })
