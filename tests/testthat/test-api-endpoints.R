@@ -593,3 +593,22 @@ test_that("git branches endpoint", {
   expect_equal(branches$status_code, 200)
   expect_equal(branches$data, branch_data)
 })
+
+test_that("git commits endpoint", {
+  path <- orderly_prepare_orderly_git_example()
+  commit_data <- data.frame(
+    id = c("2h38dns", "a2d862nd"),
+    date_time = c("20-04-31 23:12:32", "20-05-23 08:54:49"),
+    age = c(324, 124),
+    stringsAsFactors = FALSE
+  )
+  runner <- mock_runner(git_commits = commit_data)
+  endpoint <- endpoint_git_commits(runner)
+
+  commits <- endpoint$run("master")
+  expect_equal(commits$status_code, 200)
+  expect_equal(commits$data, commit_data)
+  args <- mockery::mock_args(runner$git_commits)
+  expect_length(args, 1)
+  expect_equal(args[[1]][[1]], "master")
+})

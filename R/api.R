@@ -7,6 +7,7 @@ build_api <- function(runner) {
   api$handle(endpoint_git_fetch(runner))
   api$handle(endpoint_git_pull(runner))
   api$handle(endpoint_git_branches(runner))
+  api$handle(endpoint_git_commits(runner))
   api$handle(endpoint_run(runner))
   api$handle(endpoint_status(runner))
   api$handle(endpoint_kill(runner))
@@ -108,6 +109,18 @@ endpoint_git_branches <- function(runner) {
     "GET", "/git/branches", target_git_branches,
     pkgapi::pkgapi_state(runner = runner),
     returning = returning_json("GitBranches.schema"))
+}
+
+target_git_commits <- function(runner, branch) {
+  runner$git_commits(branch)
+}
+
+endpoint_git_commits <- function(runner) {
+  pkgapi::pkgapi_endpoint$new(
+    "GET", "/git/commits", target_git_commits,
+    pkgapi::pkgapi_input_query(branch = "string"),
+    pkgapi::pkgapi_state(runner = runner),
+    returning = returning_json("GitCommits.schema"))
 }
 
 target_run <- function(runner, name, parameters = NULL, ref = NULL,
