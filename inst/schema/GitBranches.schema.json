@@ -1,0 +1,15 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "GitBranches",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "name": { "type": "string" },
+            "last_commit": { "type": "string" },
+            "last_commit_age": { "type": "integer" }
+        },
+        "required": ["name", "last_commit", "last_commit_age"],
+        "additionalProperties": false
+    }
+}
