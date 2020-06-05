@@ -294,3 +294,25 @@ test_that("git/commits", {
   expect_length(other_r$data, 1)
   expect_true(other_r$data[[1]]$id != r$data[[1]]$id)
 })
+
+test_that("can get available reports", {
+  path <- orderly_prepare_orderly_git_example()
+  server <- start_test_server(path[["local"]])
+  on.exit(server$stop())
+
+  r <- content(httr::GET(server$api_url("/git/commits?branch=master")))
+  expect_equal(r$status, "success")
+
+  url <- paste0("/reports/source?branch=master&commit=", r$data[[1]]$id)
+  reports <- content(httr::GET(server$api_url(url)))
+  expect_equal(reports$status, "success")
+  expect_equal(reports$data, c("global", "minimal"))
+
+  other_r <- content(httr::GET(server$api_url("/git/commits?branch=other")))
+  expect_equal(other_r$status, "success")
+
+  url <- paste0("/reports/source?branch=other&commit=", other_r$data[[1]]$id)
+  other_reports <- content(httr::GET(server$api_url(url)))
+  expect_equal(other_reports$status, "success")
+  expect_equal(other_reports$data, "other")
+})

@@ -10,7 +10,7 @@ Imports:
     httpuv,
     jsonlite,
     docopt,
-    orderly (>= 1.2.7),
+    orderly (>= 1.2.9),
     pkgapi (>= 0.0.7),
     processx,
     webutils
