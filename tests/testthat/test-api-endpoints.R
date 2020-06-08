@@ -626,3 +626,39 @@ test_that("can get available reports for a branch & commit", {
   expect_equal(args[[1]][[1]], "master")
   expect_equal(args[[1]][[2]], "84hd82n")
 })
+
+test_that("can get parameters for a report & commit", {
+  path <- orderly_prepare_orderly_git_example()
+  runner <- mock_runner(get_report_parameters = list(
+    a = NULL,
+    b = list(
+      default = "test"
+    ),
+    c = list(
+      default = 2
+    )
+  ))
+  endpoint <- endpoint_report_parameters(runner)
+
+  params <- endpoint$run("minimal", "84hd82n")
+  expect_equal(params$status_code, 200)
+  expect_equal(params$data, list(
+    list(name = scalar("a"), default = NULL),
+    list(name = scalar("b"), default = scalar("test")),
+    list(name = scalar("c"), default = scalar(2))
+  ))
+  args <- mockery::mock_args(runner$get_report_parameters)
+  expect_length(args, 1)
+  expect_equal(args[[1]][[1]], "minimal")
+  expect_equal(args[[1]][[2]], "84hd82n")
+})
+
+test_that("report parameters endpoint supports no parameters", {
+  path <- orderly_prepare_orderly_git_example()
+  runner <- mock_runner(get_report_parameters = NULL)
+  endpoint <- endpoint_report_parameters(runner)
+
+  params <- endpoint$run("minimal", "84hd82n")
+  expect_equal(params$status_code, 200)
+  expect_equal(params$data, list())
+})

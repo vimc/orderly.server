@@ -316,3 +316,29 @@ test_that("can get available reports", {
   expect_equal(other_reports$status, "success")
   expect_equal(other_reports$data, "other")
 })
+
+test_that("can get report parameters", {
+  path <- orderly_prepare_orderly_git_example()
+  server <- start_test_server(path[["local"]])
+  on.exit(server$stop())
+
+  r <- content(httr::GET(server$api_url("/git/commits?branch=master")))
+  expect_equal(r$status, "success")
+
+  url <- paste0("/reports/minimal/parameters?commit=", r$data[[1]]$id)
+  params <- content(httr::GET(server$api_url(url)))
+  expect_equal(params$status, "success")
+  expect_equal(params$data, list())
+  expect_equal(params$errors, NULL)
+
+  other_r <- content(httr::GET(server$api_url("/git/commits?branch=other")))
+  expect_equal(other_r$status, "success")
+
+  url <- paste0("/reports/other/parameters?commit=", other_r$data[[1]]$id)
+  other_params <- content(httr::GET(server$api_url(url)))
+  expect_equal(other_params$status, "success")
+  expect_equal(other_params$data, list(
+    list(name = "nmin",
+         default = NULL)
+  ))
+})
