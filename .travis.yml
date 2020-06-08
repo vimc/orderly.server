@@ -10,8 +10,8 @@ after_success:
   - Rscript -e 'covr::codecov()'
 
 r_github_packages:
-  - vimc/orderly@vimc-3945
-  - reside-ic/pkgapi
+  - vimc/orderly@vimc-3953
+      - reside-ic/pkgapi
   - ropensci/jsonvalidate
 
 addons:
