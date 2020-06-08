@@ -12,6 +12,7 @@ build_api <- function(runner) {
   api$handle(endpoint_status(runner))
   api$handle(endpoint_kill(runner))
   api$handle(endpoint_run_metadata(runner))
+  api$handle(endpoint_available_reports(runner))
   ## RESIDE-163: we need to prevent these hooks throwing errors, or
   ## force them to throw errors of the correct type - that needs doing
   ## in pkgapi
@@ -213,4 +214,18 @@ endpoint_run_metadata <- function(runner) {
    pkgapi::pkgapi_state(runner = runner),
    returning = returning_json("RunMetadata.schema")
  )
+}
+
+target_available_reports <- function(runner, branch, commit) {
+  runner$get_reports(branch, commit)
+}
+
+endpoint_available_reports <- function(runner) {
+  pkgapi::pkgapi_endpoint$new(
+    "GET", "/reports/source", target_available_reports,
+    pkgapi::pkgapi_input_query(branch = "string"),
+    pkgapi::pkgapi_input_query(commit = "string"),
+    pkgapi::pkgapi_state(runner = runner),
+    returning = returning_json("AvailableReports.schema")
+  )
 }

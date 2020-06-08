@@ -612,3 +612,17 @@ test_that("git commits endpoint", {
   expect_length(args, 1)
   expect_equal(args[[1]][[1]], "master")
 })
+
+test_that("can get available reports for a branch & commit", {
+  path <- orderly_prepare_orderly_git_example()
+  runner <- mock_runner(get_reports = c("report-1", "report-2"))
+  endpoint <- endpoint_available_reports(runner)
+
+  commits <- endpoint$run("master", "84hd82n")
+  expect_equal(commits$status_code, 200)
+  expect_equal(commits$data, c("report-1", "report-2"))
+  args <- mockery::mock_args(runner$get_reports)
+  expect_length(args, 1)
+  expect_equal(args[[1]][[1]], "master")
+  expect_equal(args[[1]][[2]], "84hd82n")
+})
