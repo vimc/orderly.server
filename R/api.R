@@ -238,7 +238,7 @@ target_report_parameters <- function(runner, report_id, commit) {
       pkgapi::pkgapi_stop(e$message, "FAILED_RETRIEVE_PARAMS")
     }
   )
-  if (is.null(names(parameters)) && !is.null(parameters)) {
+  if (!is.null(parameters) && is.null(names(parameters))) {
     pkgapi::pkgapi_stop(
       sprintf("Failed to parse parameters for report '%s' and commit '%s'",
               report_id, commit),
