@@ -1,0 +1,14 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "ReportParameters",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "name": { "type": "string" },
+            "default": { "type": [ "string", "null" ] }
+        },
+        "required": [ "name", "default" ],
+        "additionalProperties": false
+    }
+}
