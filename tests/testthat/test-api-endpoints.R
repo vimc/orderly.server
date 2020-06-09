@@ -662,3 +662,26 @@ test_that("report parameters endpoint supports no parameters", {
   expect_equal(params$status_code, 200)
   expect_equal(params$data, list())
 })
+
+test_that("report parameter endponits handles errors", {
+  path <- orderly_prepare_orderly_git_example()
+  runner <- mock_runner(get_report_parameters =
+                          stop("Failed to get report parameters"))
+  endpoint <- endpoint_report_parameters(runner)
+
+  params <- endpoint$run("minimal", "84hd82n")
+  expect_equal(params$status_code, 400)
+  expect_equal(params$error$data[[1]]$error, scalar("FAILED_RETRIEVE_PARAMS"))
+  expect_equal(params$error$data[[1]]$detail,
+               scalar("Failed to get report parameters"))
+
+  ## Invalid format of parameters throws an error
+  runner <- mock_runner(get_report_parameters = c("param1", "param2"))
+  endpoint <- endpoint_report_parameters(runner)
+
+  params <- endpoint$run("minimal", "84hd82n")
+  expect_equal(params$status_code, 400)
+  expect_equal(params$error$data[[1]]$error, scalar("INVALID_FORMAT"))
+  expect_equal(params$error$data[[1]]$detail, scalar(
+    "Failed to parse parameters for report 'minimal' and commit '84hd82n'"))
+})

@@ -232,7 +232,18 @@ endpoint_available_reports <- function(runner) {
 }
 
 target_report_parameters <- function(runner, report_id, commit) {
-  parameters <- runner$get_report_parameters(report_id, commit)
+  tryCatch(
+    parameters <- runner$get_report_parameters(report_id, commit),
+    error = function(e) {
+      pkgapi::pkgapi_stop(e$message, "FAILED_RETRIEVE_PARAMS")
+    }
+  )
+  if (is.null(names(parameters)) && !is.null(parameters)) {
+    pkgapi::pkgapi_stop(
+      sprintf("Failed to parse parameters for report '%s' and commit '%s'",
+              report_id, commit),
+      "INVALID_FORMAT")
+  }
   lapply(names(parameters), function(param) {
     default <- parameters[[param]]$default
     list(
