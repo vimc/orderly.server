@@ -5,8 +5,8 @@
     "items": {
         "type": "object",
         "properties": {
-            "name": "string",
-            "default": [ "string", "null" ]
+            "name": { "type": "string" },
+            "default": { "type": [ "string", "null" ] }
         },
         "required": [ "name", "default" ],
         "additionalProperties": false
