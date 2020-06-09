@@ -3,7 +3,12 @@
     "id": "ReportParameters",
     "type": "array",
     "items": {
-        "name": "string",
-        "default": [ "string", "null" ]
+        "type": "object",
+        "properties": {
+            "name": "string",
+            "default": [ "string", "null" ]
+        },
+        "required": [ "name", "default" ],
+        "additionalProperties": false
     }
 }
