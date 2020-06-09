@@ -246,9 +246,12 @@ target_report_parameters <- function(runner, report_id, commit) {
   }
   lapply(names(parameters), function(param) {
     default <- parameters[[param]]$default
+    if (!is.null(default)) {
+      default <- as.character(default)
+    }
     list(
       name = scalar(param),
-      default = scalar(parameters[[param]]$default)
+      default = scalar(default)
     )
   })
 }
