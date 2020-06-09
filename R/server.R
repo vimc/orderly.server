@@ -27,7 +27,7 @@ server <- function(path, port, host = "0.0.0.0", allow_ref = TRUE,
   message("Orderly root: ", path)
 
   wait_for_go_signal(path, go_signal)
-  runner <- orderly::orderly_runner(path, allow_ref)
+  runner <- orderly_runner(path, allow_ref)
   api <- build_api(runner)
   api$run(host, port)
 

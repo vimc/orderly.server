@@ -61,7 +61,7 @@ test_that("run: success", {
   testthat::skip_on_cran()
   skip_on_appveyor()
   skip_on_windows()
-  path <- prepare_orderly_example("interactive")
+  path <- orderly_prepare_orderly_example("interactive")
 
   expect_false(file.exists(file.path(path, "orderly.sqlite")))
   runner <- orderly_runner(path)
@@ -108,7 +108,7 @@ test_that("run: error", {
   skip_on_appveyor()
   skip_on_windows()
 
-  path <- prepare_orderly_example("interactive")
+  path <- orderly_prepare_orderly_example("interactive")
   runner <- orderly_runner(path)
   dat <- runner_start_interactive(runner)
 
@@ -127,7 +127,7 @@ test_that("run: error", {
 test_that("run report with parameters", {
   testthat::skip_on_cran()
   skip_on_windows()
-  path <- prepare_orderly_example("demo")
+  path <- orderly_prepare_orderly_example("demo")
   runner <- orderly_runner(path)
   pars <- '{"nmin":0.5}'
   key <- runner$queue("other", parameters = pars)
@@ -145,7 +145,7 @@ test_that("run report with parameters", {
 
 test_that("rebuild", {
   testthat::skip_on_cran()
-  path <- prepare_orderly_example("minimal")
+  path <- orderly_prepare_orderly_example("minimal")
   runner <- orderly_runner(path)
 
   name <- "example"
@@ -179,7 +179,7 @@ test_that("run in branch (local)", {
 
 test_that("fetch / detach / pull", {
   testthat::skip_on_cran()
-  path <- prepare_orderly_git_example()
+  path <- orderly_prepare_orderly_git_example()
   path1 <- path[["origin"]]
   path2 <- path[["local"]]
 
@@ -220,7 +220,7 @@ test_that("prevent git change", {
 
 test_that("Can't git change", {
   testthat::skip_on_cran()
-  path <- prepare_orderly_example("interactive")
+  path <- orderly_prepare_orderly_example("interactive")
   runner <- orderly_runner(path)
   expect_error(runner$queue("other", ref = "other"),
                "Reference switching is disallowed in this runner")
@@ -229,7 +229,7 @@ test_that("Can't git change", {
 
 test_that("cleanup", {
   testthat::skip_on_cran()
-  path <- prepare_orderly_example("minimal")
+  path <- orderly_prepare_orderly_example("minimal")
   on.exit(unlink(path, recursive = TRUE))
 
   id <- orderly_run("example", root = path, echo = FALSE)
@@ -254,7 +254,7 @@ test_that("kill", {
   testthat::skip_on_cran()
   skip_on_windows()
   skip_on_appveyor()
-  path <- prepare_orderly_example("interactive")
+  path <- orderly_prepare_orderly_example("interactive")
   runner <- orderly_runner(path)
   name <- "interactive"
   key <- runner$queue(name)
@@ -270,7 +270,7 @@ test_that("kill - wrong process", {
   testthat::skip_on_cran()
   skip_on_windows()
   skip_on_appveyor()
-  path <- prepare_orderly_example("interactive")
+  path <- orderly_prepare_orderly_example("interactive")
   runner <- orderly_runner(path)
   name <- "interactive"
   key <- runner$queue(name)
@@ -285,7 +285,7 @@ test_that("kill - wrong process", {
 
 test_that("kill - no process", {
   testthat::skip_on_cran()
-  path <- prepare_orderly_example("interactive")
+  path <- orderly_prepare_orderly_example("interactive")
   runner <- orderly_runner(path)
   key <- "virtual_plant"
   expect_error(runner$kill(key),
@@ -296,7 +296,7 @@ test_that("timeout", {
   testthat::skip_on_cran()
   skip_on_windows()
   skip_on_appveyor()
-  path <- prepare_orderly_example("interactive")
+  path <- orderly_prepare_orderly_example("interactive")
   runner <- orderly_runner(path)
   name <- "interactive"
   key <- runner$queue(name, timeout = 0)
@@ -309,7 +309,7 @@ test_that("timeout", {
 test_that("queue_status", {
   testthat::skip_on_cran()
   skip_on_windows()
-  path <- prepare_orderly_example("interactive")
+  path <- orderly_prepare_orderly_example("interactive")
   runner <- orderly_runner(path)
 
   expect_equal(
@@ -349,7 +349,7 @@ test_that("queue_status", {
 test_that("queue status", {
   testthat::skip_on_cran()
   skip_on_windows()
-  path <- prepare_orderly_example("interactive")
+  path <- orderly_prepare_orderly_example("interactive")
   runner <- orderly_runner(path)
 
   name <- "interactive"
@@ -390,7 +390,7 @@ test_that("queue status", {
 test_that("prevent git changes", {
   testthat::skip_on_cran()
   skip_on_windows()
-  path <- prepare_orderly_git_example()
+  path <- orderly_prepare_orderly_git_example()
 
   cfg <- list(
     database = list(
@@ -465,7 +465,7 @@ test_that("allow ref logic", {
 
 test_that("backup", {
   testthat::skip_on_cran()
-  path <- prepare_orderly_example("minimal")
+  path <- orderly_prepare_orderly_example("minimal")
   id <- orderly_run("example", root = path, echo = FALSE)
   orderly_commit(id, root = path)
 
@@ -490,7 +490,7 @@ test_that("backup", {
 test_that("runner can set instance", {
   testthat::skip_on_cran()
   skip_on_windows()
-  path <- prepare_orderly_example("demo")
+  path <- orderly_prepare_orderly_example("demo")
 
   mock_process <- mockery::mock(TRUE, cycle = TRUE)
 
@@ -523,7 +523,7 @@ test_that("runner can set instance", {
 
 test_that("can get git branch info from runner", {
     testthat::skip_on_cran()
-    path <- prepare_orderly_git_example()
+    path <- orderly_prepare_orderly_git_example()
     runner <- orderly_runner(path[["local"]])
 
     branches <- runner$git_branches_no_merged()
@@ -544,7 +544,7 @@ test_that("can get git branch info from runner", {
 
 test_that("can get git commit info from runner", {
   testthat::skip_on_cran()
-  path <- prepare_orderly_git_example()
+  path <- orderly_prepare_orderly_git_example()
   runner <- orderly_runner(path[["local"]])
 
   commits <- runner$git_commits("master")
@@ -567,7 +567,7 @@ test_that("can get git commit info from runner", {
 
 test_that("can get report list from runner", {
   testthat::skip_on_cran()
-  path <- prepare_orderly_git_example()
+  path <- orderly_prepare_orderly_git_example()
   runner <- orderly_runner(path[["local"]])
 
   commits <- runner$git_commits("master")
@@ -583,7 +583,7 @@ test_that("can get report list from runner", {
 
 test_that("can get parameters list from runner", {
   testthat::skip_on_cran()
-  path <- prepare_orderly_git_example()
+  path <- orderly_prepare_orderly_git_example()
   runner <- orderly_runner(path[["local"]])
 
   commits <- runner$git_commits("master")

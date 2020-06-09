@@ -53,7 +53,7 @@ test_that("run server", {
   msg <- capture_messages(
     with_mock(
       "orderly.server:::wait_for_go_signal" = mock_wait_for_go_signal,
-      "orderly::orderly_runner" = mock_orderly_runner,
+      "orderly.server:::orderly_runner" = mock_orderly_runner,
       "orderly.server:::build_api" = mock_build_api,
       server(path, port, host, allow_ref, go_signal)))
   expect_match(msg[[1]], "Starting orderly server on port 1234")

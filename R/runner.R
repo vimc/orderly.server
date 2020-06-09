@@ -26,7 +26,6 @@
 ##'   you are storing information alongside the core orderly tables
 ##'   (as done by OrderlyWeb).
 ##'
-##' @export
 ##' @return A runner object, with methods designed for internal use only.
 ##' @examples
 ##'
