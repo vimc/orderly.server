@@ -21,11 +21,11 @@ Options:
        go_signal = res[["go-signal"]])
 }
 
-write_script <- function(path) {
+write_script <- function(path, code) {
   if (!isTRUE(file.info(path, extra_cols = FALSE)$isdir)) {
     stop("'path' must be a directory")
   }
-  code <- c("#!/usr/bin/env Rscript", "orderly.server:::main()")
+  code <- c("#!/usr/bin/env Rscript", code)
   path_bin <- file.path(path, "orderly.server")
   writeLines(code, path_bin)
   Sys.chmod(path_bin, "755")

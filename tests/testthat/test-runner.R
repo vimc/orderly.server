@@ -28,7 +28,7 @@ test_that("runner queue", {
                        instance = NA_character_, id = NA_character_,
                        timeout = 600))
 
-  expect_true(queue$set_state(key2, "running", new_report_id()))
+  expect_true(queue$set_state(key2, "running", "new_id2"))
 
   d <- queue$next_queued()
   expect_equal(d, list(key = key3, state = "queued", name = "c",
@@ -36,25 +36,25 @@ test_that("runner queue", {
                        instance = NA_character_, id = NA_character_,
                        timeout = 600))
 
-  expect_true(queue$set_state(key3, "running", new_report_id()))
+  expect_true(queue$set_state(key3, "running", "new_id3"))
 
   d <- queue$next_queued()
   expect_equal(d, list(key = key4, state = "queued", name = "d",
                        parameters = NA_character_, ref = NA_character_,
                        instance = NA_character_, id = NA_character_,
                        timeout = 200))
-  expect_true(queue$set_state(key4, "running", new_report_id()))
+  expect_true(queue$set_state(key4, "running", "new_id4"))
 
   d <- queue$next_queued()
   expect_equal(d, list(key = key5, state = "queued", name = "e",
                        parameters = NA_character_, ref = NA_character_,
                        instance = "instance", id = NA_character_,
                        timeout = 600))
-  expect_true(queue$set_state(key5, "running", new_report_id()))
+  expect_true(queue$set_state(key5, "running", "new_id5"))
 
   expect_null(queue$next_queued())
 
-  expect_false(queue$set_state("unknown", "running", new_report_id()))
+  expect_false(queue$set_state("unknown", "running", "id"))
 })
 
 test_that("run: success", {
@@ -134,7 +134,7 @@ test_that("run report with parameters", {
   runner$poll()
   id <- wait_for_id(runner, key)
   wait_while_running(runner)
-  d <- orderly_list_archive(path)
+  d <- orderly::orderly_list_archive(path)
   expect_equal(d$name, "other")
   expect_equal(d$id, id)
 
@@ -149,8 +149,8 @@ test_that("rebuild", {
   runner <- orderly_runner(path)
 
   name <- "example"
-  id <- orderly_run(name, root = path, echo = FALSE)
-  orderly_commit(id, name, root = path)
+  id <- orderly::orderly_run(name, root = path, echo = FALSE)
+  orderly::orderly_commit(id, name, root = path)
 
   path_db <- file.path(path, "orderly.sqlite")
   file.remove(path_db)
@@ -162,7 +162,7 @@ test_that("run in branch (local)", {
   testthat::skip_on_cran()
   skip_on_appveyor()
   skip_on_windows()
-  path <- unzip_git_demo()
+  path <- orderly_unzip_git_demo()
   runner <- orderly_runner(path)
 
   pars <- '{"nmin":0}'
@@ -171,7 +171,7 @@ test_that("run in branch (local)", {
   id <- wait_for_id(runner, key)
   wait_while_running(runner)
 
-  d <- orderly_list_archive(path)
+  d <- orderly::orderly_list_archive(path)
   expect_equal(nrow(d), 1L)
   expect_equal(d$name, "other")
   expect_equal(d$id, id)
@@ -212,7 +212,7 @@ test_that("fetch / detach / pull", {
 
 test_that("prevent git change", {
   testthat::skip_on_cran()
-  path <- unzip_git_demo()
+  path <- orderly_unzip_git_demo()
   runner <- orderly_runner(path, FALSE)
   expect_error(runner$queue("other", ref = "other"),
                "Reference switching is disallowed in this runner")
@@ -232,11 +232,11 @@ test_that("cleanup", {
   path <- orderly_prepare_orderly_example("minimal")
   on.exit(unlink(path, recursive = TRUE))
 
-  id <- orderly_run("example", root = path, echo = FALSE)
-  orderly_commit(id, root = path)
+  id <- orderly::orderly_run("example", root = path, echo = FALSE)
+  orderly::orderly_commit(id, root = path)
 
   writeLines("1 + 1", file.path(path, "src/example/script.R"))
-  expect_error(orderly_run("example", root = path, echo = FALSE),
+  expect_error(orderly::orderly_run("example", root = path, echo = FALSE),
                "Script did not produce")
 
   runner <- orderly_runner(path)
@@ -244,9 +244,9 @@ test_that("cleanup", {
   expect_silent(runner$cleanup())
 
   expect_equal(
-    nrow(orderly_list2(TRUE, root = path, include_failed = TRUE)),
+    nrow(orderly::orderly_list_drafts(TRUE, root = path, include_failed = TRUE)),
     0L)
-  expect_equal(orderly_list2(FALSE, root = path)$id, id)
+  expect_equal(orderly::orderly_list_archive(FALSE, root = path)$id, id)
 })
 
 
@@ -439,7 +439,7 @@ test_that("prevent git changes", {
 
 test_that("allow ref logic", {
   testthat::skip_on_cran()
-  path <- unzip_git_demo()
+  path <- orderly_unzip_git_demo()
   config <- list(server_options = function() list(master_only = FALSE),
                  root = path)
 
@@ -466,8 +466,8 @@ test_that("allow ref logic", {
 test_that("backup", {
   testthat::skip_on_cran()
   path <- orderly_prepare_orderly_example("minimal")
-  id <- orderly_run("example", root = path, echo = FALSE)
-  orderly_commit(id, root = path)
+  id <- orderly::orderly_run("example", root = path, echo = FALSE)
+  orderly::orderly_commit(id, root = path)
 
   db_orig <- file.path(path, "orderly.sqlite")
   dat_orig <- with_sqlite(db_orig, function(con)

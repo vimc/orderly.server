@@ -16,7 +16,8 @@ RUN install2.r --error \
 
 COPY . /orderly.server
 RUN R CMD INSTALL /orderly.server && \
-  Rscript -e 'orderly.server:::write_script("/usr/bin")' && \
+  Rscript -e 'orderly.server:::write_script("/usr/bin",
+                                            "orderly.server:::main()")' && \
   rm -rf /orderly.server
 
 EXPOSE 8321

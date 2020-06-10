@@ -31,6 +31,8 @@
 ##'
 ##' path <- orderly::orderly_example("demo")
 ##' runner <- orderly::orderly_runner(path)
+##'
+##' @importFrom orderly orderly_config_get
 orderly_runner <- function(path, allow_ref = NULL, backup_period = 600) {
   orderly_runner_$new(path, allow_ref, backup_period)
 }
@@ -67,7 +69,7 @@ orderly_runner_ <- R6::R6Class(
 
     initialize = function(path, allow_ref, backup_period) {
       self$path <- path
-      self$config <- orderly_config_get(path)
+      self$config <- orderly:::orderly_config_get(path)
       self$has_git <- runner_has_git(path)
       if (!self$has_git) {
         message("Not enabling git features as this is not version controlled")
@@ -78,16 +80,18 @@ orderly_runner_ <- R6::R6Class(
         message("Disallowing reference switching in runner")
       }
 
-      do_backup <- protect(function() orderly_backup(self$config))
+      do_backup <- protect(function() orderly:::orderly_backup(self$config))
       self$backup <- periodic(do_backup, backup_period)
 
       bin <- tempfile()
       dir.create(bin)
-      self$orderly_bin <- write_script(bin, versioned = TRUE)
+      self$orderly_bin <- write_script(
+        bin,
+        readLines(system.file("script", package = "orderly", mustWork = TRUE)))
 
       ## This ensures that the index will be present, which will be
       ## useful if something else wants to access the database!
-      DBI::dbDisconnect(orderly_db("destination", self$config, FALSE))
+      DBI::dbDisconnect(orderly::orderly_db("destination", self$config, FALSE))
 
       self$data <- runner_queue$new()
 
@@ -117,7 +121,7 @@ orderly_runner_ <- R6::R6Class(
       }
       assert_scalar_numeric(timeout)
       key <- self$data$insert(name, parameters, ref, instance, timeout)
-      orderly_log("queue", sprintf("%s (%s)", key, name))
+      orderly::orderly_log("queue", sprintf("%s (%s)", key, name))
       key
     },
 
@@ -168,7 +172,7 @@ orderly_runner_ <- R6::R6Class(
     },
 
     rebuild = function() {
-      orderly_rebuild(self$config, FALSE, FALSE)
+      orderly::orderly_rebuild(self$config, FALSE, FALSE)
     },
 
     kill = function(key) {
@@ -192,7 +196,7 @@ orderly_runner_ <- R6::R6Class(
     git_fetch = function() {
       res <- git_fetch(self$path)
       if (length(res$output) > 0L) {
-        orderly_log("fetch", res$output)
+        orderly::orderly_log("fetch", res$output)
       }
       invisible(res)
     },
@@ -200,7 +204,7 @@ orderly_runner_ <- R6::R6Class(
     git_pull = function() {
       res <- git_pull(self$path)
       if (length(res$output) > 0L) {
-        orderly_log("pull", res$output)
+        orderly::orderly_log("pull", res$output)
       }
       invisible(res)
     },
@@ -223,8 +227,8 @@ orderly_runner_ <- R6::R6Class(
 
     cleanup = function(name = NULL, draft = TRUE, data = TRUE,
                        failed_only = FALSE) {
-      orderly_cleanup(name = name, root = self$config, draft = draft,
-                      data = data, failed_only = failed_only)
+      orderly::orderly_cleanup(name = name, root = self$config, draft = draft,
+                               data = data, failed_only = failed_only)
     },
 
     poll = function() {
@@ -267,7 +271,7 @@ orderly_runner_ <- R6::R6Class(
       ## Force cleanup of the process so that the I/O completes
       gc()
 
-      orderly_log(state, sprintf("%s (%s)", process$key, process$name))
+      orderly::orderly_log(state, sprintf("%s (%s)", process$key, process$name))
 
       if (file.exists(process$id_file)) {
         id <- readLines(process$id_file)
@@ -288,7 +292,7 @@ orderly_runner_ <- R6::R6Class(
 
     .kill_current = function() {
       p <- self$process
-      orderly_log("kill", p$key)
+      orderly::orderly_log("kill", p$key)
       ret <- p$px$kill()
       self$.cleanup(RUNNER_KILLED)
       ret
@@ -305,7 +309,7 @@ orderly_runner_ <- R6::R6Class(
         return(FALSE)
       }
       key <- dat$key
-      orderly_log("run", sprintf("%s (%s)", key, dat$name))
+      orderly::orderly_log("run", sprintf("%s (%s)", key, dat$name))
       self$data$set_state(key, RUNNER_RUNNING)
       id_file <- file.path(self$path_id, key)
       if (is.na(dat$parameters)) {

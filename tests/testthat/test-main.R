@@ -44,7 +44,7 @@ test_that("write script", {
   p <- tempfile()
   expect_error(write_script(p), "'path' must be a directory")
   dir.create(p)
-  res <- write_script(p)
+  res <- write_script(p, "orderly.server:::main()")
   expect_equal(basename(res), "orderly.server")
   expect_true(file.exists(res))
 })

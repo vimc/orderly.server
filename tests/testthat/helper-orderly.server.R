@@ -31,7 +31,7 @@ wait_for_finished <- function(key, server, ...) {
 }
 
 
-wait_for_id <- function(key, server) {
+wait_for_version <- function(key, server) {
   url <- server$api_url("/v1/reports/%s/status/", key)
   wait_while(function() {
     r <- httr::GET(url)
@@ -40,6 +40,16 @@ wait_for_id <- function(key, server) {
   })
 }
 
+wait_for_id <- function(runner, key, ...) {
+  e <- environment()
+  e$st <- NULL
+  continue <- function() {
+    e$st <- runner$status(key)
+    e$st$status == "running" && is.na(e$st$id)
+  }
+  wait_while(continue)
+  e$st$id
+}
 
 wait_for_finished_runner <- function(runner, key) {
   is_running <- function() {
@@ -117,6 +127,7 @@ expect_simple_endpoint_runs <- function(endpoint, data, status_code = 200,
 ## nolint start
 orderly_prepare_orderly_git_example <- orderly:::prepare_orderly_git_example
 orderly_prepare_orderly_example <- orderly:::prepare_orderly_example
+orderly_unzip_git_demo <- orderly:::unzip_git_demo
 orderly_git_ref_to_sha <- orderly:::git_ref_to_sha
 orderly_git_ref_exists <- orderly:::git_ref_exists
 orderly_git_run <- orderly:::git_run
@@ -128,4 +139,10 @@ version_info <- function() {
 
 skip_on_windows <- function() {
   testthat::skip_on_os("windows")
+}
+
+with_sqlite <- function(path, fun) {
+  con <- DBI::dbConnect(RSQLite::SQLite(), path)
+  on.exit(DBI::dbDisconnect(con))
+  fun(con)
 }
