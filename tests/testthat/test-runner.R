@@ -578,7 +578,7 @@ test_that("can get report list from runner", {
   other_commits <- git_commits("other", path[["local"]])
   expect_equal(nrow(other_commits), 1)
   other_reports <- get_reports("other", other_commits$id, path[["local"]])
-  expect_equal(other_reports, c("other"))
+  expect_equal(other_reports, "other")
 })
 
 test_that("can get parameters list from runner", {
