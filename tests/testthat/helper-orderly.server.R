@@ -46,11 +46,11 @@ wait_for_id <- function(runner, key, ...) {
   continue <- function() {
     e$st <- runner$status(key)
     if (!is.null(e$st$output)) {
-      output <- e$st$output
+      output <- paste(vcapply(names(e$st$output), function(x) sprintf("%s: %s", x, e$st$output[[x]]), USE.NAMES = FALSE), collapse = "\n")
     } else {
       output <- "null"
     }
-    print(sprintf("runner status for key %s status %s:\n  %s", key, e$st$status, output))
+    print(sprintf("runner status for key %s status: %s, id: %s:\n  %s", key, e$st$status, e$st$id, output))
     e$st$status == "running" && is.na(e$st$id)
   }
   wait_while(continue)

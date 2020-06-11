@@ -1,12 +1,12 @@
 #!/usr/bin/env Rscript
 
-if (isFALSE(require("devtools"))) {
-  install.packages("devtools")
+if (isFALSE(require("pkgload"))) {
+  install.packages("pkgload")
 }
 if (isFALSE(require("testthat"))) {
   install.packages("testthat")
 }
-devtools::load_all()
+pkgload::load_all()
 path <- orderly_prepare_orderly_example("interactive")
 
 testthat::expect_false(file.exists(file.path(path, "orderly.sqlite")))
