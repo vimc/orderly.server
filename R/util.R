@@ -111,15 +111,6 @@ path_runner_id <- function(path) {
   file.path(path, "runner", "id")
 }
 
-path_db_backup <- function(root, file, suffix = NULL) {
-  if (is.null(suffix)) {
-    filename <- basename(file)
-  } else {
-    filename <- paste0(basename(file), suffix)
-  }
-  file.path(root, "backup", "db", filename, fsep = "/")
-}
-
 path_draft <- function(root) {
   file.path(root, "draft")
 }
@@ -130,10 +121,6 @@ path_archive <- function(root, name = NULL) {
   } else {
     file.path(root, "archive", name)
   }
-}
-
-path_orderly_run_rds <- function(path) {
-  file.path(path, "orderly_run.rds")
 }
 
 readlines_if_exists <- function(path, missing = NULL) {

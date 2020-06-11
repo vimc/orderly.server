@@ -131,6 +131,8 @@ orderly_unzip_git_demo <- orderly:::unzip_git_demo
 orderly_git_ref_to_sha <- orderly:::git_ref_to_sha
 orderly_git_ref_exists <- orderly:::git_ref_exists
 orderly_git_run <- orderly:::git_run
+orderly_path_db_backup <- orderly:::path_db_backup
+orderly_path_orderly_run_rds <- orderly:::path_orderly_run_rds
 ## nolint end
 
 version_info <- function() {

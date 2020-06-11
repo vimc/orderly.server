@@ -138,7 +138,8 @@ test_that("run report with parameters", {
   expect_equal(d$name, "other")
   expect_equal(d$id, id)
 
-  d <- readRDS(path_orderly_run_rds(file.path(path, "archive", "other", id)))
+  d <- readRDS(orderly_path_orderly_run_rds(
+    file.path(path, "archive", "other", id)))
   expect_equal(d$meta$parameters, list(nmin = 0.5))
 })
 
@@ -478,7 +479,7 @@ test_that("backup", {
   Sys.sleep(1.2)
   runner$poll()
 
-  db_backup <- path_db_backup(path, "orderly.sqlite")
+  db_backup <- orderly_path_db_backup(path, "orderly.sqlite")
   expect_true(file.exists(db_backup))
 
   dat_backup <- with_sqlite(db_backup, function(con)
