@@ -85,7 +85,8 @@ orderly_runner_ <- R6::R6Class(
       dir.create(bin)
       self$orderly_bin <- write_script(
         bin,
-        readLines(system.file("script", package = "orderly", mustWork = TRUE)))
+        readLines(system.file("script", package = "orderly", mustWork = TRUE)),
+        versioned = TRUE)
 
       ## This ensures that the index will be present, which will be
       ## useful if something else wants to access the database!
@@ -101,7 +102,6 @@ orderly_runner_ <- R6::R6Class(
 
     queue = function(name, parameters = NULL, ref = NULL, instance = NULL,
                      update = FALSE, timeout = 600) {
-      print("queueing")
       if (!self$allow_ref && !is.null(ref)) {
         stop("Reference switching is disallowed in this runner",
              call. = FALSE)
@@ -303,7 +303,6 @@ orderly_runner_ <- R6::R6Class(
     },
 
     .run_next = function() {
-      print("runnign next")
       dat <- self$data$next_queued()
       if (is.null(dat)) {
         return(FALSE)
@@ -329,9 +328,6 @@ orderly_runner_ <- R6::R6Class(
 
       log_out <- path_stdout(self$path_log, key)
       log_err <- path_stderr(self$path_log, key)
-      print(sprintf("print orderly bin is %s", as.character(self$orderly_bin)))
-      print(sprintf("orderly bin exists? %s orderly bin is:", file.exists(self$orderly_bin)))
-      print(readLines(self$orderly_bin))
       px <- processx::process$new(self$orderly_bin, args,
                                   stdout = log_out, stderr = log_err)
       start_at <- Sys.time()

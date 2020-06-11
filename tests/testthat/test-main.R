@@ -50,6 +50,29 @@ test_that("write script", {
 })
 
 
+test_that("write script produces sensible script", {
+  path <- tempfile()
+  dir.create(path, FALSE, TRUE)
+  bin <- write_script(
+    path,
+    readLines(system.file("script", package = "orderly", mustWork = TRUE)))
+  expect_equal(basename(bin), "orderly.server")
+  expect_true(file.exists(bin))
+  expect_equal(readLines(bin)[[1]], "#!/usr/bin/env Rscript")
+})
+
+
+test_that("write script can be versioned", {
+  path <- tempfile()
+  dir.create(path, FALSE, TRUE)
+  bin <- write_script(
+    path,
+    readLines(system.file("script", package = "orderly", mustWork = TRUE)),
+    TRUE)
+  expect_match(readLines(bin)[[1]], R.home(), fixed = TRUE)
+})
+
+
 test_that("pass arguments to server", {
   mock_server <- mockery::mock(NULL)
   with_mock("orderly.server:::server" = mock_server,
