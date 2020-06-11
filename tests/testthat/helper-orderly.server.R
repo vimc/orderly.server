@@ -51,6 +51,16 @@ wait_for_id <- function(runner, key, ...) {
       output <- "null"
     }
     print(sprintf("runner status for key %s status: %s, id: %s:\n  %s", key, e$st$status, e$st$id, output))
+    stdout <- path_stdout(runner$path_log, key)
+    stderr <- path_stderr(runner$path_log, key)
+    print(sprintf("stdout exists : %s at %s", file.exists(stdout), stdout))
+    if (file.exists(stdout)) {
+      print(readLines(stdout))
+    }
+    print(sprintf("stderr exists : %s at %s", file.exists(stderr), stderr))
+    if (file.exists(stderr)) {
+      print(readLines(stderr))
+    }
     e$st$status == "running" && is.na(e$st$id)
   }
   wait_while(continue)
