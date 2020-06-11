@@ -6,6 +6,7 @@ r_packages:
   - covr
 before_script:
   - R CMD INSTALL .
+  - ./scripts/debug.R
 after_success:
   - Rscript -e 'covr::codecov()'
 

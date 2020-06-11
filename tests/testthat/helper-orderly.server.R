@@ -45,6 +45,12 @@ wait_for_id <- function(runner, key, ...) {
   e$st <- NULL
   continue <- function() {
     e$st <- runner$status(key)
+    if (!is.null(e$st$output)) {
+      output <- e$st$output
+    } else {
+      output <- "null"
+    }
+    print(sprintf("runner status for key %s status %s:\n  %s", key, e$st$status, output))
     e$st$status == "running" && is.na(e$st$id)
   }
   wait_while(continue)

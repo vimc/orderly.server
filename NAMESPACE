@@ -2,4 +2,3 @@
 
 export(server)
 importFrom(httpuv,runServer)
-importFrom(orderly,orderly_runner)
