@@ -115,12 +115,8 @@ path_draft <- function(root) {
   file.path(root, "draft")
 }
 
-path_archive <- function(root, name = NULL) {
-  if (is.null(name)) {
-    file.path(root, "archive")
-  } else {
-    file.path(root, "archive", name)
-  }
+path_archive <- function(root) {
+  file.path(root, "archive")
 }
 
 readlines_if_exists <- function(path, missing = NULL) {

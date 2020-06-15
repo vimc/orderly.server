@@ -11,7 +11,7 @@ Imports:
     jsonlite,
     DBI,
     docopt,
-    orderly (>= 1.2.10),
+    orderly (>= 1.2.12),
     pkgapi (>= 0.0.7),
     processx,
     webutils,
