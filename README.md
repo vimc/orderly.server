@@ -123,3 +123,24 @@ $ curl -s -X POST http://localhost:8321/v1/reports/rebuild/ | jq
 ## Security
 
 This server lets people run arbitrary R code on your computer without authentication.
+
+## Debugging runner
+
+The runner starts the report running a separate process using `processx` meaning that it can be hard to get information out about any errors from the report run. Particularly when running on travis and the result can't be investigated locally. To get the output from the external process visible in travis you need to directly retrieve it from the file and print the contents.
+
+You can do this by modifying the `continue` function in `wait_for_id` helper function to print the information.
+
+```
+stdout <- path_stdout(runner$path_log, key)
+stderr <- path_stderr(runner$path_log, key)
+print(sprintf("stdout exists : %s at %s", file.exists(stdout), stdout))
+if (file.exists(stdout)) {
+  print(readLines(stdout))
+}
+print(sprintf("stderr exists : %s at %s", file.exists(stderr), stderr))
+if (file.exists(stderr)) {
+  print(readLines(stderr))
+}
+```
+
+See https://github.com/vimc/orderly.server/pull/30/commits/29376c630d57c0f74c5d08a127ac23116e0a9bef for an example.

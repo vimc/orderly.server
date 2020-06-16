@@ -20,14 +20,13 @@
 ##'
 ##' @export
 ##' @importFrom httpuv runServer
-##' @importFrom orderly orderly_runner
 server <- function(path, port, host = "0.0.0.0", allow_ref = TRUE,
                    go_signal = NULL) {
   message("Starting orderly server on port ", port)
   message("Orderly root: ", path)
 
   wait_for_go_signal(path, go_signal)
-  runner <- orderly::orderly_runner(path, allow_ref)
+  runner <- orderly_runner(path, allow_ref)
   api <- build_api(runner)
   api$run(host, port)
 

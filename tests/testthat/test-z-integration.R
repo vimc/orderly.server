@@ -69,7 +69,7 @@ test_that("run", {
   expect_is(dat$data$path, "character")
 
   ## Then we ask about status
-  wait_for_id(dat$data$key, server)
+  wait_for_version(dat$data$key, server)
   r <- httr::GET(server$api_url(dat$data$path))
   expect_equal(httr::status_code(r), 200)
   st <- content(r)
@@ -206,7 +206,7 @@ test_that("pass parameters", {
   expect_is(dat$data$path, "character")
 
   ## Then we ask about status
-  wait_for_id(dat$data$key, server)
+  wait_for_version(dat$data$key, server)
   r <- httr::GET(server$api_url(dat$data$path))
   expect_equal(httr::status_code(r), 200)
   st <- content(r)

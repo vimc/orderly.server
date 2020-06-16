@@ -44,9 +44,32 @@ test_that("write script", {
   p <- tempfile()
   expect_error(write_script(p), "'path' must be a directory")
   dir.create(p)
-  res <- write_script(p)
+  res <- write_script(p, "orderly.server:::main()")
   expect_equal(basename(res), "orderly.server")
   expect_true(file.exists(res))
+})
+
+
+test_that("write script produces sensible script", {
+  path <- tempfile()
+  dir.create(path, FALSE, TRUE)
+  bin <- write_script(
+    path,
+    readLines(system.file("script", package = "orderly", mustWork = TRUE)))
+  expect_equal(basename(bin), "orderly.server")
+  expect_true(file.exists(bin))
+  expect_equal(readLines(bin)[[1]], "#!/usr/bin/env Rscript")
+})
+
+
+test_that("write script can be versioned", {
+  path <- tempfile()
+  dir.create(path, FALSE, TRUE)
+  bin <- write_script(
+    path,
+    readLines(system.file("script", package = "orderly", mustWork = TRUE)),
+    TRUE)
+  expect_match(readLines(bin)[[1]], R.home(), fixed = TRUE)
 })
 
 
