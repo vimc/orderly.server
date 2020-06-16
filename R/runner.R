@@ -44,10 +44,8 @@ RUNNER_KILLED  <- "killed"
 RUNNER_UNKNOWN <- "unknown"
 ## nolint end
 
-# nocov start
 ## TODO: through here we need to wrap some calls up in success/fail so
 ## that I can get that pushed back through the API.
-# nocov end
 orderly_runner_ <- R6::R6Class(
   "orderly_runner",
   cloneable = FALSE,
@@ -80,9 +78,7 @@ orderly_runner_ <- R6::R6Class(
         message("Disallowing reference switching in runner")
       }
 
-      # nocov start
-      do_backup <- protect(function() orderly:::orderly_backup(self$config))
-      # nocov end
+      do_backup <- protect(function() orderly:::orderly_backup(self$config)) # nolint
       self$backup <- periodic(do_backup, backup_period)
 
       bin <- tempfile()
@@ -138,12 +134,10 @@ orderly_runner_ <- R6::R6Class(
         state <- d$state
         id <- d$id
       }
-      # nocov start
       ## TODO: This should move into a separate field but that
       ## requires getting changes through the reporting api.  We'll do
       ## that in a second pass and move the data from here to that
       ## field.
-      # nocov end
       if (state == "queued") {
         queue <- self$data$get()
         i <- (queue[, "state"] %in% c(RUNNER_QUEUED, RUNNER_RUNNING)) &
