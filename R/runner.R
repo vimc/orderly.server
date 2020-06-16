@@ -292,10 +292,6 @@ orderly_runner_ <- R6::R6Class(
     .kill_current = function() {
       p <- self$process
       orderly::orderly_log("kill", p$key)
-      print(sprintf("pid %s", p$px$get_pid()))
-      print(sprintf("status %s", p$px$get_status()))
-      print(sprintf("format %s", p$px$format()))
-      print(sprintf("is alive %s", p$px$is_alive()))
       ret <- p$px$kill()
       self$.cleanup(RUNNER_KILLED)
       ret
