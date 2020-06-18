@@ -1,5 +1,6 @@
 start_test_server <- function(path = NULL, port = 8321, log = NULL) {
-  path <- path %||% orderly::orderly_example("interactive")
+  path <- path %||% orderly_prepare_orderly_example("interactive",
+                                                    testing = TRUE)
   server <- orderly_server_background$new(path, port, log)
   server$start()
   server
