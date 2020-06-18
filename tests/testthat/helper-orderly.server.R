@@ -128,7 +128,6 @@ expect_simple_endpoint_runs <- function(endpoint, data, status_code = 200,
 orderly_prepare_orderly_git_example <- orderly:::prepare_orderly_git_example
 orderly_prepare_orderly_example <- orderly:::prepare_orderly_example
 orderly_unzip_git_demo <- orderly:::unzip_git_demo
-orderly_git_ref_to_sha <- orderly:::git_ref_to_sha
 orderly_git_ref_exists <- orderly:::git_ref_exists
 orderly_git_run <- orderly:::git_run
 orderly_path_db_backup <- orderly:::path_db_backup
