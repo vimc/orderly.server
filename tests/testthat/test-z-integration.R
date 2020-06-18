@@ -126,7 +126,7 @@ test_that("git", {
 
   expect_equal(git_ref_to_sha("HEAD", root = path[["local"]]),
                sha[["local"]])
-  expect_false(orderly_git_ref_exists(sha[["origin"]], path[["local"]]))
+  expect_false(git_ref_exists(sha[["origin"]], path[["local"]]))
 
   r <- httr::POST(server$api_url("/v1/reports/minimal/run/"),
                   query = list(ref = sha[["origin"]]))
@@ -139,7 +139,7 @@ test_that("git", {
 
   expect_equal(git_ref_to_sha("HEAD", root = path[["local"]]),
                sha[["local"]])
-  expect_true(orderly_git_ref_exists(sha[["origin"]], path[["local"]]))
+  expect_true(git_ref_exists(sha[["origin"]], path[["local"]]))
 })
 
 
@@ -148,7 +148,7 @@ test_that("git error returns valid json", {
   server <- start_test_server(path[["local"]])
   on.exit(server$stop())
 
-  orderly_git_run(c("remote", "remove", "origin"), root = path[["local"]])
+  git_run(c("remote", "remove", "origin"), root = path[["local"]])
 
   r <- content(httr::GET(server$api_url("/v1/reports/git/status/")))
   res <- httr::POST(server$api_url("/v1/reports/git/fetch/"))
