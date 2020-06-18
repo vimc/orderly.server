@@ -61,7 +61,7 @@ test_that("run: success", {
   testthat::skip_on_cran()
   skip_on_appveyor()
   skip_on_windows()
-  path <- orderly_prepare_orderly_example("interactive")
+  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
 
   expect_false(file.exists(file.path(path, "orderly.sqlite")))
   runner <- orderly_runner(path)
@@ -108,7 +108,7 @@ test_that("run: error", {
   skip_on_appveyor()
   skip_on_windows()
 
-  path <- orderly_prepare_orderly_example("interactive")
+  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
   runner <- orderly_runner(path)
   dat <- runner_start_interactive(runner)
 
@@ -221,7 +221,7 @@ test_that("prevent git change", {
 
 test_that("Can't git change", {
   testthat::skip_on_cran()
-  path <- orderly_prepare_orderly_example("interactive")
+  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
   runner <- orderly_runner(path)
   expect_error(runner$queue("other", ref = "other"),
                "Reference switching is disallowed in this runner")
@@ -259,7 +259,7 @@ test_that("kill", {
   ## print lines for debugging makes it pass on travis
   ## We should fix this at some point, see VIMC-4066
   skip_on_travis()
-  path <- orderly_prepare_orderly_example("interactive")
+  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
   runner <- orderly_runner(path)
   name <- "interactive"
   key <- runner$queue(name)
@@ -275,7 +275,7 @@ test_that("kill - wrong process", {
   testthat::skip_on_cran()
   skip_on_windows()
   skip_on_appveyor()
-  path <- orderly_prepare_orderly_example("interactive")
+  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
   runner <- orderly_runner(path)
   name <- "interactive"
   key <- runner$queue(name)
@@ -290,7 +290,7 @@ test_that("kill - wrong process", {
 
 test_that("kill - no process", {
   testthat::skip_on_cran()
-  path <- orderly_prepare_orderly_example("interactive")
+  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
   runner <- orderly_runner(path)
   key <- "virtual_plant"
   expect_error(runner$kill(key),
@@ -301,7 +301,7 @@ test_that("timeout", {
   testthat::skip_on_cran()
   skip_on_windows()
   skip_on_appveyor()
-  path <- orderly_prepare_orderly_example("interactive")
+  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
   runner <- orderly_runner(path)
   name <- "interactive"
   key <- runner$queue(name, timeout = 0)
@@ -314,7 +314,7 @@ test_that("timeout", {
 test_that("queue_status", {
   testthat::skip_on_cran()
   skip_on_windows()
-  path <- orderly_prepare_orderly_example("interactive")
+  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
   runner <- orderly_runner(path)
 
   expect_equal(
@@ -354,7 +354,7 @@ test_that("queue_status", {
 test_that("queue status", {
   testthat::skip_on_cran()
   skip_on_windows()
-  path <- orderly_prepare_orderly_example("interactive")
+  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
   runner <- orderly_runner(path)
 
   name <- "interactive"
