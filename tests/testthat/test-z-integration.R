@@ -103,7 +103,7 @@ test_that("git", {
   server <- start_test_server(path[["local"]])
   on.exit(server$stop())
 
-  sha <- vapply(path, orderly_git_ref_to_sha, "", ref = "HEAD")
+  sha <- vapply(path, git_ref_to_sha, "", ref = "HEAD")
 
   r <- content(httr::GET(server$api_url("/v1/reports/git/status/")))
   expect_equal(r$data$hash, sha[["local"]])
@@ -111,7 +111,7 @@ test_that("git", {
   r <- httr::POST(server$api_url("/v1/reports/minimal/run/?update=false"))
   dat <- content(r)
   wait_for_finished(dat$data$key, server)
-  expect_equal(orderly_git_ref_to_sha("HEAD", path[["local"]]),
+  expect_equal(git_ref_to_sha("HEAD", path[["local"]]),
                sha[["local"]])
 
   r <- httr::POST(server$api_url("/v1/reports/minimal/run/"),
@@ -124,9 +124,9 @@ test_that("git", {
   expect_equal(httr::status_code(r), 200)
   expect_equal(st$data$status, "error")
 
-  expect_equal(orderly_git_ref_to_sha("HEAD", root = path[["local"]]),
+  expect_equal(git_ref_to_sha("HEAD", root = path[["local"]]),
                sha[["local"]])
-  expect_false(orderly_git_ref_exists(sha[["origin"]], path[["local"]]))
+  expect_false(git_ref_exists(sha[["origin"]], path[["local"]]))
 
   r <- httr::POST(server$api_url("/v1/reports/minimal/run/"),
                   query = list(ref = sha[["origin"]]))
@@ -137,9 +137,9 @@ test_that("git", {
                            query = list(output = TRUE)))
   expect_match(res$data$output$stderr, sha[["origin"]], all = FALSE)
 
-  expect_equal(orderly_git_ref_to_sha("HEAD", root = path[["local"]]),
+  expect_equal(git_ref_to_sha("HEAD", root = path[["local"]]),
                sha[["local"]])
-  expect_true(orderly_git_ref_exists(sha[["origin"]], path[["local"]]))
+  expect_true(git_ref_exists(sha[["origin"]], path[["local"]]))
 })
 
 
@@ -148,7 +148,7 @@ test_that("git error returns valid json", {
   server <- start_test_server(path[["local"]])
   on.exit(server$stop())
 
-  orderly_git_run(c("remote", "remove", "origin"), root = path[["local"]])
+  git_run(c("remote", "remove", "origin"), root = path[["local"]])
 
   r <- content(httr::GET(server$api_url("/v1/reports/git/status/")))
   res <- httr::POST(server$api_url("/v1/reports/git/fetch/"))

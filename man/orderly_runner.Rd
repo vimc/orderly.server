@@ -40,5 +40,5 @@ only for creating automated tools for use with orderly.
 \examples{
 
 path <- orderly::orderly_example("demo")
-runner <- orderly::orderly_runner(path)
+runner <- orderly.server::orderly_runner(path)
 }

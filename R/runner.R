@@ -26,11 +26,12 @@
 ##'   you are storing information alongside the core orderly tables
 ##'   (as done by OrderlyWeb).
 ##'
+##' @export
 ##' @return A runner object, with methods designed for internal use only.
 ##' @examples
 ##'
 ##' path <- orderly::orderly_example("demo")
-##' runner <- orderly::orderly_runner(path)
+##' runner <- orderly.server::orderly_runner(path)
 orderly_runner <- function(path, allow_ref = NULL, backup_period = 600) {
   orderly_runner_$new(path, allow_ref, backup_period)
 }
