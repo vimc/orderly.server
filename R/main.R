@@ -12,13 +12,19 @@ Options:
   --host=HOST       IP address owned by this server [default: 0.0.0.0]
   --no-ref          Prevent git reference switching
   --go-signal=PATH  Relative path for go signal"
-  res <- docopt::docopt(doc, args)
+  res <- docopt_parse(doc, args)
 
   list(path = res[["path"]],
        port = as.integer(res[["port"]]),
        host = res[["host"]],
        allow_ref = !res[["no_ref"]],
        go_signal = res[["go_signal"]])
+}
+
+docopt_parse <- function(doc, args) {
+  dat <- docopt::docopt(doc, args)
+  names(dat) <- gsub("-", "_", names(dat), fixed = TRUE)
+  dat
 }
 
 write_script <- function(path, code, versioned = FALSE) {
