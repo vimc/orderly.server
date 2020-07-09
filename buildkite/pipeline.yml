@@ -4,6 +4,9 @@ steps:
 
   - wait
 
+  - label: ":hammer: Test"
+    command: docker/test
+
   - label: ":shipit: Push"
     command: docker/push
 
