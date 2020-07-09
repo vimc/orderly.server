@@ -17,8 +17,8 @@ Options:
   list(path = res[["path"]],
        port = as.integer(res[["port"]]),
        host = res[["host"]],
-       allow_ref = !res[["no-ref"]],
-       go_signal = res[["go-signal"]])
+       allow_ref = !res[["no_ref"]],
+       go_signal = res[["go_signal"]])
 }
 
 write_script <- function(path, code, versioned = FALSE) {
