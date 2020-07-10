@@ -15,6 +15,8 @@ trap cleanup EXIT
 
 rm -rf orderly-demo
 git clone https://github.com/vimc/orderly-demo
+mkdir -p orderly-demo/runner/log
+mkdir -p orderly-demo/runner/id
 Rscript -e 'setwd("orderly-demo")' -e 'orderly::orderly_rebuild()'
 
 docker run --rm -d \
