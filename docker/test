@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+set -ex
+HERE=$(dirname $0)
+. $HERE/common
+
+NAME_SERVER=orderly_server
+
+function cleanup {
+  echo "Cleaning up"
+  docker kill $NAME_SERVER > /dev/null || true
+  rm -rf $PACKAGE_ROOT/orderly-demo
+}
+
+trap cleanup EXIT
+
+rm -rf orderly-demo
+git clone https://github.com/vimc/orderly-demo
+mkdir -p orderly-demo/runner/log
+mkdir -p orderly-demo/runner/id
+
+docker run --rm -d \
+    -p 8321:8321 \
+    --mount type=bind,src=$PACKAGE_ROOT/orderly-demo,dst=/demo \
+    --name $NAME_SERVER $TAG_SHA demo
+
+
+for attempt in $(seq 10); do
+    echo "Attempt $attempt"
+    ## Sleep first here as otherwise receive an error
+    ## curl: (56) Recv failure: Connection reset by peer
+    ## which exists instantly
+    sleep 2
+    RESPONSE=$(curl --silent --write-out "%{http_code}\n" --output /dev/null \
+               http://localhost:8321)
+    if [ "$RESPONSE" == "200" ]; then
+        echo "SUCCESS"
+        exit 0
+    fi
+done
+
+echo "FAIL"
+exit 1
