@@ -17,7 +17,7 @@ test_that("runner queue", {
   expect_equal(d, list(key = key1, state = "queued", name = "a",
                        parameters = NA_character_, ref = NA_character_,
                        instance = NA_character_, id = NA_character_,
-                       timeout = 600))
+                       timeout = 600, command = "run"))
 
   expect_true(queue$set_state(key1, "running"))
   expect_equal(queue$status(key1), list(state = "running", id = NA_character_))
@@ -26,7 +26,7 @@ test_that("runner queue", {
   expect_equal(d, list(key = key2, state = "queued", name = "b",
                        parameters = "parameters", ref = NA_character_,
                        instance = NA_character_, id = NA_character_,
-                       timeout = 600))
+                       timeout = 600, command = "run"))
 
   expect_true(queue$set_state(key2, "running", "new_id2"))
 
@@ -34,7 +34,7 @@ test_that("runner queue", {
   expect_equal(d, list(key = key3, state = "queued", name = "c",
                        parameters = NA_character_, ref = "ref",
                        instance = NA_character_, id = NA_character_,
-                       timeout = 600))
+                       timeout = 600, command = "run"))
 
   expect_true(queue$set_state(key3, "running", "new_id3"))
 
@@ -42,14 +42,14 @@ test_that("runner queue", {
   expect_equal(d, list(key = key4, state = "queued", name = "d",
                        parameters = NA_character_, ref = NA_character_,
                        instance = NA_character_, id = NA_character_,
-                       timeout = 200))
+                       timeout = 200, command = "run"))
   expect_true(queue$set_state(key4, "running", "new_id4"))
 
   d <- queue$next_queued()
   expect_equal(d, list(key = key5, state = "queued", name = "e",
                        parameters = NA_character_, ref = NA_character_,
                        instance = "instance", id = NA_character_,
-                       timeout = 600))
+                       timeout = 600, command = "run"))
   expect_true(queue$set_state(key5, "running", "new_id5"))
 
   expect_null(queue$next_queued())
@@ -141,6 +141,20 @@ test_that("run report with parameters", {
   d <- readRDS(orderly_path_orderly_run_rds(
     file.path(path, "archive", "other", id)))
   expect_equal(d$meta$parameters, list(nmin = 0.5))
+})
+
+test_that("run: unrecognised type", {
+  testthat::skip_on_cran()
+  skip_on_appveyor()
+  skip_on_windows()
+  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
+
+  expect_false(file.exists(file.path(path, "orderly.sqlite")))
+  runner <- orderly_runner(path)
+  expect_true(file.exists(file.path(path, "orderly.sqlite")))
+  name <- "interactive"
+  expect_error(runner$queue(name, type = "unknown"),
+               "Unrecognised type 'unknown' must be report.")
 })
 
 

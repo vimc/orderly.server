@@ -102,7 +102,7 @@ orderly_runner_ <- R6::R6Class(
     },
 
     queue = function(name, parameters = NULL, ref = NULL, instance = NULL,
-                     update = FALSE, timeout = 600) {
+                     update = FALSE, timeout = 600, type = "report") {
       if (!self$allow_ref && !is.null(ref)) {
         stop("Reference switching is disallowed in this runner",
              call. = FALSE)
@@ -119,8 +119,15 @@ orderly_runner_ <- R6::R6Class(
         ## subsequent builds will not affect where we find the source).
         ref <- git_ref_to_sha(ref, self$path, TRUE)
       }
+      assert_scalar_character(type)
+      if (type == "report") {
+        command <- "run"
+      } else {
+        stop(paste0(
+          "Unrecognised type '", type, "' must be report."))
+      }
       assert_scalar_numeric(timeout)
-      key <- self$data$insert(name, parameters, ref, instance, timeout)
+      key <- self$data$insert(name, parameters, ref, instance, timeout, command)
       orderly::orderly_log("queue", sprintf("%s (%s)", key, name))
       key
     },
@@ -322,7 +329,7 @@ orderly_runner_ <- R6::R6Class(
         parameters <- sprintf("%s=%s", names(p), vcapply(p, format))
       }
       args <- c("--root", self$path,
-                "run", dat$name, "--print-log", "--id-file", id_file,
+                dat$command, dat$name, "--print-log", "--id-file", id_file,
                 if (!is.na(dat$ref)) c("--ref", dat$ref),
                 if (!is.na(dat$instance)) c("--instance", dat$instance),
                 parameters)
@@ -360,7 +367,7 @@ runner_queue <- R6::R6Class(
   public = list(
     initialize = function() {
       cols <- c("key", "state", "name", "parameters", "ref", "instance", "id",
-                "timeout")
+                "timeout", "command")
       private$data <-
         matrix(character(0), 0, length(cols), dimnames = list(NULL, cols))
     },
@@ -380,7 +387,7 @@ runner_queue <- R6::R6Class(
     },
 
     insert = function(name, parameters = NULL, ref = NULL, instance = NULL,
-                      timeout = 600) {
+                      timeout = 600, command = "run") {
       existing <- private$data[, "key"]
       repeat {
         key <- ids::adjective_animal()
@@ -396,6 +403,7 @@ runner_queue <- R6::R6Class(
       new[["ref"]] <- ref %||% NA_character_
       new[["instance"]] <- instance %||% NA_character_
       new[["timeout"]] <- timeout
+      new[["command"]] <- command
       private$data <- rbind(private$data, new, deparse.level = 0)
       key
     },
