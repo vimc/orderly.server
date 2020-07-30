@@ -102,7 +102,8 @@ orderly_runner_ <- R6::R6Class(
     },
 
     queue = function(name, parameters = NULL, ref = NULL, instance = NULL,
-                     update = FALSE, timeout = 600, type = "report") {
+                     update = FALSE, timeout = 600, type = "report",
+                     message = NULL) {
       if (!self$allow_ref && !is.null(ref)) {
         stop("Reference switching is disallowed in this runner",
              call. = FALSE)
@@ -120,14 +121,9 @@ orderly_runner_ <- R6::R6Class(
         ref <- git_ref_to_sha(ref, self$path, TRUE)
       }
       assert_scalar_character(type)
-      if (type == "report") {
-        command <- "run"
-      } else {
-        stop(paste0(
-          "Unrecognised type '", type, "' must be report."))
-      }
       assert_scalar_numeric(timeout)
-      key <- self$data$insert(name, parameters, ref, instance, timeout, command)
+      key <- self$data$insert(name, parameters, ref, instance, timeout, type,
+                              message)
       orderly::orderly_log("queue", sprintf("%s (%s)", key, name))
       key
     },
@@ -328,11 +324,26 @@ orderly_runner_ <- R6::R6Class(
         p <- jsonlite::fromJSON(dat$parameters, FALSE)
         parameters <- sprintf("%s=%s", names(p), vcapply(p, format))
       }
-      args <- c("--root", self$path,
-                dat$command, dat$name, "--print-log", "--id-file", id_file,
-                if (!is.na(dat$ref)) c("--ref", dat$ref),
-                if (!is.na(dat$instance)) c("--instance", dat$instance),
-                parameters)
+
+
+      if (dat$type == "report") {
+        args <- c("--root", self$path,
+                  "run", dat$name, "--print-log", "--id-file", id_file,
+                  if (!is.na(dat$ref)) c("--ref", dat$ref),
+                  if (!is.na(dat$instance)) c("--instance", dat$instance),
+                  if (!is.na(dat$message)) c("--message", dat$message),
+                  parameters)
+        browser()
+      } else if (dat$type == "workflow"){
+        args <- c("--root", self$path,
+                  "workflow", dat$name, "--print-log",
+                  if (!is.na(dat$instance)) c("--instance", dat$instance),
+                  if (!is.na(dat$message)) c("--message", dat$message))
+      } else {
+        stop(paste0("Unrecognised type '", dat$type,
+                    "' must be one of report, workflow."))
+      }
+
 
       log_out <- path_stdout(self$path_log, key)
       log_err <- path_stderr(self$path_log, key)
@@ -367,7 +378,7 @@ runner_queue <- R6::R6Class(
   public = list(
     initialize = function() {
       cols <- c("key", "state", "name", "parameters", "ref", "instance", "id",
-                "timeout", "command")
+                "timeout", "type", "message")
       private$data <-
         matrix(character(0), 0, length(cols), dimnames = list(NULL, cols))
     },
@@ -387,7 +398,7 @@ runner_queue <- R6::R6Class(
     },
 
     insert = function(name, parameters = NULL, ref = NULL, instance = NULL,
-                      timeout = 600, command = "run") {
+                      timeout = 600, type = "report", message = NULL) {
       existing <- private$data[, "key"]
       repeat {
         key <- ids::adjective_animal()
@@ -403,7 +414,8 @@ runner_queue <- R6::R6Class(
       new[["ref"]] <- ref %||% NA_character_
       new[["instance"]] <- instance %||% NA_character_
       new[["timeout"]] <- timeout
-      new[["command"]] <- command
+      new[["type"]] <- type
+      new[["message"]] <- message %||% NA_character_
       private$data <- rbind(private$data, new, deparse.level = 0)
       key
     },
