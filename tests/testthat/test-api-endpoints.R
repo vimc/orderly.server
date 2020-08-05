@@ -1,7 +1,7 @@
 context("api - endpoints")
 
 test_that("index", {
-  endpoint <- endpoint_index(NULL)
+  endpoint <- endpoint_index()
 
   res <- endpoint$target()
   expect_equal(res$name, scalar("orderly.server"))

@@ -1,24 +1,19 @@
 build_api <- function(runner) {
   force(runner)
   api <- pkgapi::pkgapi$new()
-  api$handle(endpoint_index(runner))
+  api$handle(endpoint_index())
   api$handle(endpoint_rebuild(runner))
-  api$handle(endpoint_git_status(runner))
-  api$handle(endpoint_git_fetch(runner))
-  api$handle(endpoint_git_pull(runner))
-  api$handle(endpoint_git_branches(runner))
-  api$handle(endpoint_git_commits(runner))
+  api$handle(endpoint_git_status(runner)) ## done
+  api$handle(endpoint_git_fetch(runner)) ## done
+  api$handle(endpoint_git_pull(runner)) ## done
+  api$handle(endpoint_git_branches(runner)) ## done
+  api$handle(endpoint_git_commits(runner)) ## done
   api$handle(endpoint_run(runner))
   api$handle(endpoint_status(runner))
   api$handle(endpoint_kill(runner))
-  api$handle(endpoint_run_metadata(runner))
-  api$handle(endpoint_available_reports(runner))
-  api$handle(endpoint_report_parameters(runner))
-  ## RESIDE-163: we need to prevent these hooks throwing errors, or
-  ## force them to throw errors of the correct type - that needs doing
-  ## in pkgapi
-  api$registerHook("preroute", function(req)
-    tryCatch(runner$poll(), error = function(e) NULL))
+  api$handle(endpoint_run_metadata(runner)) ## done
+  api$handle(endpoint_available_reports(runner)) ## done
+  api$handle(endpoint_report_parameters(runner)) ## done
   api
 }
 
@@ -48,7 +43,7 @@ target_index <- function() {
        ))
 }
 
-endpoint_index <- function(runner) {
+endpoint_index <- function() {
   pkgapi::pkgapi_endpoint$new(
     "GET", "/", target_index,
     returning = returning_json("Index.schema"))

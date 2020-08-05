@@ -32,8 +32,9 @@
 ##'
 ##' path <- orderly::orderly_example("demo")
 ##' runner <- orderly.server::orderly_runner(path)
-orderly_runner <- function(path, allow_ref = NULL, backup_period = 600) {
-  orderly_runner_$new(path, allow_ref, backup_period)
+orderly_runner <- function(path, allow_ref = NULL, backup_period = 600,
+                           queue_id = NULL, workers = 1) {
+  orderly_runner_new$new(path, allow_ref, backup_period, queue_id, workers)
 }
 
 ## nolint start
@@ -66,7 +67,10 @@ orderly_runner_ <- R6::R6Class(
 
     backup = NULL,
 
-    initialize = function(path, allow_ref, backup_period) {
+    cue = NULL,
+
+    initialize = function(path, allow_ref, backup_period, queue_id = NULL,
+                          workers = 1) {
       self$path <- path
       self$config <- orderly::orderly_config(path)
       self$has_git <- runner_has_git(path)
@@ -95,6 +99,8 @@ orderly_runner_ <- R6::R6Class(
 
       self$data <- runner_queue$new()
 
+      self$cue <- Queue$new(queue_id, workers)
+
       self$path_log <- path_runner_log(path)
       self$path_id <- path_runner_id(path)
       dir.create(self$path_log, FALSE, TRUE)
@@ -107,13 +113,9 @@ orderly_runner_ <- R6::R6Class(
         stop("Reference switching is disallowed in this runner",
              call. = FALSE)
       }
-      if (update && self$has_git) {
-        if (is.null(ref)) {
-          self$git_pull()
-        } else {
-          self$git_fetch()
-        }
-      }
+
+      self$queue$submit(quote(1 + 1))
+
       if (!is.null(ref)) {
         ## Lock down the reference at this point in time (so that
         ## subsequent builds will not affect where we find the source).
@@ -186,44 +188,6 @@ orderly_runner_ <- R6::R6Class(
       }
     },
 
-    git_status = function() {
-      ret <- git_status(self$path)
-      ret$branch <- git_branch_name(self$path)
-      ret$hash <- git_ref_to_sha("HEAD", self$path)
-      ret
-    },
-
-    git_fetch = function() {
-      res <- git_fetch(self$path)
-      if (length(res$output) > 0L) {
-        orderly::orderly_log("fetch", res$output)
-      }
-      invisible(res)
-    },
-
-    git_pull = function() {
-      res <- git_pull(self$path)
-      if (length(res$output) > 0L) {
-        orderly::orderly_log("pull", res$output)
-      }
-      invisible(res)
-    },
-
-    git_branches_no_merged = function(include_master = FALSE) {
-      git_branches_no_merged(self$path, include_master)
-    },
-
-    git_commits = function(branch) {
-      git_commits(branch, self$path)
-    },
-
-    get_reports = function(branch, commit) {
-      get_reports(branch, commit, self$path)
-    },
-
-    get_report_parameters = function(report, commit) {
-      get_report_parameters(report, commit, self$path)
-    },
 
     cleanup = function(name = NULL, draft = TRUE, data = TRUE,
                        failed_only = FALSE) {
@@ -455,3 +419,93 @@ runner_allow_ref <- function(has_git, allow_ref, config) {
 runner_has_git <- function(path) {
   nzchar(Sys.which("git")) && file.exists(file.path(path, ".git"))
 }
+
+
+orderly_runner_new <- R6::R6Class(
+  "orderly_runner",
+  cloneable = FALSE,
+  public = list(
+    path = NULL,
+    config = NULL,
+    allow_ref = FALSE,
+
+    has_git = NULL,
+
+    cue = NULL,
+
+    initialize = function(path, allow_ref = NULL, backup_period, queue_id,
+                          workers) {
+      self$path <- path
+      self$config <- orderly::orderly_config(path)
+      self$has_git <- runner_has_git(path)
+      if (!self$has_git) {
+        message("Not enabling git features as this is not version controlled")
+      }
+
+      self$allow_ref <- runner_allow_ref(self$has_git, allow_ref, self$config)
+      if (self$has_git && !self$allow_ref) {
+        message("Disallowing reference switching in runner")
+      }
+
+      ## This ensures that the index will be present, which will be
+      ## useful if something else wants to access the database!
+      DBI::dbDisconnect(orderly::orderly_db("destination", self$config, FALSE))
+
+      ## Create queue
+      self$cue <- Queue$new(queue_id, workers)
+    },
+
+    git_status = function() {
+      ret <- git_status(self$path)
+      ret$branch <- git_branch_name(self$path)
+      ret$hash <- git_ref_to_sha("HEAD", self$path)
+      ret
+    },
+
+    git_fetch = function() {
+      res <- git_fetch(self$path)
+      if (length(res$output) > 0L) {
+        orderly::orderly_log("fetch", res$output)
+      }
+      invisible(res)
+    },
+
+    git_pull = function() {
+      res <- git_pull(self$path)
+      if (length(res$output) > 0L) {
+        orderly::orderly_log("pull", res$output)
+      }
+      invisible(res)
+    },
+
+    git_branches_no_merged = function(include_master = FALSE) {
+      git_branches_no_merged(self$path, include_master)
+    },
+
+    git_commits = function(branch) {
+      git_commits(branch, self$path)
+    },
+
+    get_reports = function(branch, commit) {
+      get_reports(branch, commit, self$path)
+    },
+
+    get_report_parameters = function(report, commit) {
+      get_report_parameters(report, commit, self$path)
+    },
+
+    queue = function(name, parameters = NULL, ref = NULL, instance = NULL,
+                     update = FALSE, timeout = 600) {
+      if (!self$allow_ref && !is.null(ref)) {
+        stop("Reference switching is disallowed in this runner",
+             call. = FALSE)
+      }
+
+      self$cue$submit(quote(1 + 1))
+    },
+
+    status = function(key, output = FALSE) {
+      self$cue$status(key)
+    }
+  )
+)

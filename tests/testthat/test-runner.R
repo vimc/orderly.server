@@ -601,3 +601,55 @@ test_that("can get parameters list from runner", {
   params <- runner$get_report_parameters("other", other_commits$id)
   expect_equal(params, list(nmin = NULL))
 })
+
+test_that("run: Can do some basic check with queuing default work 1 + 1", {
+  testthat::skip_on_cran()
+  test_redis_available()
+  skip_on_appveyor()
+  skip_on_windows()
+  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
+
+  expect_false(file.exists(file.path(path, "orderly.sqlite")))
+  runner <- orderly_runner(path)
+  expect_true(file.exists(file.path(path, "orderly.sqlite")))
+  name <- "interactive"
+  key <- runner$queue(name)
+
+  runner$status(key)
+
+  runner$queue$
+
+
+  expect_equal(runner$status(key),
+               list(key = key,
+                    status = "queued",
+                    id = NA_character_,
+                    output = list(stdout = character(), stderr = NULL)))
+
+  tmp <- runner$poll()
+  expect_equal(tmp, structure("create", key = key))
+  id <- wait_for_id(runner, key)
+
+  st <- runner$status(key)
+  expect_is(st$id, "character")
+  expect_equal(st$status, "running")
+
+  dat <- runner$status(key, TRUE)
+  expect_equal(names(dat$output), c("stderr", "stdout"))
+  expect_match(dat$output$stderr, paste0("\\[ id +\\]  ", id),
+               all = FALSE)
+
+  wait_for_path(file.path(path, "draft", name, id, "started"))
+  writeLines("continue", file.path(path, "draft", name, id, "resume"))
+  wait_while_running(runner)
+
+  dat2 <- runner$status(key, TRUE)
+  expect_equal(dat2$status, "success")
+
+  expect_equal(dat2$output$stdout[seq_along(dat$output$stdout)],
+               dat$output$stdout)
+  expect_equal(dat2$output$stderr[seq_along(dat$output$stderr)],
+               dat$output$stderr)
+  expect_gt(length(dat2$output$stderr), length(dat$output$stderr))
+  expect_equal(dat$output$stdout, character())
+})
