@@ -144,3 +144,10 @@ if (file.exists(stderr)) {
 ```
 
 See https://github.com/vimc/orderly.server/pull/30/commits/29376c630d57c0f74c5d08a127ac23116e0a9bef for an example.
+
+# Testing
+
+For local testing, bring up redis docker container via
+```
+docker run --rm -d --network=host --name hintr_redis redis
+```

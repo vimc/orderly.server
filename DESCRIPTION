@@ -6,13 +6,16 @@ License: MIT + file LICENSE
 Author: Rich FitzJohn
 Maintainer: Rich FitzJohn <rich.fitzjohn@gmail.com>
 Imports:
-    R6,
     httpuv,
     jsonlite,
     DBI,
     docopt (>= 0.7.1),
+    ids,
     orderly (>= 1.2.12),
     pkgapi (>= 0.0.7),
+    R6,
+    redux,
+    rrq (>= 0.2.6),
     processx,
     webutils,
     yaml
