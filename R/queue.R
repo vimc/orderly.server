@@ -31,29 +31,23 @@ Queue <- R6::R6Class(
       self$queue$enqueue_(job)
     },
 
-    status = function(id) {
-      status <- unname(self$queue$task_status(id))
-      done <- c("ERROR", "ORPHAN", "INTERRUPTED", "COMPLETE")
-      incomplete <- c("MISSING")
-      progress <- self$queue$task_progress(id)
-      if (status %in% done) {
-        list(done = TRUE,
-             status = status,
-             success = status == "COMPLETE",
-             queue = 0,
-             progress = progress)
-      } else if (status %in% incomplete) {
-        list(done = json_verbatim("null"),
-             status = status,
-             success = json_verbatim("null"),
-             queue = self$queue$task_position(id),
-             progress = progress)
+    status = function(key) {
+      status <- unname(self$queue$task_status(key))
+      out_status <- switch(status,
+                           "PENDING" = "queued",
+                           "COMPLETE" = "success",
+                           tolower(status)
+      )
+      if (status %in% c("ERROR", "ORPHAN", "INTERRUPTED", "COMPLETE")) {
+        list(status = out_status,
+             version = "orderly job id",
+             output = "stdout & stderr stuff",
+             queue = 0)
       } else {
-        list(done = FALSE,
-             status = status,
-             success = json_verbatim("null"),
-             queue = self$queue$task_position(id),
-             progress = progress)
+        list(status = out_status,
+             version = "orderly job id",
+             output = "stdout & stderr stuff",
+             queue = self$queue$task_position(key))
       }
     },
 
