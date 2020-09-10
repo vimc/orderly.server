@@ -617,7 +617,7 @@ test_that("run: Can do some basic check with queuing default work 1 + 1", {
 
   runner$status(key)
 
-  runner$queue$
+  runner$queue("test")
 
 
   expect_equal(runner$status(key),

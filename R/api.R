@@ -1,19 +1,19 @@
-build_api <- function(runner) {
+build_api <- function(runner, path) {
   force(runner)
   api <- pkgapi::pkgapi$new()
   api$handle(endpoint_index())
-  api$handle(endpoint_rebuild(runner))
-  api$handle(endpoint_git_status(runner)) ## done
-  api$handle(endpoint_git_fetch(runner)) ## done
-  api$handle(endpoint_git_pull(runner)) ## done
-  api$handle(endpoint_git_branches(runner)) ## done
-  api$handle(endpoint_git_commits(runner)) ## done
+  # api$handle(endpoint_rebuild(runner))
+  api$handle(endpoint_git_status(path))
+  api$handle(endpoint_git_fetch(path))
+  api$handle(endpoint_git_pull(path))
+  api$handle(endpoint_git_branches(path))
+  api$handle(endpoint_git_commits(path))
+  api$handle(endpoint_available_reports(path))
+  api$handle(endpoint_report_parameters(path))
   api$handle(endpoint_run(runner))
   api$handle(endpoint_status(runner))
   api$handle(endpoint_kill(runner))
-  api$handle(endpoint_run_metadata(runner)) ## done
-  api$handle(endpoint_available_reports(runner)) ## done
-  api$handle(endpoint_report_parameters(runner)) ## done
+  api$handle(endpoint_run_metadata(runner))
   api
 }
 
@@ -61,72 +61,132 @@ endpoint_rebuild <- function(runner) {
     returning = returning_json("Rebuild.schema"))
 }
 
-target_git_status <- function(runner) {
-  v <- c("branch", "hash", "clean", "output")
-  ret <- runner$git_status()[v]
-  ret[v != "output"] <- lapply(ret[v != "output"], scalar)
+target_git_status <- function(path) {
+  ret <- list(
+    branch = scalar(git_branch_name(path)),
+    hash = scalar(git_ref_to_sha("HEAD", path))
+  )
+  status <- git_status(path)
+  ret$clean <- scalar(status$clean)
+  ret$output <- status$output
   ret
 }
 
-endpoint_git_status <- function(runner) {
+endpoint_git_status <- function(path) {
   endpoint_git_status <- pkgapi::pkgapi_endpoint$new(
     "GET", "/v1/reports/git/status/", target_git_status,
-    pkgapi::pkgapi_state(runner = runner),
+    pkgapi::pkgapi_state(path = path),
     returning = returning_json("GitStatus.schema"))
 }
 
-target_git_fetch <- function(runner) {
-  runner$git_fetch()$output
+target_git_fetch <- function(path) {
+  res <- git_fetch(path)
+  if (length(res$output) > 0L) {
+    orderly::orderly_log("fetch", res$output)
+  }
+  res$output
 }
 
-endpoint_git_fetch <- function(runner) {
+endpoint_git_fetch <- function(path) {
   pkgapi::pkgapi_endpoint$new(
     "POST", "/v1/reports/git/fetch/", target_git_fetch,
-    pkgapi::pkgapi_state(runner = runner),
+    pkgapi::pkgapi_state(path = path),
     returning = returning_json("GitFetch.schema"))
 }
 
-target_git_pull <- function(runner) {
-  runner$git_pull()$output
+target_git_pull <- function(path) {
+  res <- git_pull(path)
+  if (length(res$output) > 0L) {
+    orderly::orderly_log("pull", res$output)
+  }
+  res$output
 }
 
-endpoint_git_pull <- function(runner) {
+endpoint_git_pull <- function(path) {
   pkgapi::pkgapi_endpoint$new(
     "POST", "/v1/reports/git/pull/", target_git_pull,
-    pkgapi::pkgapi_state(runner = runner),
+    pkgapi::pkgapi_state(path = path),
     returning = returning_json("GitPull.schema"))
 }
 
-target_git_branches <- function(runner) {
-  runner$git_branches_no_merged(include_master = TRUE)
+target_git_branches <- function(path) {
+  git_branches_no_merged(path, include_master = TRUE)
 }
 
-endpoint_git_branches <- function(runner) {
+endpoint_git_branches <- function(path) {
   pkgapi::pkgapi_endpoint$new(
     "GET", "/git/branches", target_git_branches,
-    pkgapi::pkgapi_state(runner = runner),
+    pkgapi::pkgapi_state(path = path),
     returning = returning_json("GitBranches.schema"))
 }
 
-target_git_commits <- function(runner, branch) {
-  runner$git_commits(branch)
+target_git_commits <- function(path, branch) {
+  git_commits(branch, path)
 }
 
-endpoint_git_commits <- function(runner) {
+endpoint_git_commits <- function(path) {
   pkgapi::pkgapi_endpoint$new(
     "GET", "/git/commits", target_git_commits,
     pkgapi::pkgapi_input_query(branch = "string"),
-    pkgapi::pkgapi_state(runner = runner),
+    pkgapi::pkgapi_state(path = path),
     returning = returning_json("GitCommits.schema"))
 }
 
 target_run <- function(runner, name, parameters = NULL, ref = NULL,
                        instance = NULL, update = TRUE, timeout = 600) {
-  key <- runner$queue(name, parameters, ref, instance, update,
-                      timeout = timeout)
+  key <- runner$submit_task_report(name, parameters, ref, instance, update,
+                                   timeout = timeout)
   list(name = scalar(name),
        key = scalar(key),
        path = scalar(sprintf("/v1/reports/%s/status/", key)))
+}
+
+target_available_reports <- function(path, branch, commit) {
+  get_reports(branch, commit, path)
+}
+
+endpoint_available_reports <- function(path) {
+  pkgapi::pkgapi_endpoint$new(
+    "GET", "/reports/source", target_available_reports,
+    pkgapi::pkgapi_input_query(branch = "string"),
+    pkgapi::pkgapi_input_query(commit = "string"),
+    pkgapi::pkgapi_state(path = path),
+    returning = returning_json("AvailableReports.schema")
+  )
+}
+
+target_report_parameters <- function(path, report_id, commit) {
+  tryCatch(
+    parameters <- get_report_parameters(report_id, commit, path),
+    error = function(e) {
+      pkgapi::pkgapi_stop(e$message, "FAILED_RETRIEVE_PARAMS")
+    }
+  )
+  if (!is.null(parameters) && is.null(names(parameters))) {
+    pkgapi::pkgapi_stop(
+      sprintf("Failed to parse parameters for report '%s' and commit '%s'",
+              report_id, commit),
+      "INVALID_FORMAT")
+  }
+  lapply(names(parameters), function(param) {
+    default <- parameters[[param]]$default
+    if (!is.null(default)) {
+      default <- as.character(default)
+    }
+    list(
+      name = scalar(param),
+      default = scalar(default)
+    )
+  })
+}
+
+endpoint_report_parameters <- function(path) {
+  pkgapi::pkgapi_endpoint$new(
+    "GET", "/reports/<report_id>/parameters", target_report_parameters,
+    pkgapi::pkgapi_input_query(commit = "string"),
+    pkgapi::pkgapi_state(path = path),
+    returning = returning_json("ReportParameters.schema")
+  )
 }
 
 endpoint_run <- function(runner) {
@@ -210,52 +270,4 @@ endpoint_run_metadata <- function(runner) {
    pkgapi::pkgapi_state(runner = runner),
    returning = returning_json("RunMetadata.schema")
  )
-}
-
-target_available_reports <- function(runner, branch, commit) {
-  runner$get_reports(branch, commit)
-}
-
-endpoint_available_reports <- function(runner) {
-  pkgapi::pkgapi_endpoint$new(
-    "GET", "/reports/source", target_available_reports,
-    pkgapi::pkgapi_input_query(branch = "string"),
-    pkgapi::pkgapi_input_query(commit = "string"),
-    pkgapi::pkgapi_state(runner = runner),
-    returning = returning_json("AvailableReports.schema")
-  )
-}
-
-target_report_parameters <- function(runner, report_id, commit) {
-  tryCatch(
-    parameters <- runner$get_report_parameters(report_id, commit),
-    error = function(e) {
-      pkgapi::pkgapi_stop(e$message, "FAILED_RETRIEVE_PARAMS")
-    }
-  )
-  if (!is.null(parameters) && is.null(names(parameters))) {
-    pkgapi::pkgapi_stop(
-      sprintf("Failed to parse parameters for report '%s' and commit '%s'",
-              report_id, commit),
-      "INVALID_FORMAT")
-  }
-  lapply(names(parameters), function(param) {
-    default <- parameters[[param]]$default
-    if (!is.null(default)) {
-      default <- as.character(default)
-    }
-    list(
-      name = scalar(param),
-      default = scalar(default)
-    )
-  })
-}
-
-endpoint_report_parameters <- function(runner) {
-  pkgapi::pkgapi_endpoint$new(
-    "GET", "/reports/<report_id>/parameters", target_report_parameters,
-    pkgapi::pkgapi_input_query(commit = "string"),
-    pkgapi::pkgapi_state(runner = runner),
-    returning = returning_json("ReportParameters.schema")
-  )
 }
