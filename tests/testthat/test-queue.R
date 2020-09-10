@@ -21,7 +21,7 @@ test_that("queue works as intended", {
   expect_length(queue$queue$task_list(), 1)
 
   ## status can be retireved
-  ## sleep for 5s to ensure job has been picked up by runner otherwise
+  ## sleep to ensure job has been picked up by runner otherwise
   ## will be pending
   Sys.sleep(0.1)
   status <- queue$status(job_id)
@@ -38,6 +38,24 @@ test_that("queue works as intended", {
   ## Result can be retrieved after task has completed
   res <- queue$result(job_id)
   expect_equal(res, 2)
+  expect_length(queue$queue$task_list(), 1)
+
+  ## task can be cleaned up
+  queue$remove(job_id)
+  expect_length(queue$queue$task_list(), 0)
+
+  ## After task has been added
+  job_id <- queue$submit(quote({
+    Sys.sleep(10)
+    1 + 1
+  }))
+  expect_length(queue$queue$task_list(), 1)
+
+  ## task can be cancelled
+  cancel_output <- queue$cancel(job_id)
+  expect_true(cancel_output)
+  status <- queue$status(job_id)
+  expect_equal(status$status, "interrupted")
   expect_length(queue$queue$task_list(), 1)
 
   ## task can be cleaned up

@@ -149,5 +149,5 @@ See https://github.com/vimc/orderly.server/pull/30/commits/29376c630d57c0f74c5d0
 
 For local testing, bring up redis docker container via
 ```
-docker run --rm -d --network=host --name hintr_redis redis
+docker run --rm -d --network=host --name orderly_redis redis
 ```
