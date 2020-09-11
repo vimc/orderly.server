@@ -37,6 +37,16 @@ orderly_runner <- function(path, allow_ref = NULL, backup_period = 600,
   orderly_runner_$new(path, allow_ref, backup_period, queue_id, workers)
 }
 
+runner_run <- function(name, parameters, instance, path, ref) {
+  report_id <- orderly:::orderly_run_internal(
+    name, parameters, instance = instance, root = path, ref = ref,
+    capture_log = TRUE, commit = TRUE)
+  list(
+    report_name = name,
+    report_id = report_id
+  )
+}
+
 orderly_runner_ <- R6::R6Class(
   "orderly_runner",
   cloneable = FALSE,
@@ -44,6 +54,8 @@ orderly_runner_ <- R6::R6Class(
     path = NULL,
     config = NULL,
     allow_ref = FALSE,
+
+    path_id = NULL,
 
     has_git = NULL,
 
@@ -67,21 +79,24 @@ orderly_runner_ <- R6::R6Class(
       ## useful if something else wants to access the database!
       DBI::dbDisconnect(orderly::orderly_db("destination", self$config, FALSE))
 
+      ## Create place for report IDs to be stored
+      self$path_id <- path_runner_id(self$path)
+      dir.create(self$path_id, FALSE, TRUE)
+
       ## Create queue
       self$queue <- Queue$new(queue_id, workers)
     },
 
     submit_task_report = function(name, parameters = NULL, ref = NULL,
-                                  instance = NULL, update = FALSE,
-                                  timeout = 600) {
+                                  instance = NULL, timeout = 600) {
       if (!self$allow_ref && !is.null(ref)) {
         stop("Reference switching is disallowed in this runner",
              call. = FALSE)
       }
 
+      path <- self$path
       self$queue$submit(quote(
-        orderly:::orderly_run_internal(name, parameters, instance)
-      ))
+        orderly.server:::runner_run(name, parameters, instance, path, ref)))
     },
 
     # submit_task_workflow = function(name, ref = NULL, instance = NULL,
@@ -96,8 +111,17 @@ orderly_runner_ <- R6::R6Class(
     #   ))
     # },
 
-    status = function(key, output = FALSE) {
-      self$queue$status(key)
+    status = function(task_id, output = FALSE) {
+      status <- self$queue$status(task_id)
+      if (status$status == "success") {
+        res <- self$queue$result(task_id)
+        ## Verify report_id conforms to report_id structure and is definitely one
+        status$version <- res$report_id
+        ## TODO: some helper for logfile location?
+        status$output <- readlines_if_exists(file.path(
+          self$path, "archive", res$report_name, res$report_id, "orderly.log"))
+      }
+      status
     }
   )
 )

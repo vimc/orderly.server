@@ -132,19 +132,6 @@ endpoint_git_commits <- function(path) {
     returning = returning_json("GitCommits.schema"))
 }
 
-target_run <- function(runner, name, parameters = NULL, ref = NULL,
-                       instance = NULL, update = TRUE, timeout = 600) {
-  key <- runner$submit_task_report(name, parameters, ref, instance, update,
-                                   timeout = timeout)
-  list(name = scalar(name),
-       key = scalar(key),
-       path = scalar(sprintf("/v1/reports/%s/status/", key)))
-}
-
-target_available_reports <- function(path, branch, commit) {
-  get_reports(branch, commit, path)
-}
-
 endpoint_available_reports <- function(path) {
   pkgapi::pkgapi_endpoint$new(
     "GET", "/reports/source", target_available_reports,
@@ -189,12 +176,27 @@ endpoint_report_parameters <- function(path) {
   )
 }
 
+target_run <- function(runner, name, parameters = NULL, ref = NULL,
+                       instance = NULL, timeout = 600) {
+  if (!is.null(parameters)) {
+    parameters <- jsonlite::fromJSON(parameters)
+  }
+  key <- runner$submit_task_report(name, parameters, ref, instance,
+                                   timeout = timeout)
+  list(name = scalar(name),
+       key = scalar(key),
+       path = scalar(sprintf("/v1/reports/%s/status/", key)))
+}
+
+target_available_reports <- function(path, branch, commit) {
+  get_reports(branch, commit, path)
+}
+
 endpoint_run <- function(runner) {
   pkgapi::pkgapi_endpoint$new(
     "POST", "/v1/reports/<name>/run/", target_run,
     pkgapi::pkgapi_input_query(ref = "string",
                                instance = "string",
-                               update = "logical",
                                timeout = "integer"),
     pkgapi::pkgapi_input_body_json("parameters", "Parameters.schema",
                                    schema_root()),
@@ -204,13 +206,13 @@ endpoint_run <- function(runner) {
 
 target_status <- function(runner, key, output = FALSE) {
   res <- runner$status(key, output)
-  ret <- list(key = scalar(res$key),
+  ret <- list(key = scalar(res$task_id),
               status = scalar(res$status),
-              version = scalar(res$id),
+              version = scalar(res$version),
               output = NULL)
   ## VIMC-3654: the 'queue' path here should move elsewhere
   if (output || res$status == "queued") {
-    ret$output <- lapply(res$output, as.character)
+    ret$output <- lapply(res$output, scalar)
   }
   ret
 }

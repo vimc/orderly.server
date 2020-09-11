@@ -52,8 +52,10 @@ test_that("queue works as intended", {
   expect_length(queue$queue$task_list(), 1)
 
   ## task can be cancelled
+  Sys.sleep(1)
   cancel_output <- queue$cancel(job_id)
   expect_true(cancel_output)
+  Sys.sleep(0.5)
   status <- queue$status(job_id)
   expect_equal(status$status, "interrupted")
   expect_length(queue$queue$task_list(), 1)

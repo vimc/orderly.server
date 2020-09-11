@@ -27,41 +27,39 @@ Queue <- R6::R6Class(
       }
     },
 
-    submit = function(job) {
-      self$queue$enqueue_(job)
+    submit = function(job, environment = parent.frame()) {
+      self$queue$enqueue_(job, environment)
     },
 
-    status = function(key) {
-      status <- unname(self$queue$task_status(key))
+    status = function(task_id) {
+      status <- unname(self$queue$task_status(task_id))
       out_status <- switch(status,
                            "PENDING" = "queued",
                            "COMPLETE" = "success",
                            tolower(status)
       )
       if (status %in% c("ERROR", "ORPHAN", "INTERRUPTED", "COMPLETE")) {
-        list(status = out_status,
-             version = "orderly job id",
-             output = "stdout & stderr stuff",
+        list(task_id = task_id,
+             status = out_status,
              queue = 0)
       } else {
-        list(status = out_status,
-             version = "orderly job id",
-             output = "stdout & stderr stuff",
-             queue = self$queue$task_position(key))
+        list(task_id = task_id,
+             status = out_status,
+             queue = self$queue$task_position(task_id))
       }
     },
 
-    result = function(id) {
-      self$queue$task_result(id)
+    result = function(task_id) {
+      self$queue$task_result(task_id)
     },
 
-    cancel = function(id) {
-      self$queue$task_cancel(id)
+    cancel = function(task_id) {
+      self$queue$task_cancel(task_id)
     },
 
     ## Not part of the api exposed functions, used in tests
-    remove = function(id) {
-      self$queue$task_delete(id)
+    remove = function(task_id) {
+      self$queue$task_delete(task_id)
     },
 
     ## Not part of the api exposed functions, used in tests
