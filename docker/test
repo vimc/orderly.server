@@ -11,6 +11,7 @@ function cleanup {
   echo "Cleaning up"
   docker kill $NAME_REDIS > /dev/null || true
   docker kill $NAME_SERVER > /dev/null || true
+  docker kill $NAME_TESTS > /dev/null || true
   docker network rm $NAME_NETWORK > /dev/null || true
   rm -rf $PACKAGE_ROOT/orderly-demo
 }
@@ -26,6 +27,13 @@ docker network create $NAME_NETWORK
 
 docker run --rm -d --network=$NAME_NETWORK --network-alias=redis \
     --name $NAME_REDIS redis
+
+docker run --rm --network=$NAME_NETWORK \
+       -e REDIS_URL=redis://redis:6379 \
+       -e PKGAPI_VALIDATE=true \
+       --name $NAME_TESTS $TAG_TESTS \
+       /usr/local/bin/R CMD check --as-cran orderly.server_$PACKAGE_VERSION.tar.gz
+
 
 docker run --rm -d --network=$NAME_NETWORK \
     -e REDIS_URL=redis://redis:6379 \

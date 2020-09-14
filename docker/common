@@ -2,6 +2,8 @@
 PACKAGE_ROOT=$(realpath $HERE/..)
 PACKAGE_NAME=orderly.server
 PACKAGE_ORG=vimc
+PACKAGE_VERSION=$(cat $PACKAGE_ROOT/DESCRIPTION | \
+                      grep '^Version:' | sed 's/^.*: *//')
 
 # Buildkite doesn't check out a full history from the remote (just the
 # single commit) so you end up with a detached head and git rev-parse
@@ -23,3 +25,6 @@ fi
 TAG_SHA="${PACKAGE_ORG}/${PACKAGE_NAME}:${GIT_SHA}"
 TAG_BRANCH="${PACKAGE_ORG}/${PACKAGE_NAME}:${GIT_BRANCH}"
 TAG_LATEST="${PACKAGE_ORG}/${PACKAGE_NAME}:latest"
+
+NAME_TESTS=orderly_server_tests
+TAG_TESTS="${PACKAGE_ORG}/${NAME_TESTS}:${GIT_SHA}"
