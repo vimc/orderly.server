@@ -475,231 +475,231 @@ test_that("run can specify instance", {
     mockery::mock_args(runner$submit_task_report)[[2]],
     list("example", NULL, NULL, "myinstance", timeout = 100))
 })
-#
-# test_that("run-metadata", {
-#   config <- list(
-#     changelog = data.frame(
-#       id = c("internal", "public"),
-#       public = c(FALSE, TRUE),
-#       stringsAsFactors = FALSE
-#     ),
-#     database = list(
-#       source = list(
-#         instances = list(
-#           production = list(
-#             dbname = "production.sqlite"
-#           ),
-#           staging = list(
-#             dbname = "staging.sqlite"
-#           )
-#         )
-#       )
-#     ),
-#     server_options = function() {
-#       NULL
-#     }
-#   )
-#   runner <- mock_runner(config = config)
-#   endpoint <- endpoint_run_metadata(runner)
-#
-#   res <- endpoint$target()
-#   expect_equal(res$instances_supported, scalar(TRUE))
-#   expect_equal(res$git_supported, scalar(TRUE))
-#   expect_equal(res$instances,
-#                list(source = c(scalar("production"), scalar("staging"))))
-#   expect_equal(res$changelog_types, c(scalar("public")))
-#
-#   ## test again
-#   api <- build_api(runner)
-#   res <- api$request("GET", "/run-metadata")
-#   expect_equal(res$status, 200L)
-#   expect_equal(res$headers[["Content-Type"]], "application/json")
-#   expect_equal(res$body, as.character(endpoint$run()$body))
-# })
-#
-# test_that("run-metadata pulls information from runner", {
-#   path <- orderly::orderly_example("minimal")
-#   runner <- orderly_runner(path)
-#
-#   expect_equal(target_run_metadata(runner), list(
-#     name = NULL,
-#     instances_supported = scalar(FALSE),
-#     git_supported = scalar(FALSE),
-#     instances = list(
-#       "source" = character(0)
-#     ),
-#     changelog_types = NULL
-#   ))
-#
-#   ## Example with all enabled
-#   path <- orderly::orderly_example("minimal")
-#   yml <- c("database:",
-#            "  source:",
-#            "    driver: RSQLite::SQLite",
-#            "    args:",
-#            "      dbname: source.sqlite",
-#            "      user: user",
-#            "    instances:",
-#            "      production:",
-#            "        host: production.montagu.dide.ic.ac.uk",
-#            "        port: 5432",
-#            "        password: pwd",
-#            "      staging:",
-#            "        host: support.montagu.dide.ic.ac.uk",
-#            "        port: 5432",
-#            "        password: pwd",
-#            "changelog:",
-#            "  internal:",
-#            "    public: false",
-#            "  external:",
-#            "    public: true"
-#            )
-#   writeLines(yml, file.path(path, "orderly_config.yml"))
-#   runner <- orderly_runner(path)
-#   expect_equal(target_run_metadata(runner), list(
-#     name = NULL,
-#     instances_supported = scalar(TRUE),
-#     git_supported = scalar(FALSE),
-#     instances = list(
-#       "source" = c(scalar("production"), scalar("staging"))
-#     ),
-#     changelog_types = c(scalar("external"))
-#   ))
-# })
-#
-# test_that("run-metadata can get config for multiple databases", {
-#   path <- orderly::orderly_example("minimal")
-#   yml <- c("database:",
-#            "  source:",
-#            "    driver: RSQLite::SQLite",
-#            "    args:",
-#            "      dbname: source.sqlite",
-#            "      user: user",
-#            "    instances:",
-#            "      production:",
-#            "        host: production.montagu.dide.ic.ac.uk",
-#            "        port: 5432",
-#            "        password: pwd",
-#            "      staging:",
-#            "        host: support.montagu.dide.ic.ac.uk",
-#            "        port: 5432",
-#            "        password: pwd",
-#            "  annex:",
-#            "    driver: RPostgres::Postgres",
-#            "    args:",
-#            "      dbname: name",
-#            "      user: readonly",
-#            "      host: annex_host",
-#            "      port: 1234",
-#            "      password: PW"
-#   )
-#   writeLines(yml, file.path(path, "orderly_config.yml"))
-#   runner <- orderly_runner(path)
-#   expect_equal(target_run_metadata(runner), list(
-#     name = NULL,
-#     instances_supported = scalar(TRUE),
-#     git_supported = scalar(FALSE),
-#     instances = list(
-#       source = c(scalar("production"), scalar("staging")),
-#       annex = character(0)
-#     ),
-#     changelog_types = NULL
-#   ))
-#
-#   path <- orderly::orderly_example("minimal")
-#   yml <- c("database:",
-#            "  source:",
-#            "    driver: RSQLite::SQLite",
-#            "    args:",
-#            "      dbname: source.sqlite",
-#            "      user: user",
-#            "    instances:",
-#            "      production:",
-#            "        host: production.montagu.dide.ic.ac.uk",
-#            "        port: 5432",
-#            "        password: pwd",
-#            "      staging:",
-#            "        host: support.montagu.dide.ic.ac.uk",
-#            "        port: 5432",
-#            "        password: pwd",
-#            "  annex:",
-#            "    driver: RPostgres::Postgres",
-#            "    args:",
-#            "      dbname: name",
-#            "      user: readonly",
-#            "    instances:",
-#            "      annex1:",
-#            "        host: annex1_host",
-#            "        port: 1234",
-#            "        password: PW",
-#            "      annex2:",
-#            "        host: annex2_host",
-#            "        port: 12345",
-#            "        password: PW2"
-#   )
-#   writeLines(yml, file.path(path, "orderly_config.yml"))
-#   runner <- orderly_runner(path)
-#   expect_equal(target_run_metadata(runner), list(
-#     name = NULL,
-#     instances_supported = scalar(TRUE),
-#     git_supported = scalar(FALSE),
-#     instances = list(
-#       source = c(scalar("production"), scalar("staging")),
-#       annex = c(scalar("annex1"), scalar("annex2"))
-#     ),
-#     changelog_types = NULL
-#   ))
-# })
-#
-# test_that("run metadata can get name from config", {
-#   path <- orderly::orderly_example("minimal")
-#   yml <- c("database:",
-#            "  source:",
-#            "    driver: RSQLite::SQLite",
-#            "    args:",
-#            "      dbname: source.sqlite",
-#            "      user: user",
-#            "    instances:",
-#            "      production:",
-#            "        host: production.montagu.dide.ic.ac.uk",
-#            "        port: 5432",
-#            "        password: pwd",
-#            "      staging:",
-#            "        host: support.montagu.dide.ic.ac.uk",
-#            "        port: 5432",
-#            "        password: pwd",
-#            "remote:",
-#            "  production:",
-#            "    driver: RSQLite::SQLite",
-#            "    args:",
-#            "      dbname: source.sqlite",
-#            "      user: user",
-#            "      host: production.montagu.dide.ic.ac.uk",
-#            "      port: 5432",
-#            "      password: pwd",
-#            "    slack_url: slack_url",
-#            "    teams_url: teams_url",
-#            "  staging:",
-#            "    driver: RSQLite::SQLite",
-#            "    args:",
-#            "        host: support.montagu.dide.ic.ac.uk",
-#            "        port: 5432",
-#            "        password: pwd",
-#            "    slack_url: slack_url",
-#            "    teams_url: teams_url"
-#   )
-#   writeLines(yml, file.path(path, "orderly_config.yml"))
-#   withr::with_envvar(c("ORDERLY_API_SERVER_IDENTITY" = "production"), {
-#     runner <- orderly_runner(path)
-#     metadata <- target_run_metadata(runner)
-#   })
-#   expect_equal(metadata, list(
-#     name = scalar("production"),
-#     instances_supported = scalar(TRUE),
-#     git_supported = scalar(FALSE),
-#     instances = list(
-#       source = c(scalar("production"), scalar("staging"))
-#     ),
-#     changelog_types = NULL
-#   ))
-# })
+
+test_that("run-metadata", {
+  config <- list(
+    changelog = data.frame(
+      id = c("internal", "public"),
+      public = c(FALSE, TRUE),
+      stringsAsFactors = FALSE
+    ),
+    database = list(
+      source = list(
+        instances = list(
+          production = list(
+            dbname = "production.sqlite"
+          ),
+          staging = list(
+            dbname = "staging.sqlite"
+          )
+        )
+      )
+    ),
+    server_options = function() {
+      NULL
+    }
+  )
+  runner <- mock_runner(config = config)
+  endpoint <- endpoint_run_metadata(runner)
+
+  res <- endpoint$target()
+  expect_equal(res$instances_supported, scalar(TRUE))
+  expect_equal(res$git_supported, scalar(TRUE))
+  expect_equal(res$instances,
+               list(source = c(scalar("production"), scalar("staging"))))
+  expect_equal(res$changelog_types, c(scalar("public")))
+
+  ## test through API
+  api <- build_api(runner, "path")
+  res <- api$request("GET", "/run-metadata")
+  expect_equal(res$status, 200L)
+  expect_equal(res$headers[["Content-Type"]], "application/json")
+  expect_equal(res$body, as.character(endpoint$run()$body))
+})
+
+test_that("run-metadata pulls information from runner", {
+  path <- orderly::orderly_example("minimal")
+  runner <- orderly_runner(path)
+
+  expect_equal(target_run_metadata(runner), list(
+    name = NULL,
+    instances_supported = scalar(FALSE),
+    git_supported = scalar(FALSE),
+    instances = list(
+      "source" = character(0)
+    ),
+    changelog_types = NULL
+  ))
+
+  ## Example with all enabled
+  path <- orderly::orderly_example("minimal")
+  yml <- c("database:",
+           "  source:",
+           "    driver: RSQLite::SQLite",
+           "    args:",
+           "      dbname: source.sqlite",
+           "      user: user",
+           "    instances:",
+           "      production:",
+           "        host: production.montagu.dide.ic.ac.uk",
+           "        port: 5432",
+           "        password: pwd",
+           "      staging:",
+           "        host: support.montagu.dide.ic.ac.uk",
+           "        port: 5432",
+           "        password: pwd",
+           "changelog:",
+           "  internal:",
+           "    public: false",
+           "  external:",
+           "    public: true"
+           )
+  writeLines(yml, file.path(path, "orderly_config.yml"))
+  runner <- orderly_runner(path)
+  expect_equal(target_run_metadata(runner), list(
+    name = NULL,
+    instances_supported = scalar(TRUE),
+    git_supported = scalar(FALSE),
+    instances = list(
+      "source" = c(scalar("production"), scalar("staging"))
+    ),
+    changelog_types = c(scalar("external"))
+  ))
+})
+
+test_that("run-metadata can get config for multiple databases", {
+  path <- orderly::orderly_example("minimal")
+  yml <- c("database:",
+           "  source:",
+           "    driver: RSQLite::SQLite",
+           "    args:",
+           "      dbname: source.sqlite",
+           "      user: user",
+           "    instances:",
+           "      production:",
+           "        host: production.montagu.dide.ic.ac.uk",
+           "        port: 5432",
+           "        password: pwd",
+           "      staging:",
+           "        host: support.montagu.dide.ic.ac.uk",
+           "        port: 5432",
+           "        password: pwd",
+           "  annex:",
+           "    driver: RPostgres::Postgres",
+           "    args:",
+           "      dbname: name",
+           "      user: readonly",
+           "      host: annex_host",
+           "      port: 1234",
+           "      password: PW"
+  )
+  writeLines(yml, file.path(path, "orderly_config.yml"))
+  runner <- orderly_runner(path)
+  expect_equal(target_run_metadata(runner), list(
+    name = NULL,
+    instances_supported = scalar(TRUE),
+    git_supported = scalar(FALSE),
+    instances = list(
+      source = c(scalar("production"), scalar("staging")),
+      annex = character(0)
+    ),
+    changelog_types = NULL
+  ))
+
+  path <- orderly::orderly_example("minimal")
+  yml <- c("database:",
+           "  source:",
+           "    driver: RSQLite::SQLite",
+           "    args:",
+           "      dbname: source.sqlite",
+           "      user: user",
+           "    instances:",
+           "      production:",
+           "        host: production.montagu.dide.ic.ac.uk",
+           "        port: 5432",
+           "        password: pwd",
+           "      staging:",
+           "        host: support.montagu.dide.ic.ac.uk",
+           "        port: 5432",
+           "        password: pwd",
+           "  annex:",
+           "    driver: RPostgres::Postgres",
+           "    args:",
+           "      dbname: name",
+           "      user: readonly",
+           "    instances:",
+           "      annex1:",
+           "        host: annex1_host",
+           "        port: 1234",
+           "        password: PW",
+           "      annex2:",
+           "        host: annex2_host",
+           "        port: 12345",
+           "        password: PW2"
+  )
+  writeLines(yml, file.path(path, "orderly_config.yml"))
+  runner <- orderly_runner(path)
+  expect_equal(target_run_metadata(runner), list(
+    name = NULL,
+    instances_supported = scalar(TRUE),
+    git_supported = scalar(FALSE),
+    instances = list(
+      source = c(scalar("production"), scalar("staging")),
+      annex = c(scalar("annex1"), scalar("annex2"))
+    ),
+    changelog_types = NULL
+  ))
+})
+
+test_that("run metadata can get name from config", {
+  path <- orderly::orderly_example("minimal")
+  yml <- c("database:",
+           "  source:",
+           "    driver: RSQLite::SQLite",
+           "    args:",
+           "      dbname: source.sqlite",
+           "      user: user",
+           "    instances:",
+           "      production:",
+           "        host: production.montagu.dide.ic.ac.uk",
+           "        port: 5432",
+           "        password: pwd",
+           "      staging:",
+           "        host: support.montagu.dide.ic.ac.uk",
+           "        port: 5432",
+           "        password: pwd",
+           "remote:",
+           "  production:",
+           "    driver: RSQLite::SQLite",
+           "    args:",
+           "      dbname: source.sqlite",
+           "      user: user",
+           "      host: production.montagu.dide.ic.ac.uk",
+           "      port: 5432",
+           "      password: pwd",
+           "    slack_url: slack_url",
+           "    teams_url: teams_url",
+           "  staging:",
+           "    driver: RSQLite::SQLite",
+           "    args:",
+           "        host: support.montagu.dide.ic.ac.uk",
+           "        port: 5432",
+           "        password: pwd",
+           "    slack_url: slack_url",
+           "    teams_url: teams_url"
+  )
+  writeLines(yml, file.path(path, "orderly_config.yml"))
+  withr::with_envvar(c("ORDERLY_API_SERVER_IDENTITY" = "production"), {
+    runner <- orderly_runner(path)
+    metadata <- target_run_metadata(runner)
+  })
+  expect_equal(metadata, list(
+    name = scalar("production"),
+    instances_supported = scalar(TRUE),
+    git_supported = scalar(FALSE),
+    instances = list(
+      source = c(scalar("production"), scalar("staging"))
+    ),
+    changelog_types = NULL
+  ))
+})
