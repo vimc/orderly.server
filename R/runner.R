@@ -26,12 +26,17 @@
 ##'   you are storing information alongside the core orderly tables
 ##'   (as done by OrderlyWeb).
 ##'
+##' @param queue_id ID of an existing queue to connect to, creates a new one
+##'   if NULL
+##'
+##' @param workers Number of workers to spawn
+##'
 ##' @export
 ##' @return A runner object, with methods designed for internal use only.
 ##' @examples
 ##'
 ##' path <- orderly::orderly_example("demo")
-##' runner <- orderly.server::orderly_runner(path)
+##' runner <- orderly.server::orderly_runner(path, workers = 0)
 orderly_runner <- function(path, allow_ref = NULL, backup_period = 600,
                            queue_id = NULL, workers = 1) {
   orderly_runner_$new(path, allow_ref, backup_period, queue_id, workers)

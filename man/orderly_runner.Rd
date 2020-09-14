@@ -32,6 +32,11 @@ orderly tree.  In case of corruption of the database, this
 backup can be manually moved into place.  This is only needed if
 you are storing information alongside the core orderly tables
 (as done by OrderlyWeb).}
+
+\item{queue_id}{ID of an existing queue to connect to, creates a new one
+if NULL}
+
+\item{workers}{Number of workers to spawn}
 }
 \value{
 A runner object, with methods designed for internal use only.
@@ -46,5 +51,5 @@ only for creating automated tools for use with orderly.
 \examples{
 
 path <- orderly::orderly_example("demo")
-runner <- orderly.server::orderly_runner(path)
+runner <- orderly.server::orderly_runner(path, workers = 0)
 }
