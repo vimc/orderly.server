@@ -17,7 +17,6 @@ Imports:
     R6,
     redux,
     rrq (>= 0.2.6),
-    processx,
     webutils,
     yaml
 Suggests:

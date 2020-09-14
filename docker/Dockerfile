@@ -2,17 +2,21 @@ FROM vimc/orderly:master
 
 RUN apt-get update || apt-get update && apt-get install -y \
   libcurl4-openssl-dev \
+  libhiredis-dev \
   libv8-dev \
   openssh-client
 
-# processx is an orderly Suggests that we require for the server.
 RUN install2.r --error \
   --repos https://cloud.r-project.org \
   --repos https://vimc.github.io/drat \
   jsonlite \
   pkgapi \
-  processx \
   webutils
+
+COPY docker/bin /usr/local/bin/
+
+RUN install_remote \
+        mrc-ide/rrq
 
 COPY . /orderly.server
 RUN R CMD INSTALL /orderly.server && \
@@ -21,5 +25,6 @@ RUN R CMD INSTALL /orderly.server && \
   rm -rf /orderly.server
 
 EXPOSE 8321
+ENV ORDERLY_SERVER_QUEUE_ID=orderly.server
 
 ENTRYPOINT ["orderly.server"]

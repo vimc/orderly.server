@@ -18,6 +18,11 @@
 ##'   During this period the server will not respond to any http
 ##'   requests.
 ##'
+##' @param queue_id ID of an existing queue to connect to, creates a new one
+##'   if NULL
+##'
+##' @param workers Number of workers to spawn
+##'
 ##' @export
 ##' @importFrom httpuv runServer
 server <- function(path, port, host = "0.0.0.0", allow_ref = TRUE,

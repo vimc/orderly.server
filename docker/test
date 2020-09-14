@@ -4,10 +4,14 @@ HERE=$(dirname $0)
 . $HERE/common
 
 NAME_SERVER=orderly_server
+NAME_REDIS=orderly_server_redis
+NAME_NETWORK=orderly_server_network
 
 function cleanup {
   echo "Cleaning up"
+  docker kill $NAME_REDIS > /dev/null || true
   docker kill $NAME_SERVER > /dev/null || true
+  docker network rm $NAME_NETWORK > /dev/null || true
   rm -rf $PACKAGE_ROOT/orderly-demo
 }
 
@@ -18,7 +22,13 @@ git clone https://github.com/vimc/orderly-demo
 mkdir -p orderly-demo/runner/log
 mkdir -p orderly-demo/runner/id
 
-docker run --rm -d \
+docker network create $NAME_NETWORK
+
+docker run --rm -d --network=$NAME_NETWORK --network-alias=redis \
+    --name $NAME_REDIS redis
+
+docker run --rm -d --network=$NAME_NETWORK \
+    -e REDIS_URL=redis://redis:6379 \
     -p 8321:8321 \
     --mount type=bind,src=$PACKAGE_ROOT/orderly-demo,dst=/demo \
     --name $NAME_SERVER $TAG_SHA demo

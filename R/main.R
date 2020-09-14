@@ -18,7 +18,9 @@ Options:
        port = as.integer(res[["port"]]),
        host = res[["host"]],
        allow_ref = !res[["no_ref"]],
-       go_signal = res[["go_signal"]])
+       go_signal = res[["go_signal"]],
+       ## TODO: Make this configurable?
+       workers = 0)
 }
 
 docopt_parse <- function(doc, args) {
