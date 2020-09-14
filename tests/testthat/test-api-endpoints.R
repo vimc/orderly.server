@@ -263,7 +263,7 @@ test_that("status - queued behind nothing", {
     list(key = scalar(task_id),
          status = scalar("queued"),
          version = NULL,
-         output = character(0)))
+         output = list()))
 
   expect_equal(mockery::mock_args(runner$status)[[1]], list(task_id, FALSE))
 
@@ -300,7 +300,8 @@ test_that("status - queued", {
     list(key = scalar(task_id),
          status = scalar("queued"),
          version = scalar(NA_character_),
-         output = status$output))
+         output = list(scalar("queued:key-1:example"),
+                       scalar("queued:key-2:example"))))
   expect_equal(mockery::mock_args(runner$status)[[1]], list(task_id, FALSE))
 
   ## endpoint
@@ -369,7 +370,7 @@ test_that("status - completed, with log", {
     list(key = scalar(task_id),
          status = scalar("success"),
          version = scalar(version),
-         output = status$output))
+         output = list(scalar("example/success.txt"))))
   expect_equal(mockery::mock_args(runner$status)[[1]], list(task_id, TRUE))
 
   ## endpoint

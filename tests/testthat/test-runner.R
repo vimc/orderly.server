@@ -11,6 +11,7 @@ test_that("run: success", {
 
   ## Run a report slow enough to reliably report back a "running" status
   task_id <- runner$submit_task_report("slow1")
+  Sys.sleep(1)
   expect_equal(runner$status(task_id),
                list(
                  task_id = task_id,
@@ -364,7 +365,8 @@ test_that("prevent git changes", {
   expect_true(runner$allow_ref)
   r <- runner$submit_task_report("example", ref = "origin/other",
                                  parameters = list(nmin = 0))
-  expect_equal(nrow(runner$queue_status()$queue), 1L)
+  ## TODO: add queue_status endpoint
+  ## expect_equal(nrow(runner$queue_status()$queue), 1L)
 
   runner <- withr::with_envvar(
     c("ORDERLY_API_SERVER_IDENTITY" = NA_character_),
@@ -372,7 +374,8 @@ test_that("prevent git changes", {
   expect_true(runner$allow_ref)
   r <- runner$submit_task_report("example", ref = "origin/other",
                     parameters = list(nmin = 0))
-  expect_equal(nrow(runner$queue_status()$queue), 1L)
+  ## TODO: add queue_status endpoint
+  ## expect_equal(nrow(runner$queue_status()$queue), 1L)
 })
 
 
