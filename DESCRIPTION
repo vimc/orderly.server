@@ -5,6 +5,7 @@ Description: Run orderly reports as a server.
 License: MIT + file LICENSE
 Author: Rich FitzJohn
 Maintainer: Rich FitzJohn <rich.fitzjohn@gmail.com>
+Additional_repositories: https://mrc-ide.github.io/drat
 Imports:
     httpuv,
     jsonlite,
