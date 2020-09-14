@@ -120,6 +120,9 @@ orderly_runner_ <- R6::R6Class(
         ## TODO: some helper for logfile location?
         status$output <- readlines_if_exists(file.path(
           self$path, "archive", res$report_name, res$report_id, "orderly.log"))
+      } else if (status$status == "error") {
+        res <- self$queue$result(task_id)
+        status$output <- res$message
       }
       status
     }

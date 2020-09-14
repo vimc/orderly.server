@@ -54,7 +54,8 @@ test_that("run: error", {
   expect_equal(status$task_id, task_id)
   expect_equal(status$status, "error")
   expect_equal(status$queue, 0)
-  ## TODO: report errors too
+  expect_equal(status$output,
+               "Script did not produce expected artefacts: mygraph.png")
 })
 
 
