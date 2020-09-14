@@ -28,5 +28,5 @@ Suggests:
     sys,
     testthat,
     withr
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 Encoding: UTF-8

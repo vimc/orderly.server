@@ -4,7 +4,13 @@
 \alias{orderly_runner}
 \title{Orderly runner}
 \usage{
-orderly_runner(path, allow_ref = NULL, backup_period = 600)
+orderly_runner(
+  path,
+  allow_ref = NULL,
+  backup_period = 600,
+  queue_id = NULL,
+  workers = 1
+)
 }
 \arguments{
 \item{path}{Path to use}
