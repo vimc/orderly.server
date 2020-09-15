@@ -12,9 +12,19 @@ trap cleanup EXIT
 cat << EOF > $HERE/Dockerfile.test
 FROM $TAG_SHA
 
+RUN apt-get update && apt-get -y install --no-install-recommends \
+        texinfo \
+        texlive \
+        texlive-fonts-extra \
+        && apt-get clean \
+        && rm -rf /var/lib/apt/lists/*
+
 RUN install2.r --error \
+        covr \
+        knitr \
         mockery \
-        covr
+        rmarkdown
+
 COPY . /src
 WORKDIR /src
 RUN R CMD build .
