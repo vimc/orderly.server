@@ -25,5 +25,6 @@ addons:
     packages:
       - libv8-dev
       - libapparmor-dev
+      - libsodium-dev
       - libhiredis-dev
       - redis-server
