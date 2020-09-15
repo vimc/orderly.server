@@ -361,7 +361,7 @@ test_that("status - completed, with log", {
   task_id <- "task-id-1"
   version <- "20200414-123013-a1df28f7"
   status <- list(task_id = task_id, status = "success", version = version,
-                 output = c("example/success.txt"))
+                 output = "example/success.txt")
   runner <- mock_runner(task_id, status)
 
   res <- target_status(runner, task_id, TRUE)
