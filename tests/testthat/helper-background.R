@@ -14,11 +14,11 @@ orderly_server_background <- R6::R6Class(
     path = NULL,
     port = NULL,
     url = NULL,
-    pid = NULL,
+    process = NULL,
     log = NULL,
 
     initialize = function(path, port, log) {
-      loadNamespace("sys")
+      loadNamespace("callr")
       loadNamespace("httr")
 
       if (!file.exists(file.path(path, "orderly_config.yml"))) {
@@ -40,29 +40,19 @@ orderly_server_background <- R6::R6Class(
     },
 
     start = function() {
-      if (!is.null(self$pid)) {
+      if (!is.null(self$process)) {
         stop("Server already set up")
       }
       if (!private$server_not_up()) {
         stop("Server already listening on port ", port)
       }
 
-      Sys.setenv(R_TESTS = "") # nolint
-      lib_paths <- .libPaths() # nolint
-      libs <- sprintf("c(%s)",
-                      paste(sprintf('"%s"', lib_paths), collapse = ", "))
-      code <-
-        c(sprintf('path <- "%s"', self$path),
-          sprintf("port <- %d", self$port),
-          sprintf(".libPaths(%s)", libs),
-          'orderly.server::server(path, port, "127.0.0.1")')
-      path_server <- tempfile()
-      writeLines(code, path_server)
-
-      unlink(self$log)
-      rscript <- file.path(R.home("bin"), "Rscript")
-      self$pid <- sys::exec_background(rscript, path_server,
-                                       std_out = self$log, std_err = self$log)
+      self$process <- callr::r_bg(
+        function(path, port) {
+          orderly.server::server(path, port, "127.0.0.1")
+        },
+        args = list(path = self$path, port = self$port)
+      )
 
       message("waiting for server to become responsive")
       wait_while(private$server_not_up)
@@ -70,12 +60,10 @@ orderly_server_background <- R6::R6Class(
     },
 
     stop = function() {
-      if (!is.null(self$pid)) {
+      if (!is.null(self$process)) {
         message("Stopping server")
-        tools::pskill(self$pid, tools::SIGINT)
-        Sys.sleep(0.15)
-        tools::pskill(self$pid, tools::SIGKILL)
-        self$pid <- NULL
+        self$process$kill()
+        self$process <- NULL
       }
     },
 

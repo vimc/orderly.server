@@ -16,6 +16,7 @@ RUN install2.r --error \
 COPY docker/bin /usr/local/bin/
 
 RUN install_remote \
+        mrc-ide/heartbeatr \
         mrc-ide/rrq
 
 COPY . /orderly.server

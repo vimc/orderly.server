@@ -519,7 +519,7 @@ test_that("run-metadata", {
 
 test_that("run-metadata pulls information from runner", {
   path <- orderly::orderly_example("minimal")
-  runner <- orderly_runner(path)
+  runner <- orderly_runner(path, workers = 0)
 
   expect_equal(target_run_metadata(runner), list(
     name = NULL,
@@ -555,7 +555,7 @@ test_that("run-metadata pulls information from runner", {
            "    public: true"
            )
   writeLines(yml, file.path(path, "orderly_config.yml"))
-  runner <- orderly_runner(path)
+  runner <- orderly_runner(path, workers = 0)
   expect_equal(target_run_metadata(runner), list(
     name = NULL,
     instances_supported = scalar(TRUE),
@@ -594,7 +594,7 @@ test_that("run-metadata can get config for multiple databases", {
            "      password: PW"
   )
   writeLines(yml, file.path(path, "orderly_config.yml"))
-  runner <- orderly_runner(path)
+  runner <- orderly_runner(path, workers = 0)
   expect_equal(target_run_metadata(runner), list(
     name = NULL,
     instances_supported = scalar(TRUE),
@@ -638,7 +638,7 @@ test_that("run-metadata can get config for multiple databases", {
            "        password: PW2"
   )
   writeLines(yml, file.path(path, "orderly_config.yml"))
-  runner <- orderly_runner(path)
+  runner <- orderly_runner(path, workers = 0)
   expect_equal(target_run_metadata(runner), list(
     name = NULL,
     instances_supported = scalar(TRUE),
@@ -690,7 +690,7 @@ test_that("run metadata can get name from config", {
   )
   writeLines(yml, file.path(path, "orderly_config.yml"))
   withr::with_envvar(c("ORDERLY_API_SERVER_IDENTITY" = "production"), {
-    runner <- orderly_runner(path)
+    runner <- orderly_runner(path, workers = 0)
     metadata <- target_run_metadata(runner)
   })
   expect_equal(metadata, list(
