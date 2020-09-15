@@ -10,14 +10,14 @@ RUN install2.r --error \
   --repos https://cloud.r-project.org \
   --repos https://vimc.github.io/drat \
   jsonlite \
-  pkgapi \
   webutils
 
 COPY docker/bin /usr/local/bin/
 
 RUN install_remote \
         mrc-ide/heartbeatr \
-        mrc-ide/rrq
+        mrc-ide/rrq \
+        reside-ic/pkgapi
 
 COPY . /orderly.server
 RUN R CMD INSTALL /orderly.server && \
