@@ -17,7 +17,8 @@ COPY docker/bin /usr/local/bin/
 RUN install_remote \
         mrc-ide/heartbeatr \
         mrc-ide/rrq \
-        reside-ic/pkgapi
+        reside-ic/pkgapi \
+        ropensci/jsonvalidate
 
 COPY . /orderly.server
 RUN R CMD INSTALL /orderly.server && \
