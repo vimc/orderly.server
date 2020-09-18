@@ -23,6 +23,10 @@ docker run --rm -d \
     --mount type=bind,src=$PACKAGE_ROOT/orderly-demo,dst=/demo \
     --name $NAME_SERVER $TAG_SHA demo
 
+## Sleep first here as otherwise receive an error
+## curl: (56) Recv failure: Connection reset by peer
+## which exists instantly
+sleep 2
 
 for attempt in $(seq 10); do
     echo "Attempt $attempt"
