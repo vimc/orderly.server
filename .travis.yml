@@ -19,3 +19,4 @@ addons:
     packages:
       - libv8-dev
       - libapparmor-dev
+      - libsodium-dev
