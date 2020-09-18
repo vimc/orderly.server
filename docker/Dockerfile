@@ -10,9 +10,14 @@ RUN install2.r --error \
   --repos https://cloud.r-project.org \
   --repos https://vimc.github.io/drat \
   jsonlite \
-  pkgapi \
   processx \
   webutils
+
+COPY docker/bin /usr/local/bin/
+
+RUN install_remote \
+        reside-ic/pkgapi \
+        ropensci/jsonvalidate
 
 COPY . /orderly.server
 RUN R CMD INSTALL /orderly.server && \
