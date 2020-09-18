@@ -402,6 +402,7 @@ test_that("run-metadata pulls information from runner", {
     instances = list(
       "source" = character(0)
     ),
+    remotes = NULL,
     changelog_types = NULL
   ))
 
@@ -437,6 +438,7 @@ test_that("run-metadata pulls information from runner", {
     instances = list(
       "source" = c(scalar("production"), scalar("staging"))
     ),
+    remotes = NULL,
     changelog_types = c(scalar("external"))
   ))
 })
@@ -477,6 +479,7 @@ test_that("run-metadata can get config for multiple databases", {
       source = c(scalar("production"), scalar("staging")),
       annex = character(0)
     ),
+    remotes = NULL,
     changelog_types = NULL
   ))
 
@@ -521,6 +524,7 @@ test_that("run-metadata can get config for multiple databases", {
       source = c(scalar("production"), scalar("staging")),
       annex = c(scalar("annex1"), scalar("annex2"))
     ),
+    remotes = NULL,
     changelog_types = NULL
   ))
 })
@@ -574,6 +578,7 @@ test_that("run metadata can get name from config", {
     instances = list(
       source = c(scalar("production"), scalar("staging"))
     ),
+    remotes = c(scalar("production"), scalar("staging")),
     changelog_types = NULL
   ))
 })

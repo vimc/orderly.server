@@ -21,6 +21,12 @@
                 }
             }
         },
+        "remotes": {
+            "type": [ "array", "null" ],
+            "items": {
+                "type": "string"
+            }
+        },
         "changelog_types": {
             "type": "array",
             "items": {
@@ -29,6 +35,6 @@
         }
    },
     "required": ["name", "instances_supported", "git_supported", "instances",
-                 "changelog_types"],
+                 "remotes", "changelog_types"],
     "additionalProperties": false
 }

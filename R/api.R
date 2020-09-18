@@ -200,11 +200,17 @@ target_run_metadata <- function(runner) {
     names(instances) <- databases
   }
 
+  remotes <- names(runner$config$remote)
+  if (length(remotes) > 0) {
+    remotes <- vcapply(remotes, scalar, USE.NAMES = FALSE)
+  }
+
   list(
     name = scalar(runner$config$server_options()$name),
     instances_supported = scalar(any(viapply(instances, length) > 0)),
     git_supported = scalar(isTRUE(runner$has_git)),
     instances = instances,
+    remotes = remotes,
     changelog_types = changelog
   )
 }
