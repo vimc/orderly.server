@@ -2,6 +2,7 @@ FROM vimc/orderly:master
 
 RUN apt-get update || apt-get update && apt-get install -y \
   libcurl4-openssl-dev \
+  libsodium-dev \
   libv8-dev \
   openssh-client
 
@@ -12,7 +13,10 @@ RUN install2.r --error \
   jsonlite \
   pkgapi \
   processx \
+  remotes \
   webutils
+
+RUN Rscript -e 'remotes::install_github("reside-ic/porcelain@22eef9b")'
 
 COPY . /orderly.server
 RUN R CMD INSTALL /orderly.server && \

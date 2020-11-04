@@ -26,3 +26,7 @@ Suggests:
     withr
 RoxygenNote: 7.1.0
 Encoding: UTF-8
+Remotes:
+    reside-ic/porcelain@22eef9b,
+    ropensci/jsonvalidate,
+    vimc/orderly

@@ -1,10 +1,12 @@
 # orderly.server
 
+<!-- badges: start -->
 [![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
-[![Build Status](https://travis-ci.org/vimc/orderly.server.svg?branch=master)](https://travis-ci.org/vimc/orderly.server)
+[![R build status](https://github.com/vimc/orderly.server/workflows/R-CMD-check/badge.svg)](https://github.com/vimc/orderly.server/actions)
 [![Build status](https://badge.buildkite.com/c35bbf7799cef2d70f8282aa6215ce1d67bc24f4a1981c308e.svg?branch=master)](https://buildkite.com/mrc-ide/orderly-dot-server)
 [![codecov.io](https://codecov.io/github/vimc/orderly.server/coverage.svg?branch=master)](https://codecov.io/github/vimc/orderly.server?branch=master)
 [![CodeFactor](https://www.codefactor.io/repository/github/vimc/orderly.server/badge)](https://www.codefactor.io/repository/github/vimc/orderly.server)
+<!-- badges: end -->
 
 Server process to orchestrate running reports.  This is not in the [main package](https://github.com/vimc/orderly) because it drags in some dependencies that will never usually be needed.
 

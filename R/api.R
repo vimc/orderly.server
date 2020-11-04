@@ -19,6 +19,7 @@ build_api <- function(runner) {
   ## in pkgapi
   api$registerHook("preroute", function(req)
     tryCatch(runner$poll(), error = function(e) NULL))
+  api$setDocs(FALSE)
   api
 }
 
