@@ -13,7 +13,10 @@ RUN install2.r --error \
   jsonlite \
   pkgapi \
   processx \
+  remotes \
   webutils
+
+RUN Rscript -e 'remotes::install_github("reside-ic/porcelain@22eef9b")'
 
 COPY . /orderly.server
 RUN R CMD INSTALL /orderly.server && \
