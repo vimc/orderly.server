@@ -30,3 +30,7 @@ Suggests:
     withr
 RoxygenNote: 7.1.1
 Encoding: UTF-8
+Remotes:
+    reside-ic/porcelain@22eef9b,
+    ropensci/jsonvalidate,
+    vimc/orderly

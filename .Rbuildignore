@@ -13,3 +13,4 @@
 ^buildkite$
 ^\.lintr$
 ^\.hadolint\.yaml$
+^\.github$

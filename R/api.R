@@ -14,6 +14,7 @@ build_api <- function(runner, path) {
   api$handle(endpoint_status(runner))
   api$handle(endpoint_kill(runner))
   api$handle(endpoint_run_metadata(runner))
+  api$setDocs(FALSE)
   api
 }
 
