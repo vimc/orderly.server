@@ -4,6 +4,7 @@ test_that("run: success", {
   testthat::skip_on_cran()
   skip_on_appveyor()
   skip_on_windows()
+  skip_if_no_redis()
   path <- orderly_prepare_orderly_example("demo")
   expect_false(file.exists(file.path(path, "orderly.sqlite")))
   runner <- orderly_runner(path)
@@ -39,6 +40,7 @@ test_that("run: error", {
   testthat::skip_on_cran()
   skip_on_appveyor()
   skip_on_windows()
+  skip_if_no_redis()
 
   ## Setup report which will error
   path <- orderly_prepare_orderly_example("minimal")
@@ -62,6 +64,7 @@ test_that("run: error", {
 test_that("run report with parameters", {
   testthat::skip_on_cran()
   skip_on_windows()
+  skip_if_no_redis()
   path <- orderly_prepare_orderly_example("demo")
   runner <- orderly_runner(path)
   task_id <- runner$submit_task_report("other", parameters = list(nmin = 0.5))
@@ -97,6 +100,7 @@ test_that("run in branch (local)", {
   testthat::skip_on_cran()
   skip_on_appveyor()
   skip_on_windows()
+  skip_if_no_redis()
   path <- orderly_unzip_git_demo()
   runner <- orderly_runner(path)
 
@@ -112,6 +116,7 @@ test_that("run in branch (local)", {
 
 test_that("run missing ref", {
   testthat::skip_on_cran()
+  skip_if_no_redis()
   path <- orderly_prepare_orderly_git_example()
   path1 <- path[["origin"]]
   path2 <- path[["local"]]
@@ -148,6 +153,7 @@ test_that("run missing ref", {
 
 test_that("prevent ref change", {
   testthat::skip_on_cran()
+  skip_if_no_redis()
   path <- orderly_unzip_git_demo()
   runner <- orderly_runner(path, FALSE)
   expect_error(runner$submit_task_report("other", ref = "other"),
@@ -156,6 +162,7 @@ test_that("prevent ref change", {
 
 test_that("Can't git change", {
   testthat::skip_on_cran()
+  skip_if_no_redis()
   path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
   runner <- orderly_runner(path)
   expect_error(runner$submit_task_report("other", ref = "other"),
@@ -330,6 +337,7 @@ test_that("Can't git change", {
 test_that("prevent git changes", {
   testthat::skip_on_cran()
   skip_on_windows()
+  skip_if_no_redis()
   path <- orderly_prepare_orderly_git_example()
 
   cfg <- list(
@@ -433,6 +441,7 @@ test_that("allow ref logic", {
 test_that("runner can set instance", {
   testthat::skip_on_cran()
   skip_on_windows()
+  skip_if_no_redis()
 
   path <- orderly_prepare_orderly_example("demo")
   config <- file.path(path, "orderly_config.yml")

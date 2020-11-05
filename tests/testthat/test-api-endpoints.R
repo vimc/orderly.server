@@ -518,6 +518,7 @@ test_that("run-metadata", {
 })
 
 test_that("run-metadata pulls information from runner", {
+  skip_if_no_redis()
   path <- orderly::orderly_example("minimal")
   runner <- orderly_runner(path, workers = 0)
 
@@ -568,6 +569,7 @@ test_that("run-metadata pulls information from runner", {
 })
 
 test_that("run-metadata can get config for multiple databases", {
+  skip_if_no_redis()
   path <- orderly::orderly_example("minimal")
   yml <- c("database:",
            "  source:",
@@ -652,6 +654,7 @@ test_that("run-metadata can get config for multiple databases", {
 })
 
 test_that("run metadata can get name from config", {
+  skip_if_no_redis()
   path <- orderly::orderly_example("minimal")
   yml <- c("database:",
            "  source:",

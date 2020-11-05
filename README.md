@@ -151,5 +151,9 @@ See https://github.com/vimc/orderly.server/pull/30/commits/29376c630d57c0f74c5d0
 
 For local testing, bring up redis docker container via
 ```
-docker run --rm -d --network=host --name orderly_redis redis
+./scripts/redis start
+```
+this can then be removed via
+```
+./scripts/redis stop
 ```
