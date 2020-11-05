@@ -3,13 +3,16 @@ context("queue")
 test_that("queue works as intended", {
   test_redis_available()
 
-  queue <- Queue$new()
+  queue <- Queue$new(timeout = 300)
   expect_equal(queue$queue$worker_len(), 1)
 
   worker_1 <- queue$queue$worker_list()[[1]]
 
   expect_equal(nrow(queue$queue$worker_log_tail(worker_1)), 1)
-  expect_equal(queue$queue$worker_log_tail(worker_1)$command, "ALIVE")
+  expect_equal(queue$queue$worker_log_tail(worker_1, n = 3)[1, "command"],
+               "ALIVE")
+  expect_equal(queue$queue$worker_log_tail(worker_1, n = 3)[3, "message"],
+               "TIMEOUT_SET")
 
   expect_length(queue$queue$task_list(), 0)
 
@@ -95,4 +98,22 @@ test_that("queue_id is returned if supplied", {
   withr::with_envvar(
     c("ORDERLY_SERVER_QUEUE_ID" = NA),
     expect_equal(orderly_queue_id("myqueue", TRUE), "myqueue"))
+})
+
+test_that("test queue can start workers with timeout", {
+  queue <- Queue$new(workers = 2, timeout = 300)
+  timeout <- queue$queue$message_send_and_wait("TIMEOUT_GET",
+                                               queue$queue$worker_list())
+  expect_length(timeout, 2)
+  expect_equal(timeout[[1]][["timeout"]], 300.0)
+  expect_equal(timeout[[2]][["timeout"]], 300.0)
+})
+
+test_that("queue starts up normally without a timeout", {
+  queue <- Queue$new(workers = 1)
+  on.exit(queue$cleanup())
+  timeout <- queue$queue$message_send_and_wait("TIMEOUT_GET",
+                                               queue$queue$worker_list(),
+                                               progress = FALSE)
+  expect_equal(timeout[[1]], c("timeout" = Inf, remaining = Inf))
 })

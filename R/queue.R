@@ -7,7 +7,8 @@ Queue <- R6::R6Class(
     queue = NULL,
 
     initialize = function(queue_id = NULL, workers = 1,
-                          cleanup_on_exit = workers > 0) {
+                          cleanup_on_exit = workers > 0,
+                          timeout = Inf) {
       self$cleanup_on_exit <- cleanup_on_exit
 
       message(sprintf("Connecting to redis at %s", redux::redis_config()$url))
@@ -18,12 +19,15 @@ Queue <- R6::R6Class(
       self$queue <- rrq::rrq_controller(queue_id, con)
       self$queue$worker_config_save("localhost", heartbeat_period = 3)
 
-      self$start(workers)
+      self$start(workers, timeout)
     },
 
-    start = function(workers) {
+    start = function(workers, timeout) {
       if (workers > 0L) {
-        rrq::worker_spawn(self$queue, workers)
+        ids <- rrq::worker_spawn(self$queue, workers)
+        if (is.finite(timeout) && timeout > 0) {
+          self$queue$message_send_and_wait("TIMEOUT_SET", timeout, ids)
+        }
       }
     },
 
@@ -70,7 +74,7 @@ Queue <- R6::R6Class(
     cleanup = function() {
       if (self$cleanup_on_exit && !is.null(self$queue$con)) {
         message("Stopping workers")
-        self$queue$worker_stop()
+        self$queue$worker_stop(type = "kill")
         self$destroy()
       }
     }
