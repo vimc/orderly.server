@@ -1,7 +1,7 @@
 context("queue")
 
 test_that("queue works as intended", {
-  test_redis_available()
+  skip_if_no_redis()
 
   queue <- Queue$new(timeout = 300)
   expect_equal(queue$queue$worker_len(), 1)
@@ -101,6 +101,7 @@ test_that("queue_id is returned if supplied", {
 })
 
 test_that("test queue can start workers with timeout", {
+  skip_if_no_redis()
   queue <- Queue$new(workers = 2, timeout = 300)
   timeout <- queue$queue$message_send_and_wait("TIMEOUT_GET",
                                                queue$queue$worker_list())
@@ -110,6 +111,7 @@ test_that("test queue can start workers with timeout", {
 })
 
 test_that("queue starts up normally without a timeout", {
+  skip_if_no_redis()
   queue <- Queue$new(workers = 1)
   on.exit(queue$cleanup())
   timeout <- queue$queue$message_send_and_wait("TIMEOUT_GET",
