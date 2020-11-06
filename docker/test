@@ -32,7 +32,7 @@ docker run --rm --network=$NAME_NETWORK \
        -e REDIS_URL=redis://redis:6379 \
        -e PKGAPI_VALIDATE=true \
        --name $NAME_TESTS $TAG_TESTS \
-       /usr/local/bin/R CMD check --as-cran orderly.server_$PACKAGE_VERSION.tar.gz
+       /usr/local/bin/R CMD check orderly.server_$PACKAGE_VERSION.tar.gz
 
 
 docker run --rm -d --network=$NAME_NETWORK \
