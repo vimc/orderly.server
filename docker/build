@@ -3,46 +3,11 @@ set -ex
 HERE=$(dirname $0)
 . $HERE/common
 
-function cleanup {
-    echo "Cleaning up"
-    rm -f $PACKAGE_ROOT/docker/Dockerfile.test
-}
-trap cleanup EXIT
-
-cat << EOF > $HERE/Dockerfile.test
-FROM $TAG_SHA
-
-RUN apt-get update && apt-get -y install --no-install-recommends \
-        texinfo \
-        texlive \
-        texlive-fonts-extra \
-        texlive-latex-extra \
-        && apt-get clean \
-        && rm -rf /var/lib/apt/lists/*
-
-RUN install2.r --error \
-        covr \
-        knitr \
-        mockery \
-        rmarkdown
-
-COPY . /src
-WORKDIR /src
-RUN R CMD build .
-ENTRYPOINT ["/bin/bash"]
-EOF
-
 docker build --pull \
        -t $TAG_SHA \
        -f docker/Dockerfile \
        .
 
-docker build \
-      -t $TAG_TESTS \
-      -f docker/Dockerfile.test \
-      .
-
 # We always push the SHA tagged versions, for debugging if the tests
 # after this step fail
 docker push $TAG_SHA
-docker push $TAG_TESTS
