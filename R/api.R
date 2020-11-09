@@ -14,6 +14,8 @@ build_api <- function(runner) {
   api$handle(endpoint_run_metadata(runner))
   api$handle(endpoint_available_reports(runner))
   api$handle(endpoint_report_parameters(runner))
+  api$handle(endpoint_bundle_pack(runner))
+  api$handle(endpoint_bundle_import(runner))
   ## RESIDE-163: we need to prevent these hooks throwing errors, or
   ## force them to throw errors of the correct type - that needs doing
   ## in pkgapi
@@ -264,4 +266,44 @@ endpoint_report_parameters <- function(runner) {
     pkgapi::pkgapi_state(runner = runner),
     returning = returning_json("ReportParameters.schema")
   )
+}
+
+target_bundle_pack <- function(runner, name, parameters = NULL, ref = NULL,
+                                 instance = NULL, update = TRUE) {
+  path <- runner$bundle_pack(name, parameters, ref, instance, update)
+  on.exit(unlink(path))
+  bytes <- readBin(path, "raw", n = file.size(path))
+  bytes <- pkgapi::pkgapi_add_headers(
+    bytes, list("Content-Disposition" = basename(path)))
+  bytes
+}
+
+endpoint_bundle_pack <- function(runner) {
+  pkgapi::pkgapi_endpoint$new(
+    "POST", "/v1/bundle/pack/<name>", target_bundle_pack,
+    pkgapi::pkgapi_input_query(ref = "string",
+                               instance = "string",
+                               update = "logical"),
+    pkgapi::pkgapi_input_body_json("parameters", "Parameters.schema",
+                                   schema_root()),
+    pkgapi::pkgapi_state(runner = runner),
+    returning = pkgapi::pkgapi_returning_binary())
+}
+
+target_bundle_import <- function(runner, data) {
+  path <- tempfile(fileext = ".zip")
+  on.exit(unlink(path))
+  writeBin(data, path)
+  runner$bundle_import(path)
+  scalar(TRUE)
+}
+
+endpoint_bundle_import <- function(runner, data) {
+  pkgapi::pkgapi_endpoint$new(
+    "POST", "/v1/bundle/import", target_bundle_import,
+    ## NOTE: This is not ideal because it requires
+    ## application/octet-stream - see RESIDE-208 for details.
+    pkgapi::pkgapi_input_body_binary("data"),
+    pkgapi::pkgapi_state(runner = runner),
+    returning = returning_json("BundleImport.schema"))
 }

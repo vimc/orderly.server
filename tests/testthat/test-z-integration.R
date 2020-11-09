@@ -342,3 +342,33 @@ test_that("can get report parameters", {
          default = NULL)
   ))
 })
+
+
+test_that("Can pack, run and import a bundle", {
+  server <- start_test_server()
+  on.exit(server$stop())
+
+  res <- httr::POST(server$api_url("/v1/bundle/pack/example"))
+  expect_equal(httr::status_code(res), 200L)
+  zip_in <- tempfile()
+  writeBin(httr::content(res, "raw"), zip_in)
+
+  filename <- httr::headers(res)[["Content-Disposition"]]
+  expect_match(filename, "^[0-9]{8}-[0-9]{6}-[[:xdigit:]]{8}\\.zip")
+
+  ans <- orderly::orderly_bundle_run(zip_in, echo = FALSE)
+  expect_equal(filename, paste0(ans$id, ".zip"))
+
+  res_up <- httr::POST(
+    "http://localhost:8321/v1/bundle/import",
+    body = httr::upload_file(ans$path, "application/octet-stream"))
+  expect_equal(httr::status_code(res), 200L)
+  dat <- content(res_up)
+  expect_equal(dat$status, "success")
+  expect_equal(dat$errors, NULL)
+  expect_true(dat$data)
+
+  expect_equal(
+    orderly::orderly_list_archive(server$path),
+    data.frame(name = "example", id = ans$id, stringsAsFactors = FALSE))
+})
