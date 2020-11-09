@@ -34,9 +34,11 @@
 ##' @export
 ##' @return A runner object, with methods designed for internal use only.
 ##' @examples
-##'
-##' path <- orderly::orderly_example("demo")
-##' runner <- orderly.server::orderly_runner(path, workers = 0)
+##' available <- redux::redis_available()
+##' if (available) {
+##'   path <- orderly::orderly_example("demo")
+##'   runner <- orderly.server::orderly_runner(path, workers = 0)
+##' }
 orderly_runner <- function(path, allow_ref = NULL, backup_period = 600,
                            queue_id = NULL, workers = 1) {
   orderly_runner_$new(path, allow_ref, backup_period, queue_id, workers)

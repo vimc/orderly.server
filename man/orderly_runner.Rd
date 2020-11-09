@@ -49,7 +49,9 @@ they are run.  This function is not intended for human end users,
 only for creating automated tools for use with orderly.
 }
 \examples{
-
-path <- orderly::orderly_example("demo")
-runner <- orderly.server::orderly_runner(path, workers = 0)
+available <- redux::redis_available()
+if (available) {
+  path <- orderly::orderly_example("demo")
+  runner <- orderly.server::orderly_runner(path, workers = 0)
+}
 }
