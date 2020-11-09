@@ -1,8 +1,6 @@
 context("queue")
 
 test_that("queue works as intended", {
-  skip_if_no_redis()
-
   queue <- Queue$new(timeout = 300)
   expect_equal(queue$queue$worker_len(), 1)
 
