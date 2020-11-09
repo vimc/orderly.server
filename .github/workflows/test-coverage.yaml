@@ -40,6 +40,10 @@ jobs:
         run: |
           install.packages(c("remotes"))
           remotes::install_deps(dependencies = TRUE)
+          remotes::install_github("mrc-ide/heartbeatr")
+          remotes::install_github("mrc-ide/rrq")
+          remotes::install_github("ropensci/jsonvalidate")
+          remotes::install_github("reside-ic/porcelain@22eef9b")
           remotes::install_cran("covr")
         shell: Rscript {0}
 
