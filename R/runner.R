@@ -231,6 +231,24 @@ orderly_runner_ <- R6::R6Class(
                                data = data, failed_only = failed_only)
     },
 
+    bundle_pack = function(name, parameters = NULL, ref = NULL,
+                           instance = NULL, update = FALSE) {
+      ## NOTE: because the orderly::orderly_bundle_pack does not
+      ## support ref, we only do the minimum here and support
+      ## pull-before-pack.
+      if (update && self$has_git) {
+        self$git_pull()
+      }
+      res <- orderly::orderly_bundle_pack(tempfile(), name, parameters,
+                                          root = self$config,
+                                          instance = instance)
+      res$path
+    },
+
+    bundle_import = function(path) {
+      orderly::orderly_bundle_import(path, root = self$config)
+    },
+
     poll = function() {
       key <- self$process$key
       if (!is.null(self$process)) {
