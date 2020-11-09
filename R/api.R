@@ -268,9 +268,12 @@ endpoint_report_parameters <- function(runner) {
   )
 }
 
-target_bundle_pack <- function(runner, name, parameters = NULL, ref = NULL,
-                                 instance = NULL, update = TRUE) {
-  path <- runner$bundle_pack(name, parameters, ref, instance, update)
+target_bundle_pack <- function(runner, name, parameters = NULL,
+                               instance = NULL) {
+  if (!is.null(parameters)) {
+    parameters <- jsonlite::fromJSON(parameters)
+  }
+  path <- runner$bundle_pack(name, parameters, instance)
   on.exit(unlink(path))
   bytes <- readBin(path, "raw", n = file.size(path))
   bytes <- pkgapi::pkgapi_add_headers(
@@ -281,9 +284,7 @@ target_bundle_pack <- function(runner, name, parameters = NULL, ref = NULL,
 endpoint_bundle_pack <- function(runner) {
   pkgapi::pkgapi_endpoint$new(
     "POST", "/v1/bundle/pack/<name>", target_bundle_pack,
-    pkgapi::pkgapi_input_query(ref = "string",
-                               instance = "string",
-                               update = "logical"),
+    pkgapi::pkgapi_input_query(instance = "string"),
     pkgapi::pkgapi_input_body_json("parameters", "Parameters.schema",
                                    schema_root()),
     pkgapi::pkgapi_state(runner = runner),
