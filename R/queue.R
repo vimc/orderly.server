@@ -5,6 +5,7 @@ Queue <- R6::R6Class(
     root = NULL,
     cleanup_on_exit = NULL,
     queue = NULL,
+    queue_id = NULL,
 
     initialize = function(queue_id = NULL, workers = 1,
                           cleanup_on_exit = workers > 0,
@@ -15,8 +16,8 @@ Queue <- R6::R6Class(
       con <- redux::hiredis()
 
       message("Starting queue")
-      queue_id <- orderly_queue_id(queue_id)
-      self$queue <- rrq::rrq_controller(queue_id, con)
+      self$queue_id <- orderly_queue_id(queue_id)
+      self$queue <- rrq::rrq_controller(self$queue_id, con)
       self$queue$worker_config_save("localhost", heartbeat_period = 3)
 
       self$start(workers, timeout)

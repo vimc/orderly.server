@@ -103,14 +103,6 @@ first_dirname <- function(paths) {
   vcapply(paths, first_dir, USE.NAMES = FALSE)
 }
 
-path_runner_log <- function(path) {
-  file.path(path, "runner", "log")
-}
-
-path_runner_id <- function(path) {
-  file.path(path, "runner", "id")
-}
-
 path_draft <- function(root) {
   file.path(root, "draft")
 }
@@ -138,4 +130,8 @@ file_copy <- function(..., overwrite = TRUE) {
 json_verbatim <- function(x) {
   class(x) <- "json"
   x
+}
+
+dir_create <- function(path) {
+  dir.create(path, FALSE, TRUE)
 }

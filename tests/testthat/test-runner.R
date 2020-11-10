@@ -1,5 +1,28 @@
 context("orderly_runner")
 
+test_that("runner can run a report", {
+  ## Setup dir for testing
+  path <- orderly_prepare_orderly_example("demo")
+  dir_create(dirname(path_stderr(path, "ignore")))
+  dir_create(dirname(path_stdout(path, "ignore")))
+  dir_create(dirname(path_id_file(path, "ignore")))
+
+  out <- runner_run("key_id", "test_key", path, "minimal", parameters = NULL,
+                    instance = NULL, ref = NULL)
+  expect_equal(out$report_name, "minimal")
+  expect_match(out$report_id, "^\\d{8}-\\d{6}-\\w{8}")
+
+  ## Report has been added to archive
+  report_dir <- file.path(path, "archive", "minimal", out$report_id)
+  expect_true(file.exists(report_dir))
+
+  ## Report id has been written to redis
+  con <- redux::hiredis()
+  expect_equal(con$HGET("key_id", "test_key"), out$report_id)
+
+  ## Can read log file as it has been copied to destination
+  expect_true(file.exists(file.path(report_dir, "orderly.log")))
+})
 test_that("run: success", {
   testthat::skip_on_cran()
   skip_on_appveyor()
@@ -11,11 +34,11 @@ test_that("run: success", {
   expect_true(file.exists(file.path(path, "orderly.sqlite")))
 
   ## Run a report slow enough to reliably report back a "running" status
-  task_id <- runner$submit_task_report("slow1")
+  key <- runner$submit_task_report("slow1")
   Sys.sleep(1)
-  expect_equal(runner$status(task_id),
+  expect_equal(runner$status(key),
                list(
-                 task_id = task_id,
+                 key = key,
                  status = "running",
                  queue = 0
                ))

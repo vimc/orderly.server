@@ -44,13 +44,42 @@ orderly_runner <- function(path, allow_ref = NULL, backup_period = 600,
   orderly_runner_$new(path, allow_ref, backup_period, queue_id, workers)
 }
 
-runner_run <- function(name, parameters, instance, path, ref) {
-  report_id <- orderly:::orderly_run_internal(
-    name, parameters, instance = instance, root = path, ref = ref,
-    capture_log = TRUE, commit = TRUE)
+runner_run <- function(key_id, key, root, name, parameters, instance, ref,
+                       poll = 0.1) {
+  con <- redux::hiredis()
+  bin <- tempfile()
+  dir.create(bin)
+  orderly_bin <- write_script(
+    bin,
+    readLines(system.file("script", package = "orderly", mustWork = TRUE)),
+    versioned = TRUE)
+  id_file <- path_id_file(root, key)
+  args <- c("--root", root,
+            "run", name, "--print-log", "--id-file", id_file,
+            if (!is.null(ref)) c("--ref", ref),
+            if (!is.null(instance)) c("--instance", instance),
+            parameters)
+  log_out <- path_stdout(root, key)
+  log_err <- path_stderr(root, key)
+  px <- processx::process$new(orderly_bin, args,
+                              stdout = log_out, stderr = log_err)
+  ## Might be worth killing px on function exit
+  id <- NULL
+  while (px$is_alive()) {
+    if (is.null(id)) {
+      if (file.exists(id_file)) {
+        id <- readlines_if_exists(id_file, NA_character_)
+        con$HSET(key_id, key, id)
+      }
+    }
+    Sys.sleep(poll)
+  }
+
+  ## TODO: Copy the log file into the final report location
+  ## either draft or archive
   list(
     report_name = name,
-    report_id = report_id
+    report_id = id
   )
 }
 
@@ -58,7 +87,7 @@ orderly_runner_ <- R6::R6Class(
   "orderly_runner",
   cloneable = FALSE,
   public = list(
-    path = NULL,
+    root = NULL,
     config = NULL,
     allow_ref = FALSE,
 
@@ -67,12 +96,14 @@ orderly_runner_ <- R6::R6Class(
     has_git = NULL,
 
     queue = NULL,
+    con = NULL,
+    keys = NULL,
 
-    initialize = function(path, allow_ref = NULL, backup_period, queue_id,
+    initialize = function(root, allow_ref = NULL, backup_period, queue_id,
                           workers) {
-      self$path <- path
-      self$config <- orderly::orderly_config(path)
-      self$has_git <- runner_has_git(path)
+      self$config <- orderly::orderly_config(root)
+      self$root <- self$config$root
+      self$has_git <- runner_has_git(self$root)
       if (!self$has_git) {
         message("Not enabling git features as this is not version controlled")
       }
@@ -86,24 +117,34 @@ orderly_runner_ <- R6::R6Class(
       ## useful if something else wants to access the database!
       DBI::dbDisconnect(orderly::orderly_db("destination", self$config, FALSE))
 
-      ## Create place for report IDs to be stored
-      self$path_id <- path_runner_id(self$path)
-      dir.create(self$path_id, FALSE, TRUE)
+      ## Create directories for storing logs and id files
+      dir_create(dirname(path_stderr(self$root, "ignore")))
+      dir_create(dirname(path_stdout(self$root, "ignore")))
+      dir_create(dirname(path_id_file(self$root, "ignore")))
 
       ## Create queue
       self$queue <- Queue$new(queue_id, workers)
+      self$con <- self$queue$queue$con
+      ## TODO: put all the keys in this and read from here too
+      self$keys <- orderly_key(self$queue$queue_id)
     },
 
     submit_task_report = function(name, parameters = NULL, ref = NULL,
-                                  instance = NULL, timeout = 600) {
+                                  instance = NULL, poll = 0.1, timeout = 600) {
       if (!self$allow_ref && !is.null(ref)) {
         stop("Reference switching is disallowed in this runner",
              call. = FALSE)
       }
 
-      path <- self$path
-      self$queue$submit(quote(
-        orderly.server:::runner_run(name, parameters, instance, path, ref)))
+      root <- self$root
+      key <- ids::adjective_animal()
+      self$con$HSET("key_timeout", key, timeout)
+      task_id <- self$queue$submit(quote(
+        orderly.server:::runner_run("key_id", key, root, name, parameters,
+                                    instance, ref, poll = poll)))
+      self$con$HSET("key_task_id", key, task_id)
+      self$con$HSET("task_id_key", task_id, key)
+      key
     },
 
     # submit_task_workflow = function(name, ref = NULL, instance = NULL,
@@ -118,16 +159,20 @@ orderly_runner_ <- R6::R6Class(
     #   ))
     # },
 
-    status = function(task_id, output = FALSE) {
+    status = function(key, output = FALSE) {
+      task_id <- self$con$HGET("key_task_id", key)
       status <- self$queue$status(task_id)
-      if (status$status == "success") {
-        res <- self$queue$result(task_id)
-        ## Verify report_id conforms to report_id structure and is definitely one
-        status$version <- res$report_id
-        ## TODO: some helper for logfile location?
-        status$output <- readlines_if_exists(file.path(
-          self$path, "archive", res$report_name, res$report_id, "orderly.log"))
-      } else if (status$status == "error") {
+      report_id <- self$con$HGET("key_id", key)
+      status$version <- report_id
+      if (output) {
+        status$output <- list(
+          stderr = readlines_if_exists(path_stderr(self$root, key)),
+          stdout = readlines_if_exists(path_stdout(self$root, key))
+        )
+      }
+
+      # TODO: Handle errors
+      if (status$status == "error") {
         res <- self$queue$result(task_id)
         status$output <- res$message
       }
@@ -154,3 +199,20 @@ runner_has_git <- function(path) {
   nzchar(Sys.which("git")) && file.exists(file.path(path, ".git"))
 }
 
+path_stderr <- function(root, key) {
+  file.path(root, "runner/log", paste0(key, ".stderr"))
+}
+
+path_stdout <- function(root, key) {
+  file.path(root, "runner/log", paste0(key, ".stdout"))
+}
+
+path_id_file <- function(root, key) {
+  file.path(root, "runner/id", paste0(key, ".id_file"))
+}
+
+
+orderly_key <- function(base) {
+  list(key_task_id = sprintf("%s:orderly.server:key_task_id", base),
+       task_id_key = sprintf("%s:orderly.server:task_id_key", base))
+}
