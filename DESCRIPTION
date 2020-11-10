@@ -15,7 +15,8 @@ Imports:
     pkgapi (>= 0.0.7),
     processx,
     webutils,
-    yaml
+    yaml,
+    zip
 Suggests:
     httr,
     jsonvalidate (>= 1.2.2),
