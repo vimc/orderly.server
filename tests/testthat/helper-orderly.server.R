@@ -87,7 +87,8 @@ mock_runner <- function(keys = NULL, status = NULL, git_status = NULL,
                         git_fetch = NULL, git_pull = NULL,
                         git_branches_no_merged = NULL, git_commits = NULL,
                         config = NULL, has_git = TRUE, get_reports = NULL,
-                        get_report_parameters = NULL) {
+                        get_report_parameters = NULL,
+                        bundle_pack = NULL, bundle_import = NULL) {
   list(
     rebuild = mockery::mock(TRUE, cycle = TRUE),
     queue = mockery::mock(keys, cycle = TRUE),
@@ -102,7 +103,9 @@ mock_runner <- function(keys = NULL, status = NULL, git_status = NULL,
     config = config,
     has_git = has_git,
     get_reports = mockery::mock(get_reports, cycle = TRUE),
-    get_report_parameters = mockery::mock(get_report_parameters, cycle = TRUE))
+    get_report_parameters = mockery::mock(get_report_parameters, cycle = TRUE),
+    bundle_pack = mockery::mock(bundle_pack, cycle = TRUE),
+    bundle_import = mockery::mock(bundle_import, cycle = TRUE))
 }
 
 

@@ -601,3 +601,19 @@ test_that("can get parameters list from runner", {
   params <- runner$get_report_parameters("other", other_commits$id)
   expect_equal(params, list(nmin = NULL))
 })
+
+
+test_that("Can create and run bundles from runner", {
+  testthat::skip_on_cran()
+  skip_on_windows()
+  path <- orderly_prepare_orderly_example("demo")
+  runner <- orderly_runner(path)
+  pars <- '{"nmin":0.5}'
+  path_pack <- runner$bundle_pack("other", parameters = list(nmin = 0.5))
+  expect_true(file.exists(path_pack))
+  res <- orderly::orderly_bundle_run(path_pack, echo = FALSE)
+  runner$bundle_import(res$path)
+  expect_equal(
+    orderly::orderly_list_archive(path),
+    data.frame(name = "other", id = res$id, stringsAsFactors = FALSE))
+})
