@@ -150,3 +150,25 @@ Pull from remote git.  This updates the working tree
   " create mode 100644 new"
 ]
 ```
+
+## POST /bundle/pack/:name
+
+Create a "[report bundle](https://www.vaccineimpact.org/orderly/reference/orderly_bundle_pack.html)", to be run on some other machine
+
+As for the `/reports/:name/run/` endpoint, accepts as `POST` body json that will be passed directly through to the report.  This is required when the report requires parameters and is not allowed for reports that do not allow parameters.
+
+Also accepts the query parameter `instance` which can be used to change database instance.
+
+Returns binary data, being the created bundle object for use with `orderly::orderly_bundle_run`
+
+## POST /bundle/import
+
+Import a bundle previously packed with `/bundle/pack/:name`. Requires the completed bundle to be sent as body with mime type of `application/octet-stream`.
+
+Schema: [`BundleImport.schema.json`](BundleImport.schema.json)
+
+### Example
+
+``` json
+true
+```
