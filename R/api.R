@@ -303,7 +303,8 @@ endpoint_bundle_import <- function(runner, data) {
   pkgapi::pkgapi_endpoint$new(
     "POST", "/v1/bundle/import", target_bundle_import,
     ## NOTE: This is not ideal because it requires
-    ## application/octet-stream - see RESIDE-208 for details.
+    ## application/octet-stream - see RESIDE-208 for details, can be
+    ## updated once we move to porcelain >= 0.1.1
     pkgapi::pkgapi_input_body_binary("data"),
     pkgapi::pkgapi_state(runner = runner),
     returning = returning_json("BundleImport.schema"))

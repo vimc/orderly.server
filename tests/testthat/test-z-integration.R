@@ -372,3 +372,25 @@ test_that("Can pack, run and import a bundle", {
     orderly::orderly_list_archive(server$path),
     data.frame(name = "example", id = ans$id, stringsAsFactors = FALSE))
 })
+
+
+test_that("Can create a report with parameters", {
+  server <- start_test_server()
+  on.exit(server$stop())
+
+  res <- httr::POST(server$api_url("/v1/bundle/pack/count_param"),
+                    body = list(time = 10, poll = 1), encode = "json")
+  expect_equal(httr::status_code(res), 200L)
+  zip_in <- tempfile()
+  writeBin(httr::content(res, "raw"), zip_in)
+
+  filename <- httr::headers(res)[["Content-Disposition"]]
+  id <- sub("\\.zip$", "", filename)
+
+  tmp <- tempfile()
+  zip::unzip(zip_in, exdir = tmp)
+  on.exit(unlink(tmp, recursive = TRUE))
+  expect_mapequal(
+    readRDS(file.path(tmp, id, "meta", "info.rds"))$parameters,
+    list(time = 10, poll = 1))
+})

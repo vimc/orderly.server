@@ -685,3 +685,39 @@ test_that("report parameter endponits handles errors", {
   expect_equal(params$error$data[[1]]$detail, scalar(
     "Failed to parse parameters for report 'minimal' and commit '84hd82n'"))
 })
+
+
+test_that("bundle pack can pack basic bundle", {
+  tmp <- tempfile(fileext = ".zip")
+  writeBin(as.raw(0:255), tmp)
+
+  runner <- mock_runner(bundle_pack = tmp)
+
+  endpoint <- endpoint_bundle_pack(runner)
+  res <- endpoint$run("name")
+  expect_equal(
+    mockery::mock_args(runner$bundle_pack)[[1]],
+    list("name", NULL, NULL))
+
+  expect_equal(res$data, as.raw(0:255), check.attributes = FALSE)
+  expect_equal(res$headers, list("Content-Disposition" = basename(tmp)))
+  expect_equal(res$status_code, 200L)
+})
+
+
+test_that("bundle pack can pass parameters and instance", {
+  tmp <- tempfile(fileext = ".zip")
+  writeBin(as.raw(0:255), tmp)
+
+  runner <- mock_runner(bundle_pack = tmp)
+
+  endpoint <- endpoint_bundle_pack(runner)
+  res <- endpoint$run("name", parameters = '{"a": 1}', instance = "myinstance")
+  expect_equal(
+    mockery::mock_args(runner$bundle_pack)[[1]],
+    list("name", list(a = 1), "myinstance"))
+
+  expect_equal(res$data, as.raw(0:255), check.attributes = FALSE)
+  expect_equal(res$headers, list("Content-Disposition" = basename(tmp)))
+  expect_equal(res$status_code, 200L)
+})
