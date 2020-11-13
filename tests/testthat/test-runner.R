@@ -23,6 +23,7 @@ test_that("runner can run a report", {
   ## Can read log file as it has been copied to destination
   expect_true(file.exists(file.path(report_dir, "orderly.log")))
 })
+
 test_that("run: success", {
   testthat::skip_on_cran()
   skip_on_appveyor()

@@ -75,8 +75,18 @@ runner_run <- function(key_id, key, root, name, parameters, instance, ref,
     Sys.sleep(poll)
   }
 
-  ## TODO: Copy the log file into the final report location
-  ## either draft or archive
+  ## TODO test this and see if it works, what is the weirdness with stdout??
+  ok <- px$get_exit_status() == 0L
+  base <- if (ok) path_archive else path_draft
+  p <- file.path(base(root), name, id)
+  if (file.exists(p)) {
+    file_copy(log_err, file.path(p, "orderly.log"))
+    ## This should be empty if the redirection works as expected:
+    if (file.size(log_out) > 0L) {
+      file_copy(log_out, file.path(p, "orderly.log.stdout"))
+    }
+  }
+
   list(
     report_name = name,
     report_id = id
@@ -161,6 +171,7 @@ orderly_runner_ <- R6::R6Class(
 
     status = function(key, output = FALSE) {
       task_id <- self$con$HGET("key_task_id", key)
+      browser()
       status <- self$queue$status(task_id)
       report_id <- self$con$HGET("key_id", key)
       status$version <- report_id
@@ -176,7 +187,6 @@ orderly_runner_ <- R6::R6Class(
         res <- self$queue$result(task_id)
         status$output <- res$message
       }
-      status
     }
   )
 )
