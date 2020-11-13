@@ -11,7 +11,8 @@ Options:
   --port=PORT       Port to run on [default: 8321]
   --host=HOST       IP address owned by this server [default: 0.0.0.0]
   --no-ref          Prevent git reference switching
-  --go-signal=PATH  Relative path for go signal"
+  --go-signal=PATH  Relative path for go signal
+  --workers=WORKERS Number of workers to spawn [default: 0]"
   res <- docopt_parse(doc, args)
 
   list(path = res[["path"]],
@@ -19,8 +20,7 @@ Options:
        host = res[["host"]],
        allow_ref = !res[["no_ref"]],
        go_signal = res[["go_signal"]],
-       ## TODO: Make this configurable?
-       workers = 0)
+       workers = as.integer(res[["workers"]]))
 }
 
 docopt_parse <- function(doc, args) {

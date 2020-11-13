@@ -79,7 +79,7 @@ runner_run <- function(key_report_id, key, root, name, parameters, instance,
     Sys.sleep(poll)
   }
 
-  ## TODO test this and see if it works, what is the weirdness with stdout??
+  ## TODO stdout stuff? when is there stdout?
   ok <- px$get_exit_status() == 0L
   base <- if (ok) path_archive else path_draft
   p <- file.path(base(root), name, id)
@@ -153,7 +153,6 @@ orderly_runner_ <- R6::R6Class(
       self$queue <- rrq::rrq_controller(self$queue_id, self$con)
       self$queue$worker_config_save("localhost", heartbeat_period = 3)
       self$start_workers(workers, worker_timeout)
-      ## TODO: put all the keys in this and read from here too
       self$keys <- orderly_key(self$queue$queue_id)
     },
 
@@ -223,12 +222,6 @@ orderly_runner_ <- R6::R6Class(
       } else {
         out <- NULL
       }
-
-      # TODO: Handle errors
-      # if (status$status == "error") {
-      #   res <- self$queue$task_result(task_id)
-      #   output <- res$message
-      # }
 
       list(
         key = key,

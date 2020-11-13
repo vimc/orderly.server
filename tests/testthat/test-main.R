@@ -40,6 +40,14 @@ test_that("Set go signal", {
 })
 
 
+test_that("Set workers", {
+  expect_equal(
+    main_args(c("path", "--workers", "2")),
+    list(path = "path", port = 8321, host = "0.0.0.0", allow_ref = TRUE,
+         go_signal = NULL, workers = 2))
+})
+
+
 test_that("write script", {
   p <- tempfile()
   expect_error(write_script(p), "'path' must be a directory")
