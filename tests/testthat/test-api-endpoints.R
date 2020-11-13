@@ -220,15 +220,15 @@ test_that("report parameter endponits handles errors", {
 
 
 test_that("run", {
-  task_id <- "task-id-1"
-  runner <- mock_runner(task_ids = task_id)
+  key <- "key-1"
+  runner <- mock_runner(key = key)
 
   res <- target_run(runner, "example")
   expect_equal(
     res,
     list(name = scalar("example"),
-         key = scalar(task_id),
-         path = scalar(sprintf("/v1/reports/%s/status/", task_id))))
+         key = scalar(key),
+         path = scalar(sprintf("/v1/reports/%s/status/", key))))
   expect_equal(
     mockery::mock_args(runner$submit_task_report)[[1]],
     list("example", NULL, NULL, NULL, timeout = 600))
@@ -252,143 +252,151 @@ test_that("run", {
 
 test_that("status - queued behind nothing", {
   ## See mock.R
-  task_id <- "task-id-2"
-  status <- list(task_id = task_id, status = "queued")
+  key <- "key-2"
+  status <- list(key = key, status = "queued", version = NULL,
+                 task_position = 1)
 
-  runner <- mock_runner(task_id, status)
+  runner <- mock_runner(key, status)
 
-  res <- target_status(runner, task_id)
+  res <- target_status(runner, key)
   expect_equal(
     res,
-    list(key = scalar(task_id),
+    list(key = scalar(key),
          status = scalar("queued"),
          version = NULL,
-         output = list()))
+         output = NULL,
+         task_position = scalar(1)))
 
-  expect_equal(mockery::mock_args(runner$status)[[1]], list(task_id, FALSE))
+  expect_equal(mockery::mock_args(runner$status)[[1]], list(key, FALSE))
 
   ## endpoint
   endpoint <- endpoint_status(runner)
-  res_endpoint <- endpoint$run(task_id)
+  res_endpoint <- endpoint$run(key)
   expect_equal(res_endpoint$status_code, 200)
   expect_equal(res_endpoint$content_type, "application/json")
   expect_equal(res_endpoint$data, res)
-  expect_equal(mockery::mock_args(runner$status)[[2]], list(task_id, FALSE))
+  expect_equal(mockery::mock_args(runner$status)[[2]], list(key, FALSE))
 
   ## api
   api <- build_api(runner, "path")
-  res_api <- api$request("GET", sprintf("/v1/reports/%s/status/", task_id))
+  res_api <- api$request("GET", sprintf("/v1/reports/%s/status/", key))
   expect_equal(res_api$status, 200L)
   expect_equal(res_api$headers[["Content-Type"]], "application/json")
   expect_equal(res_api$body, as.character(res_endpoint$body))
-  expect_equal(mockery::mock_args(runner$status)[[3]], list(task_id, FALSE))
+  expect_equal(mockery::mock_args(runner$status)[[3]], list(key, FALSE))
 })
 
 
 test_that("status - queued", {
+  testthat::skip("TODO: how do we want to return queue info?")
   ## See mock.R
-  task_id <- "task-id-3"
+  key <- "key-3"
   status <- list(
-    task_id = task_id, status = "queued", version = NA_character_,
+    key = key, status = "queued", version = NA_character_,
     output = sprintf("queued:key-%d:example", 1:2))
 
-  runner <- mock_runner(task_id, status)
+  runner <- mock_runner(key, status)
 
-  res <- target_status(runner, task_id)
+  res <- target_status(runner, key)
   expect_equal(
     res,
-    list(key = scalar(task_id),
+    list(key = scalar(key),
          status = scalar("queued"),
          version = scalar(NA_character_),
          output = list(scalar("queued:key-1:example"),
                        scalar("queued:key-2:example"))))
-  expect_equal(mockery::mock_args(runner$status)[[1]], list(task_id, FALSE))
+  expect_equal(mockery::mock_args(runner$status)[[1]], list(key, FALSE))
 
   ## endpoint
   endpoint <- endpoint_status(runner)
-  res_endpoint <- endpoint$run(task_id)
+  res_endpoint <- endpoint$run(key)
   expect_equal(res_endpoint$status_code, 200)
   expect_equal(res_endpoint$content_type, "application/json")
   expect_equal(res_endpoint$data, res)
-  expect_equal(mockery::mock_args(runner$status)[[2]], list(task_id, FALSE))
+  expect_equal(mockery::mock_args(runner$status)[[2]], list(key, FALSE))
 
   ## api
   api <- build_api(runner, "path")
-  res_api <- api$request("GET", sprintf("/v1/reports/%s/status/", task_id))
+  res_api <- api$request("GET", sprintf("/v1/reports/%s/status/", key))
   expect_equal(res_api$status, 200L)
   expect_equal(res_api$headers[["Content-Type"]], "application/json")
   expect_equal(res_api$body, as.character(res_endpoint$body))
-  expect_equal(mockery::mock_args(runner$status)[[3]], list(task_id, FALSE))
+  expect_equal(mockery::mock_args(runner$status)[[3]], list(key, FALSE))
 })
 
 
 test_that("status - completed, no log", {
-  task_id <- "task-id-1"
+  key <- "key-1"
   version <- "20200414-123013-a1df28f7"
-  status <- list(task_id = task_id, status = "success", version = version,
-                 output = NULL)
+  status <- list(key = key, status = "success", version = version,
+                 output = NULL, task_position = 0)
 
-  runner <- mock_runner(task_id, status)
+  runner <- mock_runner(key, status)
 
-  res <- target_status(runner, task_id)
+  res <- target_status(runner, key)
   expect_equal(
     res,
-    list(key = scalar(task_id),
+    list(key = scalar(key),
          status = scalar("success"),
          version = scalar(version),
-         output = NULL))
-  expect_equal(mockery::mock_args(runner$status)[[1]], list(task_id, FALSE))
+         output = NULL,
+         task_position = scalar(0)))
+  expect_equal(mockery::mock_args(runner$status)[[1]], list(key, FALSE))
 
   ## endpoint
   endpoint <- endpoint_status(runner)
-  res_endpoint <- endpoint$run(task_id)
+  res_endpoint <- endpoint$run(key)
   expect_equal(res_endpoint$status_code, 200)
   expect_equal(res_endpoint$content_type, "application/json")
   expect_equal(res_endpoint$data, res)
-  expect_equal(mockery::mock_args(runner$status)[[2]], list(task_id, FALSE))
+  expect_equal(mockery::mock_args(runner$status)[[2]], list(key, FALSE))
 
   ## api
   api <- build_api(runner, "path")
-  res_api <- api$request("GET", sprintf("/v1/reports/%s/status/", task_id))
+  res_api <- api$request("GET", sprintf("/v1/reports/%s/status/", key))
   expect_equal(res_api$status, 200L)
   expect_equal(res_api$headers[["Content-Type"]], "application/json")
   expect_equal(res_api$body, as.character(res_endpoint$body))
-  expect_equal(mockery::mock_args(runner$status)[[3]], list(task_id, FALSE))
+  expect_equal(mockery::mock_args(runner$status)[[3]], list(key, FALSE))
 })
 
 
 test_that("status - completed, with log", {
-  task_id <- "task-id-1"
+  key <- "key-1"
   version <- "20200414-123013-a1df28f7"
-  status <- list(task_id = task_id, status = "success", version = version,
-                 output = "example/success.txt")
-  runner <- mock_runner(task_id, status)
+  status <- list(key = key, status = "success", version = version,
+                 output = list(stderr = c("a message", "in the logs"),
+                               stdout = list()),
+                 task_position = 0)
+  runner <- mock_runner(key, status)
 
-  res <- target_status(runner, task_id, TRUE)
+  res <- target_status(runner, key, TRUE)
   expect_equal(
     res,
-    list(key = scalar(task_id),
+    list(key = scalar(key),
          status = scalar("success"),
          version = scalar(version),
-         output = list(scalar("example/success.txt"))))
-  expect_equal(mockery::mock_args(runner$status)[[1]], list(task_id, TRUE))
+         output = list(stderr = c("a message", "in the logs"),
+                       stdout = list()),
+         task_position = scalar(0)))
+  expect_equal(mockery::mock_args(runner$status)[[1]], list(key, TRUE))
 
   ## endpoint
   endpoint <- endpoint_status(runner)
-  res_endpoint <- endpoint$run(task_id, TRUE)
+  res_endpoint <- endpoint$run(key, TRUE)
   expect_equal(res_endpoint$status_code, 200)
   expect_equal(res_endpoint$content_type, "application/json")
   expect_equal(res_endpoint$data, res)
-  expect_equal(mockery::mock_args(runner$status)[[2]], list(task_id, TRUE))
+  expect_equal(mockery::mock_args(runner$status)[[2]], list(key, TRUE))
 
   ## api
   api <- build_api(runner, "path")
-  res_api <- api$request("GET", sprintf("/v1/reports/%s/status/", task_id),
+  res_api <- api$request("GET", sprintf("/v1/reports/%s/status/", key),
                          query = list(output = TRUE))
   expect_equal(res_api$status, 200L)
   expect_equal(res_api$headers[["Content-Type"]], "application/json")
   expect_equal(res_api$body, as.character(res_endpoint$body))
-  expect_equal(mockery::mock_args(runner$status)[[3]], list(task_id, TRUE))
+  expect_equal(mockery::mock_args(runner$status)[[3]], list(key, TRUE))
 })
 
 #
@@ -453,15 +461,15 @@ test_that("status - completed, with log", {
 test_that("run can specify instance", {
   ## We're interested in testing that orderly.server passes instance arg
   ## to the runner$queue arg
-  task_id <- "task-id-1"
-  runner <- mock_runner(task_ids = task_id)
+  key <- "key-1"
+  runner <- mock_runner(key = key)
 
   res <- target_run(runner, "example", timeout = 100, instance = "myinstance")
   expect_equal(
     res,
     list(name = scalar("example"),
-         key = scalar(task_id),
-         path = scalar(sprintf("/v1/reports/%s/status/", task_id))))
+         key = scalar(key),
+         path = scalar(sprintf("/v1/reports/%s/status/", key))))
   expect_equal(
     mockery::mock_args(runner$submit_task_report)[[1]],
     list("example", NULL, NULL, "myinstance", timeout = 100))
@@ -706,3 +714,4 @@ test_that("run metadata can get name from config", {
     changelog_types = NULL
   ))
 })
+

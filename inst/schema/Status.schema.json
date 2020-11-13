@@ -23,14 +23,27 @@
                     "type": "null"
                 },
                 {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
+                    "type": "object",
+                    "properties": {
+                        "stdout": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "stderr": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "required": ["stdout", "stderr"],
+                    "additional_properites": false
                 }
             ]
         },
-        "queue": { "type": "integer" }
+        "task_position": { "type": "integer" }
     },
     "required": ["key", "status", "version", "output"],
     "additionalProperties": false

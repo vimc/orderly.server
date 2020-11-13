@@ -44,8 +44,8 @@ orderly_runner <- function(path, allow_ref = NULL, backup_period = 600,
   orderly_runner_$new(path, allow_ref, backup_period, queue_id, workers)
 }
 
-runner_run <- function(key_id, key, root, name, parameters, instance, ref,
-                       poll = 0.1) {
+runner_run <- function(key_report_id, key, root, name, parameters, instance,
+                       ref, poll = 0.1) {
   con <- redux::hiredis()
   bin <- tempfile()
   dir.create(bin)
@@ -54,6 +54,10 @@ runner_run <- function(key_id, key, root, name, parameters, instance, ref,
     readLines(system.file("script", package = "orderly", mustWork = TRUE)),
     versioned = TRUE)
   id_file <- path_id_file(root, key)
+  if (!is.null(parameters)) {
+    parameters <- sprintf("%s=%s", names(parameters),
+                          vcapply(parameters, format))
+  }
   args <- c("--root", root,
             "run", name, "--print-log", "--id-file", id_file,
             if (!is.null(ref)) c("--ref", ref),
@@ -64,12 +68,12 @@ runner_run <- function(key_id, key, root, name, parameters, instance, ref,
   px <- processx::process$new(orderly_bin, args,
                               stdout = log_out, stderr = log_err)
   ## Might be worth killing px on function exit
-  id <- NULL
+  id <- NA_character_
   while (px$is_alive()) {
-    if (is.null(id)) {
+    if (is.na(id)) {
       if (file.exists(id_file)) {
         id <- readlines_if_exists(id_file, NA_character_)
-        con$HSET(key_id, key, id)
+        con$HSET(key_report_id, key, id)
       }
     }
     Sys.sleep(poll)
@@ -85,6 +89,10 @@ runner_run <- function(key_id, key, root, name, parameters, instance, ref,
     if (file.size(log_out) > 0L) {
       file_copy(log_out, file.path(p, "orderly.log.stdout"))
     }
+  }
+
+  if (!ok) {
+    stop(paste(readLines(log_err), collapse = "\n"))
   }
 
   list(
@@ -105,12 +113,16 @@ orderly_runner_ <- R6::R6Class(
 
     has_git = NULL,
 
-    queue = NULL,
     con = NULL,
+    cleanup_on_exit = NULL,
+    queue = NULL,
+    queue_id = NULL,
     keys = NULL,
 
+    ## Timeout is worker timeout
     initialize = function(root, allow_ref = NULL, backup_period, queue_id,
-                          workers) {
+                          workers, cleanup_on_exit = workers > 0,
+                          worker_timeout = Inf) {
       self$config <- orderly::orderly_config(root)
       self$root <- self$config$root
       self$has_git <- runner_has_git(self$root)
@@ -133,10 +145,25 @@ orderly_runner_ <- R6::R6Class(
       dir_create(dirname(path_id_file(self$root, "ignore")))
 
       ## Create queue
-      self$queue <- Queue$new(queue_id, workers)
-      self$con <- self$queue$queue$con
+      self$cleanup_on_exit <- cleanup_on_exit
+      message(sprintf("Connecting to redis at %s", redux::redis_config()$url))
+      self$con <- redux::hiredis()
+      message("Starting queue")
+      self$queue_id <- orderly_queue_id(queue_id)
+      self$queue <- rrq::rrq_controller(self$queue_id, self$con)
+      self$queue$worker_config_save("localhost", heartbeat_period = 3)
+      self$start_workers(workers, worker_timeout)
       ## TODO: put all the keys in this and read from here too
       self$keys <- orderly_key(self$queue$queue_id)
+    },
+
+    start_workers = function(workers, timeout) {
+      if (workers > 0L) {
+        ids <- rrq::worker_spawn(self$queue, workers)
+        if (is.finite(timeout) && timeout > 0) {
+          self$queue$message_send_and_wait("TIMEOUT_SET", timeout, ids)
+        }
+      }
     },
 
     submit_task_report = function(name, parameters = NULL, ref = NULL,
@@ -148,13 +175,19 @@ orderly_runner_ <- R6::R6Class(
 
       root <- self$root
       key <- ids::adjective_animal()
-      self$con$HSET("key_timeout", key, timeout)
-      task_id <- self$queue$submit(quote(
-        orderly.server:::runner_run("key_id", key, root, name, parameters,
-                                    instance, ref, poll = poll)))
-      self$con$HSET("key_task_id", key, task_id)
-      self$con$HSET("task_id_key", task_id, key)
+      ## TODO: key timeout?
+      self$con$HSET(self$keys$key_timeout, key, timeout)
+      key_report_id <- self$keys$key_report_id
+      task_id <- self$submit(quote(
+        orderly.server:::runner_run(key_report_id, key, root, name,
+                                    parameters, instance, ref, poll = poll)))
+      self$con$HSET(self$keys$key_task_id, key, task_id)
+      self$con$HSET(self$keys$task_id_key, task_id, key)
       key
+    },
+
+    submit = function(job, environment = parent.frame()) {
+       self$queue$enqueue_(job, environment)
     },
 
     # submit_task_workflow = function(name, ref = NULL, instance = NULL,
@@ -170,26 +203,76 @@ orderly_runner_ <- R6::R6Class(
     # },
 
     status = function(key, output = FALSE) {
-      task_id <- self$con$HGET("key_task_id", key)
-      browser()
-      status <- self$queue$status(task_id)
-      report_id <- self$con$HGET("key_id", key)
-      status$version <- report_id
+      task_id <- self$con$HGET(self$keys$key_task_id, key)
+      status <- unname(self$queue$task_status(task_id))
+      out_status <- switch(status,
+                           "PENDING" = "queued",
+                           "COMPLETE" = "success",
+                           tolower(status)
+      )
+      task_position <- self$queue$task_position(task_id)
+      if (status %in% c("ERROR", "ORPHAN", "INTERRUPTED", "COMPLETE")) {
+        task_position <- 0
+      }
+      report_id <- self$con$HGET(self$keys$key_report_id, key)
       if (output) {
-        status$output <- list(
-          stderr = readlines_if_exists(path_stderr(self$root, key)),
-          stdout = readlines_if_exists(path_stdout(self$root, key))
+        out <- list(
+          stderr = readlines_if_exists(path_stderr(self$root, key), list()),
+          stdout = readlines_if_exists(path_stdout(self$root, key), list())
         )
+      } else {
+        out <- NULL
       }
 
       # TODO: Handle errors
-      if (status$status == "error") {
-        res <- self$queue$result(task_id)
-        status$output <- res$message
+      # if (status$status == "error") {
+      #   res <- self$queue$task_result(task_id)
+      #   output <- res$message
+      # }
+
+      list(
+        key = key,
+        status = out_status,
+        version = report_id,
+        output = out,
+        task_position = task_position
+      )
+    },
+
+    ## Not part of the api exposed functions, used in tests
+    destroy = function() {
+      self$queue$destroy(delete = TRUE)
+    },
+
+    cleanup = function() {
+      if (self$cleanup_on_exit && !is.null(self$con)) {
+        message("Stopping workers")
+        self$queue$worker_stop(type = "kill")
+        self$destroy()
       }
+    }
+  ),
+
+  private = list(
+    finalize = function() {
+      self$cleanup()
     }
   )
 )
+
+orderly_queue_id <- function(queue_id, worker = FALSE) {
+  if (!is.null(queue_id)) {
+    return(queue_id)
+  }
+  id <- Sys.getenv("ORDERLY_SERVER_QUEUE_ID", "")
+  if (!nzchar(id)) {
+    if (worker) {
+      stop("Environment variable 'ORDERLY_SERVER_QUEUE_ID' is not set")
+    }
+    id <- sprintf("orderly.server:%s", ids::random_id())
+  }
+  id
+}
 
 runner_allow_ref <- function(has_git, allow_ref, config) {
   if (!has_git) {
@@ -224,5 +307,7 @@ path_id_file <- function(root, key) {
 
 orderly_key <- function(base) {
   list(key_task_id = sprintf("%s:orderly.server:key_task_id", base),
-       task_id_key = sprintf("%s:orderly.server:task_id_key", base))
+       task_id_key = sprintf("%s:orderly.server:task_id_key", base),
+       key_timeout = sprintf("%s:orderly.server:key_timeout", base),
+       key_report_id = sprintf("%s:orderly.server:key_report_id", base))
 }

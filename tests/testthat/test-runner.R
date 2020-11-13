@@ -1,5 +1,106 @@
 context("orderly_runner")
 
+test_that("queue works as intended", {
+  skip_if_no_redis()
+
+  path <- orderly_prepare_orderly_example("demo")
+  runner <- orderly_runner_$new(path, NULL, backup_period = 600,
+                                queue_id = NULL, workers = 1,
+                                worker_timeout = 300)
+  expect_equal(runner$queue$worker_len(), 1)
+
+  worker_1 <- runner$queue$worker_list()[[1]]
+
+  expect_equal(nrow(runner$queue$worker_log_tail(worker_1)), 1)
+  expect_equal(runner$queue$worker_log_tail(worker_1, n = 3)[1, "command"],
+               "ALIVE")
+  expect_equal(runner$queue$worker_log_tail(worker_1, n = 3)[3, "message"],
+               "TIMEOUT_SET")
+
+  expect_length(runner$queue$task_list(), 0)
+
+  ## jobs can be pushed to queue
+  job_id <- runner$submit(quote({
+    Sys.sleep(1)
+    1 + 1
+  }))
+  expect_length(runner$queue$task_list(), 1)
+
+  ## status can be retrieved
+  ## sleep to ensure job has been picked up by runner otherwise
+  ## will be pending
+  Sys.sleep(0.1)
+  status <- runner$queue$task_status(job_id)
+  expect_equivalent(status, "RUNNING")
+
+  ## After task has completed
+  Sys.sleep(1)
+  result <- runner$queue$task_wait(job_id)
+  status <- runner$queue$task_status(job_id)
+  expect_equivalent(status, "COMPLETE")
+
+  ## Cleanup removes workers
+  con <- runner$con
+  worker_name <- runner$queue$keys$worker_name
+  expect_equal(con$SCARD(worker_name), 1)
+
+  rm(runner)
+  gc()
+
+  expect_equal(con$SCARD(worker_name), 0)
+})
+
+
+test_that("queue_id is generated if not supplied", {
+  withr::with_envvar(
+    c("ORDERLY_SERVER_QUEUE_ID" = NA),
+    expect_match(orderly_queue_id(NULL), "^orderly.server:[[:xdigit:]]+$"))
+  withr::with_envvar(
+    c("ORDERLY_SERVER_QUEUE_ID" = "myqueue"),
+    expect_equal(orderly_queue_id(NULL), "myqueue"))
+})
+
+
+test_that("queue_id is required for workers", {
+  withr::with_envvar(
+    c("ORDERLY_SERVER_QUEUE_ID" = NA),
+    expect_error(orderly_queue_id(NULL, TRUE),
+                 "Environment variable 'ORDERLY_SERVER_QUEUE_ID' is not set"))
+})
+
+test_that("queue_id is returned if supplied", {
+  withr::with_envvar(
+    c("ORDERLY_SERVER_QUEUE_ID" = NA),
+    expect_equal(orderly_queue_id("myqueue", TRUE), "myqueue"))
+})
+
+
+test_that("test runner can start workers with timeout", {
+  skip_if_no_redis()
+  path <- orderly_prepare_orderly_example("demo")
+  runner <- orderly_runner_$new(path, NULL, backup_period = 600,
+                                queue_id = NULL, workers = 2,
+                                worker_timeout = 300)
+  timeout <- runner$queue$message_send_and_wait("TIMEOUT_GET",
+                                                runner$queue$worker_list())
+  expect_length(timeout, 2)
+  expect_equal(timeout[[1]][["timeout"]], 300.0)
+  expect_equal(timeout[[2]][["timeout"]], 300.0)
+})
+
+test_that("queue starts up normally without a timeout", {
+  skip_if_no_redis()
+  path <- orderly_prepare_orderly_example("demo")
+  runner <- orderly_runner_$new(path, NULL, backup_period = 600,
+                                queue_id = NULL, workers = 1)
+  on.exit(runner$cleanup())
+  timeout <- runner$queue$message_send_and_wait("TIMEOUT_GET",
+                                               runner$queue$worker_list(),
+                                               progress = FALSE)
+  expect_equal(timeout[[1]], c("timeout" = Inf, remaining = Inf))
+})
+
+
 test_that("runner can run a report", {
   ## Setup dir for testing
   path <- orderly_prepare_orderly_example("demo")
@@ -24,6 +125,65 @@ test_that("runner can run a report", {
   expect_true(file.exists(file.path(report_dir, "orderly.log")))
 })
 
+
+test_that("runner can run a report with parameters", {
+  ## Setup dir for testing
+  path <- orderly_prepare_orderly_example("demo")
+  dir_create(dirname(path_stderr(path, "ignore")))
+  dir_create(dirname(path_stdout(path, "ignore")))
+  dir_create(dirname(path_id_file(path, "ignore")))
+
+  out <- runner_run("key_id", "test_key", path, "other",
+                    parameters = list(nmin = 0.5), instance = NULL, ref = NULL)
+  expect_equal(out$report_name, "other")
+  expect_match(out$report_id, "^\\d{8}-\\d{6}-\\w{8}")
+
+  ## Report has been added to archive
+  report_dir <- file.path(path, "archive", "other", out$report_id)
+  expect_true(file.exists(report_dir))
+
+  ## Report id has been written to redis
+  con <- redux::hiredis()
+  expect_equal(con$HGET("key_id", "test_key"), out$report_id)
+
+  ## Can read log file as it has been copied to destination
+  expect_true(file.exists(file.path(report_dir, "orderly.log")))
+
+  run <- readRDS(orderly_path_orderly_run_rds(
+    file.path(path, "archive", "other", out$report_id)))
+  expect_equal(run$meta$parameters, list(nmin = 0.5))
+})
+
+
+test_that("runner can return errors", {
+  ## Setup dir for testing
+  path <- orderly_prepare_orderly_example("minimal")
+  writeLines("1 + 1", file.path(path, "src/example/script.R"))
+  dir_create(dirname(path_stderr(path, "ignore")))
+  dir_create(dirname(path_stdout(path, "ignore")))
+  dir_create(dirname(path_id_file(path, "ignore")))
+
+  err <- expect_error(runner_run("key_report_id", "test_key", path, "example",
+                    parameters = NULL, instance = NULL, ref = NULL))
+
+  ## Report ID still can be retrieved
+  con <- redux::hiredis()
+  report_id <- con$HGET("key_report_id", "test_key")
+  expect_match(report_id, "^\\d{8}-\\d{6}-\\w{8}")
+
+  ## Report has been added to drafts
+  draft <- file.path(path, "draft", "example", report_id)
+  expect_true(file.exists(draft))
+
+  ## Can read log file as it has been copied to destination
+  expect_true(file.exists(file.path(draft, "orderly.log")))
+
+  ## Error from run matches formatted orderly log
+  log <- readLines(file.path(draft, "orderly.log"))
+  expect_equal(err$message, paste(log, collapse = "\n"))
+})
+
+
 test_that("run: success", {
   testthat::skip_on_cran()
   skip_on_appveyor()
@@ -37,28 +197,36 @@ test_that("run: success", {
   ## Run a report slow enough to reliably report back a "running" status
   key <- runner$submit_task_report("slow1")
   Sys.sleep(1)
-  expect_equal(runner$status(key),
-               list(
-                 key = key,
-                 status = "running",
-                 queue = 0
-               ))
+  status <- runner$status(key)
+  expect_equal(names(status), c("key", "status", "version", "output",
+                                "task_position"))
+  expect_equal(status$key, key)
+  expect_equal(status$status, "running")
+  expect_match(status$version, "^\\d{8}-\\d{6}-\\w{8}$")
+  expect_null(status$output)
+  expect_equal(status$task_position, 0)
 
-  result <- runner$queue$queue$task_wait(task_id)
+  task_id <- get_task_id_key(runner, key)
+  expect_match(task_id, "^[[:xdigit:]]{32}$")
+  result <- runner$queue$task_wait(task_id)
   report_id <- result$report_id
-  expect_match(result$report_id, "^\\d{8}-\\d{6}-\\w{8}")
-  status <- runner$status(task_id)
-  expect_equal(status$task_id, task_id)
+  expect_match(result$report_id, "^\\d{8}-\\d{6}-\\w{8}$")
+  expect_equal(result$report_id, status$version)
+  status <- runner$status(key, output = TRUE)
+  expect_equal(status$key, key)
   expect_equal(status$status, "success")
-  expect_equal(status$queue, 0)
   expect_equal(status$version, report_id)
-  expect_match(status$output, paste0("\\[ id +\\]  ", report_id),
+  expect_match(status$output$stderr, paste0("\\[ id +\\]  ", report_id),
                all = FALSE)
+  expect_equal(status$output$stdout, character(0))
+  expect_equal(status$task_position, 0)
 
+  ## Report is in archive
   d <- orderly::orderly_list_archive(path)
   expect_equal(d$name, "slow1")
   expect_equal(d$id, report_id)
 })
+
 
 test_that("run: error", {
   testthat::skip_on_cran()
@@ -71,17 +239,21 @@ test_that("run: error", {
   writeLines("1 + 1", file.path(path, "src/example/script.R"))
 
   runner <- orderly_runner(path)
-  task_id <- runner$submit_task_report("example")
-  result <- runner$queue$queue$task_wait(task_id)
+  key <- runner$submit_task_report("example")
+  task_id <- get_task_id_key(runner, key)
+  expect_match(task_id, "^[[:xdigit:]]{32}$")
+  result <- runner$queue$task_wait(task_id)
 
-  expect_equal(result$message,
+  expect_s3_class(result, "rrq_task_error")
+  expect_match(result$message,
                "Script did not produce expected artefacts: mygraph.png")
-  status <- runner$status(task_id)
-  expect_equal(status$task_id, task_id)
+  status <- runner$status(key, output = TRUE)
+  expect_equal(status$key, key)
   expect_equal(status$status, "error")
-  expect_equal(status$queue, 0)
-  expect_equal(status$output,
-               "Script did not produce expected artefacts: mygraph.png")
+  expect_true(any(grepl(
+    "Script did not produce expected artefacts: mygraph.png",
+    status$output$stderr)))
+  expect_equal(status$task_position, 0)
 })
 
 
@@ -91,9 +263,9 @@ test_that("run report with parameters", {
   skip_if_no_redis()
   path <- orderly_prepare_orderly_example("demo")
   runner <- orderly_runner(path)
-  task_id <- runner$submit_task_report("other", parameters = list(nmin = 0.5))
-
-  result <- runner$queue$queue$task_wait(task_id)
+  key <- runner$submit_task_report("other", parameters = list(nmin = 0.5))
+  task_id <- get_task_id_key(runner, key)
+  result <- runner$queue$task_wait(task_id)
 
   d <- orderly::orderly_list_archive(path)
   expect_equal(d$name, "other")
@@ -128,9 +300,10 @@ test_that("run in branch (local)", {
   path <- orderly_unzip_git_demo()
   runner <- orderly_runner(path)
 
-  task_id <- runner$submit_task_report("other", parameters = list(nmin = 0),
+  key <- runner$submit_task_report("other", parameters = list(nmin = 0),
                                        ref = "other")
-  result <- runner$queue$queue$task_wait(task_id)
+  task_id <- get_task_id_key(runner, key)
+  result <- runner$queue$task_wait(task_id)
 
   d <- orderly::orderly_list_archive(path)
   expect_equal(nrow(d), 1L)
@@ -152,9 +325,10 @@ test_that("run missing ref", {
 
   expect_false(git_ref_exists("unknown", path2))
 
-  task_id <- runner$submit_task_report("minimal", ref = "unknown")
-  result <- runner$queue$queue$task_wait(task_id)
-  res <- runner$status(task_id)
+  key <- runner$submit_task_report("minimal", ref = "unknown")
+  task_id <- get_task_id_key(runner, key)
+  result <- runner$queue$task_wait(task_id)
+  res <- runner$status(key)
   expect_equal(res$status, "error")
   expect_s3_class(result, "error")
   ## TODO: Improve error message when unknown ref for checking out
@@ -488,32 +662,36 @@ test_that("runner can set instance", {
   DBI::dbDisconnect(con$source)
 
   runner <- orderly_runner(path)
-  task_id <- runner$submit_task_report("minimal", instance = "alternative")
+  key <- runner$submit_task_report("minimal", instance = "alternative")
+  task_id <- get_task_id_key(runner, key)
 
-  result <- runner$queue$queue$task_wait(task_id)
+  result <- runner$queue$task_wait(task_id)
   report_id <- result$report_id
   expect_match(result$report_id, "^\\d{8}-\\d{6}-\\w{8}")
-  status <- runner$status(task_id)
-  expect_equal(status$task_id, task_id)
+  status <- runner$status(key, output = TRUE)
+  expect_equal(status$key, key)
   expect_equal(status$status, "success")
-  expect_equal(status$queue, 0)
   expect_equal(status$version, report_id)
   ## Data in alternative db extracts only 10 rows
-  expect_match(status$output, "\\[ data +\\]  source => dat: 10 x 2",
+  expect_match(status$output$stderr, "\\[ data +\\]  source => dat: 10 x 2",
                all = FALSE)
+  expect_equal(status$output$stdout, character(0))
+  expect_equal(status$task_position, 0)
 
 
-  task_id_default <- runner$submit_task_report("minimal")
+  key_default <- runner$submit_task_report("minimal")
+  task_id_default <- get_task_id_key(runner, key_default)
 
-  result_default <- runner$queue$queue$task_wait(task_id_default)
+  result_default <- runner$queue$task_wait(task_id_default)
   report_id_default <- result_default$report_id
   expect_match(result_default$report_id, "^\\d{8}-\\d{6}-\\w{8}")
-  status_default <- runner$status(task_id_default)
-  expect_equal(status_default$task_id, task_id_default)
+  status_default <- runner$status(key_default, output = TRUE)
+  expect_equal(status_default$key, key_default)
   expect_equal(status_default$status, "success")
-  expect_equal(status_default$queue, 0)
   expect_equal(status_default$version, report_id_default)
   ## Data in default db extracts 20 rows
-  expect_match(status_default$output, "\\[ data +\\]  source => dat: 20 x 2",
+  expect_match(status_default$output$stderr, "\\[ data +\\]  source => dat: 20 x 2",
                all = FALSE)
+  expect_equal(status_default$output$stdout, character(0))
+  expect_equal(status_default$task_position, 0)
 })

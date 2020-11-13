@@ -207,15 +207,13 @@ endpoint_run <- function(runner) {
 
 target_status <- function(runner, key, output = FALSE) {
   res <- runner$status(key, output)
-  ret <- list(key = scalar(res$task_id),
-              status = scalar(res$status),
-              version = scalar(res$version),
-              output = NULL)
-  ## VIMC-3654: the 'queue' path here should move elsewhere
-  if (output || res$status == "queued") {
-    ret$output <- lapply(res$output, scalar)
-  }
-  ret
+  list(
+    key = scalar(res$key),
+    status = scalar(res$status),
+    version = scalar(res$version),
+    output = res$output,
+    task_position = scalar(res$task_position)
+  )
 }
 
 endpoint_status <- function(runner) {
