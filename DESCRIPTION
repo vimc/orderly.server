@@ -15,6 +15,7 @@ Imports:
     jsonlite,
     orderly (>= 1.2.12),
     pkgapi (>= 0.0.7),
+    processx,
     R6,
     redux,
     rrq (>= 0.2.6),
