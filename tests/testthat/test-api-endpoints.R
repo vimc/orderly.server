@@ -289,6 +289,7 @@ test_that("status - queued behind nothing", {
 
 test_that("status - queued", {
   testthat::skip("TODO: how do we want to return queue info?")
+  ## Add another field for this info, alongside task_position
   ## See mock.R
   key <- "key-3"
   status <- list(
@@ -726,7 +727,7 @@ test_that("bundle pack can pack basic bundle", {
     res <- endpoint$run("name")
   })
   args <- mockery::mock_args(mock_bundle_pack)[[1]]
-  expect_match(args[[1]], "/tmp/[\\w/]+", perl = TRUE)
+  expect_match(args[[1]], "[\\w/_]+", perl = TRUE)
   expect_equal(args[[2]], "name")
   expect_null(args[[3]])
   expect_equal(args[[4]], "root")
@@ -748,7 +749,7 @@ test_that("bundle pack can pass parameters and instance", {
                         instance = "myinstance")
   })
   args <- mockery::mock_args(mock_bundle_pack)[[1]]
-  expect_match(args[[1]], "/tmp/[\\w/]+", perl = TRUE)
+  expect_match(args[[1]], "[\\w/_]+", perl = TRUE)
   expect_equal(args[[2]], "name")
   expect_equal(args[[3]], list(a = 1))
   expect_equal(args[[4]], "root")
