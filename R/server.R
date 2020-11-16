@@ -33,7 +33,7 @@ server <- function(path, port, host = "0.0.0.0", allow_ref = TRUE,
   wait_for_go_signal(path, go_signal)
   runner <- orderly_runner(path, allow_ref, queue_id = queue_id,
                            workers = workers)
-  api <- build_api(runner, path)
+  api <- build_api(runner, runner$root)
   api$run(host, port)
 
   message("Server exiting")

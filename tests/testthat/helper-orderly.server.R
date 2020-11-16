@@ -84,14 +84,15 @@ read_json <- function(path, ...) {
 
 ## There is going to be some work here to keep these up-to-date:
 mock_runner <- function(key = NULL, status = NULL,
-                        config = NULL, has_git = TRUE) {
+                        config = NULL, has_git = TRUE, root = NULL) {
   list(
-   # rebuild = mockery::mock(TRUE, cycle = TRUE),
+    # rebuild = mockery::mock(TRUE, cycle = TRUE),
     submit_task_report = mockery::mock(key, cycle = TRUE),
     status = mockery::mock(status, cycle = TRUE),
-  #  kill = mockery::mock(TRUE, cycle = TRUE),
+    #  kill = mockery::mock(TRUE, cycle = TRUE),
     config = config,
-    has_git = has_git
+    has_git = has_git,
+    root = root
   )
 }
 

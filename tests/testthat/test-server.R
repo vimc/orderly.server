@@ -37,18 +37,19 @@ test_that("Wait for a go signal if provided", {
 
 
 test_that("run server", {
-  api <- list(run = mockery::mock())
-  runner <- mock_runner()
-
-  mock_wait_for_go_signal <- mockery::mock()
-  mock_orderly_runner <- mockery::mock(runner)
-  mock_build_api <- mockery::mock(api)
-
   path <- tempfile()
   port <- 1234
   host <- "127.0.0.1"
   allow_ref <- FALSE
   go_signal <- "go"
+
+  api <- list(run = mockery::mock())
+  runner <- mock_runner(root = path)
+
+  mock_wait_for_go_signal <- mockery::mock()
+  mock_orderly_runner <- mockery::mock(runner)
+  mock_build_api <- mockery::mock(api)
+
 
   msg <- capture_messages(
     with_mock(

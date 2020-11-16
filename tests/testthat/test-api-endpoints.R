@@ -192,7 +192,7 @@ test_that("report parameters endpoint supports no parameters", {
   expect_equal(res$data, list())
 })
 
-test_that("report parameter endponits handles errors", {
+test_that("report parameter endpoints handles errors", {
   mock_report_parameters <- mockery::mock(
     stop("Failed to get report parameters"))
 
@@ -715,3 +715,65 @@ test_that("run metadata can get name from config", {
   ))
 })
 
+test_that("bundle pack can pack basic bundle", {
+  tmp <- tempfile(fileext = ".zip")
+  writeBin(as.raw(0:255), tmp)
+
+  mock_bundle_pack <- mockery::mock(list(path = tmp))
+
+  with_mock("orderly::orderly_bundle_pack" = mock_bundle_pack, {
+    endpoint <- endpoint_bundle_pack("root")
+    res <- endpoint$run("name")
+  })
+  args <- mockery::mock_args(mock_bundle_pack)[[1]]
+  expect_match(args[[1]], "/tmp/[\\w/]+", perl = TRUE)
+  expect_equal(args[[2]], "name")
+  expect_null(args[[3]])
+  expect_equal(args[[4]], "root")
+  expect_null(args[[5]])
+
+  expect_equal(res$data, as.raw(0:255), check.attributes = FALSE)
+  expect_equal(res$headers, list("Content-Disposition" = basename(tmp)))
+  expect_equal(res$status_code, 200L)
+})
+
+test_that("bundle pack can pass parameters and instance", {
+  tmp <- tempfile(fileext = ".zip")
+  writeBin(as.raw(0:255), tmp)
+
+  mock_bundle_pack <- mockery::mock(list(path = tmp))
+  with_mock("orderly::orderly_bundle_pack" = mock_bundle_pack, {
+    endpoint <- endpoint_bundle_pack("root")
+    res <- endpoint$run("name", parameters = '{"a": 1}',
+                        instance = "myinstance")
+  })
+  args <- mockery::mock_args(mock_bundle_pack)[[1]]
+  expect_match(args[[1]], "/tmp/[\\w/]+", perl = TRUE)
+  expect_equal(args[[2]], "name")
+  expect_equal(args[[3]], list(a = 1))
+  expect_equal(args[[4]], "root")
+  expect_equal(args[[5]], "myinstance")
+
+  expect_equal(res$data, as.raw(0:255), check.attributes = FALSE)
+  expect_equal(res$headers, list("Content-Disposition" = basename(tmp)))
+  expect_equal(res$status_code, 200L)
+})
+
+test_that("Can create and run bundles", {
+  path <- orderly_prepare_orderly_example("demo")
+
+  bundle_pack <- endpoint_bundle_pack(path)
+  res <- bundle_pack$run("other", parameters = '{"nmin":0.5}')
+  path_pack <- tempfile()
+  writeBin(res$body, path_pack)
+  expect_true(file.exists(path_pack))
+
+  res <- orderly::orderly_bundle_run(path_pack, echo = FALSE)
+
+  bundle_import <- endpoint_bundle_import(path)
+  bundle_res <- bundle_import$run(readBin(res$path, "raw", 10e6))
+  expect_equal(bundle_res$status_code, 200)
+  expect_equal(
+    orderly::orderly_list_archive(path),
+    data.frame(name = "other", id = res$id, stringsAsFactors = FALSE))
+})

@@ -10,9 +10,11 @@ build_api <- function(runner, path) {
   api$handle(endpoint_git_commits(path))
   api$handle(endpoint_available_reports(path))
   api$handle(endpoint_report_parameters(path))
+  api$handle(endpoint_bundle_pack(path))
+  api$handle(endpoint_bundle_import(path))
   api$handle(endpoint_run(runner))
   api$handle(endpoint_status(runner))
-  api$handle(endpoint_kill(runner))
+  # api$handle(endpoint_kill(runner))
   api$handle(endpoint_run_metadata(runner))
   api$setDocs(FALSE)
   api
@@ -175,6 +177,49 @@ endpoint_report_parameters <- function(path) {
     pkgapi::pkgapi_state(path = path),
     returning = returning_json("ReportParameters.schema")
   )
+}
+
+target_bundle_pack <- function(path, name, parameters = NULL,
+                               instance = NULL) {
+  if (!is.null(parameters)) {
+    parameters <- jsonlite::fromJSON(parameters)
+  }
+  res <- orderly::orderly_bundle_pack(tempfile(), name, parameters, root = path,
+                                      instance = instance)
+  on.exit(unlink(res$path))
+  bytes <- readBin(res$path, "raw", n = file.size(res$path))
+  bytes <- pkgapi::pkgapi_add_headers(
+    bytes, list("Content-Disposition" = basename(res$path)))
+  bytes
+}
+
+endpoint_bundle_pack <- function(path) {
+  pkgapi::pkgapi_endpoint$new(
+    "POST", "/v1/bundle/pack/<name>", target_bundle_pack,
+    pkgapi::pkgapi_input_query(instance = "string"),
+    pkgapi::pkgapi_input_body_json("parameters", "Parameters.schema",
+                                   schema_root()),
+    pkgapi::pkgapi_state(path = path),
+    returning = pkgapi::pkgapi_returning_binary())
+}
+
+target_bundle_import <- function(path, data) {
+  data_path <- tempfile(fileext = ".zip")
+  on.exit(unlink(data_path))
+  writeBin(data, data_path)
+  orderly::orderly_bundle_import(data_path, root = path)
+  scalar(TRUE)
+}
+
+endpoint_bundle_import <- function(path, data) {
+  pkgapi::pkgapi_endpoint$new(
+    "POST", "/v1/bundle/import", target_bundle_import,
+    ## NOTE: This is not ideal because it requires
+    ## application/octet-stream - see RESIDE-208 for details, can be
+    ## updated once we move to porcelain >= 0.1.1
+    pkgapi::pkgapi_input_body_binary("data"),
+    pkgapi::pkgapi_state(path = path),
+    returning = returning_json("BundleImport.schema"))
 }
 
 target_run <- function(runner, name, parameters = NULL, ref = NULL,

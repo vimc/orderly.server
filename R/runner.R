@@ -189,18 +189,6 @@ orderly_runner_ <- R6::R6Class(
        self$queue$enqueue_(job, environment)
     },
 
-    # submit_task_workflow = function(name, ref = NULL, instance = NULL,
-    #                                 update = FALSE, timeout = 600) {
-    #   if (!self$allow_ref && !is.null(ref)) {
-    #     stop("Reference switching is disallowed in this runner",
-    #          call. = FALSE)
-    #   }
-    #
-    #   self$queue$submit(quote(
-    #     orderly:::orderly_workflow_int(name, parameters, instance)
-    #   ))
-    # },
-
     status = function(key, output = FALSE) {
       task_id <- self$con$HGET(self$keys$key_task_id, key)
       status <- unname(self$queue$task_status(task_id))
@@ -253,6 +241,7 @@ orderly_runner_ <- R6::R6Class(
   )
 )
 
+
 orderly_queue_id <- function(queue_id, worker = FALSE) {
   if (!is.null(queue_id)) {
     return(queue_id)
@@ -266,6 +255,7 @@ orderly_queue_id <- function(queue_id, worker = FALSE) {
   }
   id
 }
+
 
 runner_allow_ref <- function(has_git, allow_ref, config) {
   if (!has_git) {
@@ -281,17 +271,21 @@ runner_allow_ref <- function(has_git, allow_ref, config) {
   allow_ref
 }
 
+
 runner_has_git <- function(path) {
   nzchar(Sys.which("git")) && file.exists(file.path(path, ".git"))
 }
+
 
 path_stderr <- function(root, key) {
   file.path(root, "runner/log", paste0(key, ".stderr"))
 }
 
+
 path_stdout <- function(root, key) {
   file.path(root, "runner/log", paste0(key, ".stdout"))
 }
+
 
 path_id_file <- function(root, key) {
   file.path(root, "runner/id", paste0(key, ".id_file"))
