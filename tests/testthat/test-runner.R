@@ -93,7 +93,6 @@ test_that("queue starts up normally without a timeout", {
   path <- orderly_prepare_orderly_example("demo")
   runner <- orderly_runner_$new(path, NULL, backup_period = 600,
                                 queue_id = NULL, workers = 1)
-  on.exit(runner$cleanup())
   timeout <- runner$queue$message_send_and_wait("TIMEOUT_GET",
                                                runner$queue$worker_list(),
                                                progress = FALSE)
