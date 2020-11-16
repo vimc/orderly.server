@@ -93,9 +93,8 @@ test_that("run", {
   expect_equal(httr::status_code(r), 200)
   st <- content(r)
   expect_equal(st$status, "success")
-  expect_match(st$data$output$stderr, paste0("\\[ id +\\]  ", id),
+  expect_match(st$data$output, paste0("\\[ id +\\]  ", id),
                all = FALSE)
-  expect_equal(st$data$output$stdout, list())
 })
 
 
@@ -239,13 +238,12 @@ test_that("pass parameters", {
   expect_equal(httr::status_code(r), 200)
   st <- content(r)
   expect_equal(st$status, "success")
-  expect_match(st$data$output$stderr, paste0("\\[ id +\\]  ", version),
+  expect_match(st$data$output, paste0("\\[ id +\\]  ", version),
                all = FALSE)
-  expect_equal(st$data$output$stdout, list())
 
   ## parameters make it across
-  expect_match(st$data$output$stderr, "time: 1", fixed = TRUE, all = FALSE)
-  expect_match(st$data$output$stderr, "poll: 0.1", fixed = TRUE, all = FALSE)
+  expect_match(st$data$output, "time: 1", fixed = TRUE, all = FALSE)
+  expect_match(st$data$output, "poll: 0.1", fixed = TRUE, all = FALSE)
 })
 
 test_that("run-metadata", {

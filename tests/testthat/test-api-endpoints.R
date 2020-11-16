@@ -366,8 +366,7 @@ test_that("status - completed, with log", {
   key <- "key-1"
   version <- "20200414-123013-a1df28f7"
   status <- list(key = key, status = "success", version = version,
-                 output = list(stderr = c("a message", "in the logs"),
-                               stdout = list()),
+                 output = c("a message", "in the logs"),
                  task_position = 0)
   runner <- mock_runner(key, status)
 
@@ -377,8 +376,7 @@ test_that("status - completed, with log", {
     list(key = scalar(key),
          status = scalar("success"),
          version = scalar(version),
-         output = list(stderr = c("a message", "in the logs"),
-                       stdout = list()),
+         output = c("a message", "in the logs"),
          task_position = scalar(0)))
   expect_equal(mockery::mock_args(runner$status)[[1]], list(key, TRUE))
 

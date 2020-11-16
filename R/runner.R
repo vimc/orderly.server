@@ -63,10 +63,11 @@ runner_run <- function(key_report_id, key, root, name, parameters, instance,
             if (!is.null(ref)) c("--ref", ref),
             if (!is.null(instance)) c("--instance", instance),
             parameters)
-  log_out <- path_stdout(root, key)
   log_err <- path_stderr(root, key)
+  ## We don't need to capture stdout as orderly CLI interleaves stdout
+  ## stderr for us
   px <- processx::process$new(orderly_bin, args,
-                              stdout = log_out, stderr = log_err)
+                              stdout = NULL, stderr = log_err)
   ## Might be worth killing px on function exit
   id <- NA_character_
   while (px$is_alive()) {
@@ -79,19 +80,11 @@ runner_run <- function(key_report_id, key, root, name, parameters, instance,
     Sys.sleep(poll)
   }
 
-  ## TODO stdout stuff? when is there stdout?
   ok <- px$get_exit_status() == 0L
   base <- if (ok) path_archive else path_draft
   p <- file.path(base(root), name, id)
   if (file.exists(p)) {
     file_copy(log_err, file.path(p, "orderly.log"))
-    ## This should be empty if the redirection works as expected:
-    if (file.size(log_out) > 0L) {
-      ## TODO: If never gets touched then stdout = NULL and remove it, comment
-      ## in processx that out is interleaved
-      stop()
-      file_copy(log_out, file.path(p, "orderly.log.stdout"))
-    }
   }
 
   if (!ok) {
@@ -144,7 +137,6 @@ orderly_runner_ <- R6::R6Class(
 
       ## Create directories for storing logs and id files
       dir_create(dirname(path_stderr(self$root, "ignore")))
-      dir_create(dirname(path_stdout(self$root, "ignore")))
       dir_create(dirname(path_id_file(self$root, "ignore")))
 
       ## Create queue
@@ -210,8 +202,7 @@ orderly_runner_ <- R6::R6Class(
       report_id <- self$con$HGET(self$keys$key_report_id, key)
       if (output) {
         out <- list(
-          stderr = readlines_if_exists(path_stderr(self$root, key), list()),
-          stdout = readlines_if_exists(path_stdout(self$root, key), list())
+          readlines_if_exists(path_stderr(self$root, key), NULL)
         )
       } else {
         out <- NULL
@@ -287,11 +278,6 @@ runner_has_git <- function(path) {
 
 path_stderr <- function(root, key) {
   file.path(root, "runner/log", paste0(key, ".stderr"))
-}
-
-
-path_stdout <- function(root, key) {
-  file.path(root, "runner/log", paste0(key, ".stdout"))
 }
 
 

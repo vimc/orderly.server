@@ -23,23 +23,10 @@
                     "type": "null"
                 },
                 {
-                    "type": "object",
-                    "properties": {
-                        "stdout": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            }
-                        },
-                        "stderr": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "required": ["stdout", "stderr"],
-                    "additional_properites": false
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             ]
         },

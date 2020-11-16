@@ -105,7 +105,6 @@ test_that("runner can run a report", {
   skip_if_no_redis()
   path <- orderly_prepare_orderly_example("demo")
   dir_create(dirname(path_stderr(path, "ignore")))
-  dir_create(dirname(path_stdout(path, "ignore")))
   dir_create(dirname(path_id_file(path, "ignore")))
 
   out <- runner_run("key_id", "test_key", path, "minimal", parameters = NULL,
@@ -131,7 +130,6 @@ test_that("runner can run a report with parameters", {
   skip_if_no_redis()
   path <- orderly_prepare_orderly_example("demo")
   dir_create(dirname(path_stderr(path, "ignore")))
-  dir_create(dirname(path_stdout(path, "ignore")))
   dir_create(dirname(path_id_file(path, "ignore")))
 
   out <- runner_run("key_id", "test_key", path, "other",
@@ -162,7 +160,6 @@ test_that("runner can return errors", {
   path <- orderly_prepare_orderly_example("minimal")
   writeLines("1 + 1", file.path(path, "src/example/script.R"))
   dir_create(dirname(path_stderr(path, "ignore")))
-  dir_create(dirname(path_stdout(path, "ignore")))
   dir_create(dirname(path_id_file(path, "ignore")))
 
   err <- expect_error(runner_run("key_report_id", "test_key", path, "example",
@@ -218,9 +215,8 @@ test_that("run: success", {
   expect_equal(status$key, key)
   expect_equal(status$status, "success")
   expect_equal(status$version, report_id)
-  expect_match(status$output$stderr, paste0("\\[ id +\\]  ", report_id),
+  expect_match(status$output, paste0("\\[ id +\\]  ", report_id),
                all = FALSE)
-  expect_equal(status$output$stdout, character(0))
   expect_equal(status$task_position, 0)
 
   ## Report is in archive
@@ -277,22 +273,6 @@ test_that("run report with parameters", {
     file.path(path, "archive", "other", result$report_id)))
   expect_equal(d$meta$parameters, list(nmin = 0.5))
 })
-
-## TODO: rebuild - make a ticket and then remove it
-# test_that("rebuild", {
-#   testthat::skip_on_cran()
-#   path <- orderly_prepare_orderly_example("minimal")
-#   runner <- orderly_runner(path)
-#
-#   name <- "example"
-#   id <- orderly::orderly_run(name, root = path, echo = FALSE)
-#   orderly::orderly_commit(id, name, root = path)
-#
-#   path_db <- file.path(path, "orderly.sqlite")
-#   file.remove(path_db)
-#   expect_true(runner$rebuild())
-#   expect_true(file.exists(path_db))
-# })
 
 test_that("run in branch (local)", {
   testthat::skip_on_cran()
@@ -371,30 +351,6 @@ test_that("Can't git change", {
   expect_error(runner$submit_task_report("other", ref = "other"),
                "Reference switching is disallowed in this runner")
 })
-
-## TODO: cleanup - remove for now
-# test_that("cleanup", {
-#   testthat::skip_on_cran()
-#   path <- orderly_prepare_orderly_example("minimal")
-#   on.exit(unlink(path, recursive = TRUE))
-#
-#   id <- orderly::orderly_run("example", root = path, echo = FALSE)
-#   orderly::orderly_commit(id, root = path)
-#
-#   writeLines("1 + 1", file.path(path, "src/example/script.R"))
-#   expect_error(orderly::orderly_run("example", root = path, echo = FALSE),
-#                "Script did not produce")
-#
-#   runner <- orderly_runner(path)
-#   expect_message(runner$cleanup(), "clean.+draft/example")
-#   expect_silent(runner$cleanup())
-#
-#   expect_equal(
-#     nrow(orderly::orderly_list_drafts(TRUE, root = path, include_failed = TRUE)),
-#     0L)
-#   expect_equal(orderly::orderly_list_archive(FALSE, root = path)$id, id)
-# })
-
 
 # test_that("kill", {
 #   testthat::skip_on_cran()
@@ -674,9 +630,8 @@ test_that("runner can set instance", {
   expect_equal(status$status, "success")
   expect_equal(status$version, report_id)
   ## Data in alternative db extracts only 10 rows
-  expect_match(status$output$stderr, "\\[ data +\\]  source => dat: 10 x 2",
+  expect_match(status$output, "\\[ data +\\]  source => dat: 10 x 2",
                all = FALSE)
-  expect_equal(status$output$stdout, character(0))
   expect_equal(status$task_position, 0)
 
 
@@ -691,8 +646,7 @@ test_that("runner can set instance", {
   expect_equal(status_default$status, "success")
   expect_equal(status_default$version, report_id_default)
   ## Data in default db extracts 20 rows
-  expect_match(status_default$output$stderr, "\\[ data +\\]  source => dat: 20 x 2",
+  expect_match(status_default$output, "\\[ data +\\]  source => dat: 20 x 2",
                all = FALSE)
-  expect_equal(status_default$output$stdout, character(0))
   expect_equal(status_default$task_position, 0)
 })
