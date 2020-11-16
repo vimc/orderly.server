@@ -102,6 +102,7 @@ test_that("queue starts up normally without a timeout", {
 
 test_that("runner can run a report", {
   ## Setup dir for testing
+  skip_if_no_redis()
   path <- orderly_prepare_orderly_example("demo")
   dir_create(dirname(path_stderr(path, "ignore")))
   dir_create(dirname(path_stdout(path, "ignore")))
@@ -127,6 +128,7 @@ test_that("runner can run a report", {
 
 test_that("runner can run a report with parameters", {
   ## Setup dir for testing
+  skip_if_no_redis()
   path <- orderly_prepare_orderly_example("demo")
   dir_create(dirname(path_stderr(path, "ignore")))
   dir_create(dirname(path_stdout(path, "ignore")))
@@ -156,6 +158,7 @@ test_that("runner can run a report with parameters", {
 
 test_that("runner can return errors", {
   ## Setup dir for testing
+  skip_if_no_redis()
   path <- orderly_prepare_orderly_example("minimal")
   writeLines("1 + 1", file.path(path, "src/example/script.R"))
   dir_create(dirname(path_stderr(path, "ignore")))
