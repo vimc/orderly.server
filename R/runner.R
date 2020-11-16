@@ -87,6 +87,9 @@ runner_run <- function(key_report_id, key, root, name, parameters, instance,
     file_copy(log_err, file.path(p, "orderly.log"))
     ## This should be empty if the redirection works as expected:
     if (file.size(log_out) > 0L) {
+      ## TODO: If never gets touched then stdout = NULL and remove it, comment
+      ## in processx that out is interleaved
+      stop()
       file_copy(log_out, file.path(p, "orderly.log.stdout"))
     }
   }
@@ -174,7 +177,10 @@ orderly_runner_ <- R6::R6Class(
 
       root <- self$root
       key <- ids::adjective_animal()
-      ## TODO: key timeout?
+      ## TODO: key timeout? create timeout on queue, check jobs running, the time
+      ## they have been running for and kill them if over timeout
+      ## Add a check_timeout method as a hook on the api build which calls this
+      ## SO then old jobs get killed
       self$con$HSET(self$keys$key_timeout, key, timeout)
       key_report_id <- self$keys$key_report_id
       task_id <- self$submit(quote(
@@ -227,7 +233,9 @@ orderly_runner_ <- R6::R6Class(
 
     cleanup = function() {
       if (self$cleanup_on_exit && !is.null(self$con)) {
-        message("Stopping workers")
+        if (interactive()) {
+          message("Stopping workers") # nocov
+        }
         self$queue$worker_stop(type = "kill")
         self$destroy()
       }

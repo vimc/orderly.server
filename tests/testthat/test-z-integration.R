@@ -110,6 +110,9 @@ test_that("git", {
   expect_equal(r$data$hash, sha[["local"]])
 
   ## TODO: git and update stuff
+  ## Endpoint still accept ref and pull args, server still needs to fetch
+  ## but the getting a sha from a branch ref can be done on client
+  ## args pass to running process, at the point of running do git stuff, not when job received
   # r <- httr::POST(server$api_url("/v1/reports/minimal/run/?update=false"))
   # dat <- content(r)
   # wait_for_finished(dat$data$key, server)
@@ -157,6 +160,7 @@ test_that("git error returns valid json", {
   json <- httr::content(res, "text", encoding = "UTF-8")
 
   ## TODO: What are the tests here?
+  ## https://github.com/vimc/orderly.server/commit/0479667e181ed2f0757faad186ffa8de1c739dba
 })
 
 

@@ -275,7 +275,7 @@ test_that("run report with parameters", {
   expect_equal(d$meta$parameters, list(nmin = 0.5))
 })
 
-## TODO: rebuild
+## TODO: rebuild - make a ticket and then remove it
 # test_that("rebuild", {
 #   testthat::skip_on_cran()
 #   path <- orderly_prepare_orderly_example("minimal")
@@ -334,6 +334,9 @@ test_that("run missing ref", {
   expect_match(result$message, "Error code 128 running command:\n")
 
   ## TODO: sort update behaviour - should we just always pull?
+  ## In orderly (on client) if --ref exists fetch first
+  ## if it doesn't exist but if update does -- update then pull
+
   # id <- runner$queue("minimal", ref = sha1, update = TRUE)
   # expect_is(id, "character")
   # expect_equal(runner$data$length(), 1)
@@ -366,7 +369,7 @@ test_that("Can't git change", {
                "Reference switching is disallowed in this runner")
 })
 
-## TODO: cleanup
+## TODO: cleanup - remove for now
 # test_that("cleanup", {
 #   testthat::skip_on_cran()
 #   path <- orderly_prepare_orderly_example("minimal")
@@ -571,8 +574,6 @@ test_that("prevent git changes", {
   expect_true(runner$allow_ref)
   r <- runner$submit_task_report("example", ref = "origin/other",
                                  parameters = list(nmin = 0))
-  ## TODO: add queue_status endpoint
-  ## expect_equal(nrow(runner$queue_status()$queue), 1L)
 
   runner <- withr::with_envvar(
     c("ORDERLY_API_SERVER_IDENTITY" = NA_character_),
@@ -580,8 +581,6 @@ test_that("prevent git changes", {
   expect_true(runner$allow_ref)
   r <- runner$submit_task_report("example", ref = "origin/other",
                     parameters = list(nmin = 0))
-  ## TODO: add queue_status endpoint
-  ## expect_equal(nrow(runner$queue_status()$queue), 1L)
 })
 
 
