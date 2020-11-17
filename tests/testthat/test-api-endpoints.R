@@ -17,16 +17,6 @@ test_that("index", {
 })
 
 
-# test_that("rebuild", {
-#   runner <- mock_runner()
-#
-#   res_target <- target_rebuild(runner)
-#   expect_null(res_target)
-#
-#   expect_simple_endpoint_runs(endpoint_rebuild(runner), res_target)
-# })
-
-
 test_that("git_status", {
   path <- orderly_unzip_git_demo()
   endpoint <- endpoint_git_status(path)
@@ -398,65 +388,67 @@ test_that("status - completed, with log", {
   expect_equal(mockery::mock_args(runner$status)[[3]], list(key, TRUE))
 })
 
-#
-# test_that("kill - successful", {
-#   key <- "key-1"
-#   runner <- mock_runner()
-#
-#   res <- target_kill(runner, key)
-#   expect_true(res)
-#   expect_equal(mockery::mock_args(runner$kill)[[1]], list(key))
-#
-#   ## endpoint
-#   endpoint <- endpoint_kill(runner)
-#   res_endpoint <- endpoint$run(key)
-#   expect_equal(res_endpoint$status_code, 200)
-#   expect_equal(res_endpoint$content_type, "application/json")
-#   expect_equal(res_endpoint$data, res)
-#   expect_equal(mockery::mock_args(runner$kill)[[2]], list(key))
-#
-#   ## api
-#   api <- build_api(runner)
-#   res_api <- api$request("DELETE", sprintf("/v1/reports/%s/kill/", key))
-#   expect_equal(res_api$status, 200L)
-#   expect_equal(res_api$headers[["Content-Type"]], "application/json")
-#   expect_equal(res_api$body, as.character(res_endpoint$body))
-#   expect_equal(mockery::mock_args(runner$kill)[[3]], list(key))
-# })
-#
-#
-# test_that("kill - failure", {
-#   key <- "key-1"
-#   runner <- mock_runner()
-#
-#   msg <- "Can't kill 'key-1' - not currently running a report"
-#   runner$kill <- mockery::mock(stop(msg), cycle = TRUE)
-#
-#   res <- expect_error(target_kill(runner, key), class = "pkgapi_error")
-#   res$trace <- NULL
-#   expect_equal(mockery::mock_args(runner$kill)[[1]], list(key))
-#   expect_equal(res$data[[1]]$error, jsonlite::unbox("ERROR"))
-#   expect_equal(res$data[[1]]$detail, jsonlite::unbox(msg))
-#
-#   ## endpoint
-#   endpoint <- endpoint_kill(runner)
-#   res_endpoint <- endpoint$run(key)
-#   expect_equal(res_endpoint$status_code, 400)
-#   expect_equal(res_endpoint$content_type, "application/json")
-#   expect_null(res_endpoint$data)
-#   expect_equal(res_endpoint$error, res)
-#   expect_equal(mockery::mock_args(runner$kill)[[2]], list(key))
-#
-#   ## api
-#   api <- build_api(runner)
-#   res_api <- api$request("DELETE", sprintf("/v1/reports/%s/kill/", key))
-#   expect_equal(res_api$status, 400L)
-#   expect_equal(res_api$headers[["Content-Type"]], "application/json")
-#   expect_equal(res_api$body, as.character(res_endpoint$body))
-#   expect_equal(mockery::mock_args(runner$kill)[[3]], list(key))
-# })
-#
-#
+
+test_that("kill - successful", {
+  skip("add kill endpoint")
+  key <- "key-1"
+  runner <- mock_runner()
+
+  res <- target_kill(runner, key)
+  expect_true(res)
+  expect_equal(mockery::mock_args(runner$kill)[[1]], list(key))
+
+  ## endpoint
+  endpoint <- endpoint_kill(runner)
+  res_endpoint <- endpoint$run(key)
+  expect_equal(res_endpoint$status_code, 200)
+  expect_equal(res_endpoint$content_type, "application/json")
+  expect_equal(res_endpoint$data, res)
+  expect_equal(mockery::mock_args(runner$kill)[[2]], list(key))
+
+  ## api
+  api <- build_api(runner)
+  res_api <- api$request("DELETE", sprintf("/v1/reports/%s/kill/", key))
+  expect_equal(res_api$status, 200L)
+  expect_equal(res_api$headers[["Content-Type"]], "application/json")
+  expect_equal(res_api$body, as.character(res_endpoint$body))
+  expect_equal(mockery::mock_args(runner$kill)[[3]], list(key))
+})
+
+
+test_that("kill - failure", {
+  skip("add kill endpoint")
+  key <- "key-1"
+  runner <- mock_runner()
+
+  msg <- "Can't kill 'key-1' - not currently running a report"
+  runner$kill <- mockery::mock(stop(msg), cycle = TRUE)
+
+  res <- expect_error(target_kill(runner, key), class = "pkgapi_error")
+  res$trace <- NULL
+  expect_equal(mockery::mock_args(runner$kill)[[1]], list(key))
+  expect_equal(res$data[[1]]$error, jsonlite::unbox("ERROR"))
+  expect_equal(res$data[[1]]$detail, jsonlite::unbox(msg))
+
+  ## endpoint
+  endpoint <- endpoint_kill(runner)
+  res_endpoint <- endpoint$run(key)
+  expect_equal(res_endpoint$status_code, 400)
+  expect_equal(res_endpoint$content_type, "application/json")
+  expect_null(res_endpoint$data)
+  expect_equal(res_endpoint$error, res)
+  expect_equal(mockery::mock_args(runner$kill)[[2]], list(key))
+
+  ## api
+  api <- build_api(runner)
+  res_api <- api$request("DELETE", sprintf("/v1/reports/%s/kill/", key))
+  expect_equal(res_api$status, 400L)
+  expect_equal(res_api$headers[["Content-Type"]], "application/json")
+  expect_equal(res_api$body, as.character(res_endpoint$body))
+  expect_equal(mockery::mock_args(runner$kill)[[3]], list(key))
+})
+
+
 test_that("run can specify instance", {
   ## We're interested in testing that orderly.server passes instance arg
   ## to the runner$queue arg

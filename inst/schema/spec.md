@@ -2,18 +2,6 @@
 
 This API is built on top of [`pkgapi`](https://reside-ic.github.io/pkgapi) (itself influenced by [`hintr`](https://github.com/mrc-ide/hintr) and [montagu api](https://github.com/vimc/montagu-api/blob/master/spec/spec.md)).
 
-## POST /reports/rebuild/
-
-Force orderly to rebuild the index.  This is useful in cases where the index is corrupt (seen in failed restores), or during a schema migration.  It's a relatively harmless operation, though it might get a little slow when the store is large.  Returns nothing.
-
-Schema: [`Rebuild.schema.json`](Rebuild.schema.json)
-
-### Example
-
-```json
-null
-```
-
 ## POST /reports/:name/run/
 
 Try and run a report `:name`

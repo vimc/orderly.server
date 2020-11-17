@@ -99,39 +99,41 @@ test_that("git", {
   ## TODO: git and update stuff
   ## Endpoint still accept ref and pull args, server still needs to fetch
   ## but the getting a sha from a branch ref can be done on client
-  ## args pass to running process, at the point of running do git stuff, not when job received
-  # r <- httr::POST(server$api_url("/v1/reports/minimal/run/?update=false"))
-  # dat <- content(r)
-  # wait_for_finished(dat$data$key, server)
-  # expect_equal(git_ref_to_sha("HEAD", path[["local"]]),
-  #              sha[["local"]])
-  #
-  # r <- httr::POST(server$api_url("/v1/reports/minimal/run/"),
-  #                 query = list(update = "false", ref = sha[["origin"]]))
-  # dat <- content(r)
-  # wait_for_finished(dat$data$key, server)
-  #
-  # r <- httr::GET(server$api_url(dat$data$path))
-  # st <- content(r)
-  # expect_equal(httr::status_code(r), 200)
-  # expect_equal(st$data$status, "error")
-  #
-  # expect_equal(git_ref_to_sha("HEAD", root = path[["local"]]),
-  #              sha[["local"]])
-  # expect_false(git_ref_exists(sha[["origin"]], path[["local"]]))
-  #
-  # r <- httr::POST(server$api_url("/v1/reports/minimal/run/"),
-  #                 query = list(ref = sha[["origin"]]))
-  # dat <- content(r)
-  # wait_for_finished(dat$data$key, server)
-  #
-  # res <- content(httr::GET(server$api_url(content(r)$data$path),
-  #                          query = list(output = TRUE)))
-  # expect_match(res$data$output$stderr, sha[["origin"]], all = FALSE)
-  #
-  # expect_equal(git_ref_to_sha("HEAD", root = path[["local"]]),
-  #              sha[["local"]])
-  # expect_true(git_ref_exists(sha[["origin"]], path[["local"]]))
+  ## args pass to running process, at the point of running do git stuff,
+  ## not when job received
+  skip("Add git update")
+  r <- httr::POST(server$api_url("/v1/reports/minimal/run/?update=false"))
+  dat <- content(r)
+  wait_for_finished(dat$data$key, server)
+  expect_equal(git_ref_to_sha("HEAD", path[["local"]]),
+               sha[["local"]])
+
+  r <- httr::POST(server$api_url("/v1/reports/minimal/run/"),
+                  query = list(update = "false", ref = sha[["origin"]]))
+  dat <- content(r)
+  wait_for_finished(dat$data$key, server)
+
+  r <- httr::GET(server$api_url(dat$data$path))
+  st <- content(r)
+  expect_equal(httr::status_code(r), 200)
+  expect_equal(st$data$status, "error")
+
+  expect_equal(git_ref_to_sha("HEAD", root = path[["local"]]),
+               sha[["local"]])
+  expect_false(git_ref_exists(sha[["origin"]], path[["local"]]))
+
+  r <- httr::POST(server$api_url("/v1/reports/minimal/run/"),
+                  query = list(ref = sha[["origin"]]))
+  dat <- content(r)
+  wait_for_finished(dat$data$key, server)
+
+  res <- content(httr::GET(server$api_url(content(r)$data$path),
+                           query = list(output = TRUE)))
+  expect_match(res$data$output$stderr, sha[["origin"]], all = FALSE)
+
+  expect_equal(git_ref_to_sha("HEAD", root = path[["local"]]),
+               sha[["local"]])
+  expect_true(git_ref_exists(sha[["origin"]], path[["local"]]))
 })
 
 
@@ -155,34 +157,35 @@ test_that("git error returns valid json", {
 })
 
 
-# test_that("run report honours timeout", {
-#   server <- start_test_server()
-#   on.exit(server$stop())
-#
-#   p <- file.path(server$path, "src", "count", "parameters.json")
-#   writeLines(jsonlite::toJSON(list(time = 2, poll = 0.1), auto_unbox = TRUE),
-#              p)
-#
-#   r <- httr::POST(server$api_url("/v1/reports/count/run/"),
-#                   query = list(timeout = 1))
-#   expect_equal(httr::status_code(r), 200)
-#   dat <- content(r)
-#   wait_for_finished(dat$data$key, server)
-#   r <- httr::GET(server$api_url(dat$data$path))
-#   expect_equal(httr::status_code(r), 200)
-#   st <- content(r)
-#   expect_equal(st$data$status, "killed")
-#
-#   r <- httr::POST(server$api_url("/v1/reports/count/run/"),
-#                   query = list(timeout = 60))
-#   expect_equal(httr::status_code(r), 200)
-#   dat <- content(r)
-#   wait_for_finished(dat$data$key, server)
-#   r <- httr::GET(server$api_url(dat$data$path))
-#   expect_equal(httr::status_code(r), 200)
-#   st <- content(r)
-#   expect_equal(st$data$status, "success")
-# })
+test_that("run report honours timeout", {
+  skip("Add timeout on hook")
+  server <- start_test_server()
+  on.exit(server$stop())
+
+  p <- file.path(server$path, "src", "count", "parameters.json")
+  writeLines(jsonlite::toJSON(list(time = 2, poll = 0.1), auto_unbox = TRUE),
+             p)
+
+  r <- httr::POST(server$api_url("/v1/reports/count/run/"),
+                  query = list(timeout = 1))
+  expect_equal(httr::status_code(r), 200)
+  dat <- content(r)
+  wait_for_finished(dat$data$key, server)
+  r <- httr::GET(server$api_url(dat$data$path))
+  expect_equal(httr::status_code(r), 200)
+  st <- content(r)
+  expect_equal(st$data$status, "killed")
+
+  r <- httr::POST(server$api_url("/v1/reports/count/run/"),
+                  query = list(timeout = 60))
+  expect_equal(httr::status_code(r), 200)
+  dat <- content(r)
+  wait_for_finished(dat$data$key, server)
+  r <- httr::GET(server$api_url(dat$data$path))
+  expect_equal(httr::status_code(r), 200)
+  st <- content(r)
+  expect_equal(st$data$status, "success")
+})
 
 
 test_that("pass parameters", {

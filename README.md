@@ -16,7 +16,6 @@ Current API:
 
 ```
 GET  /
-POST /v1/reports/rebuild/
 POST /v1/reports/:name/run/
 GET  /v1/reports/:key/status/
 GET  /v1/reports/git/status/
@@ -46,7 +45,6 @@ $ curl -s -X GET http://localhost:8321/ | jq
     "version": "0.0.0",
     "endpoints": [
       "/",
-      "/v1/reports/rebuild/",
       "/v1/reports/:name/run/",
       "/v1/reports/:key/status/",
       "/v1/reports/git/status/",
@@ -107,17 +105,6 @@ $ curl -s -X GET http://localhost:8321/v1/reports/flirtatious_komododragon/statu
       ]
     }
   },
-  "errors": []
-}
-```
-
-Rebuild the orderly index:
-
-```
-$ curl -s -X POST http://localhost:8321/v1/reports/rebuild/ | jq
-{
-  "status": "success",
-  "data": null,
   "errors": []
 }
 ```

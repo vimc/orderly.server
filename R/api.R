@@ -2,7 +2,6 @@ build_api <- function(runner, path) {
   force(runner)
   api <- pkgapi::pkgapi$new()
   api$handle(endpoint_index())
-  # api$handle(endpoint_rebuild(runner))
   api$handle(endpoint_git_status(path))
   api$handle(endpoint_git_fetch(path))
   api$handle(endpoint_git_pull(path))
@@ -42,7 +41,6 @@ target_index <- function() {
          "/v1/reports/git/fetch/",
          "/v1/reports/git/pull/",
          "/v1/reports/git/status/",
-         "/v1/reports/rebuild/"
        ))
 }
 
@@ -50,18 +48,6 @@ endpoint_index <- function() {
   pkgapi::pkgapi_endpoint$new(
     "GET", "/", target_index,
     returning = returning_json("Index.schema"))
-}
-
-target_rebuild <- function(runner) {
-  runner$rebuild()
-  NULL
-}
-
-endpoint_rebuild <- function(runner) {
-  pkgapi::pkgapi_endpoint$new(
-    "POST", "/v1/reports/rebuild/", target_rebuild,
-    pkgapi::pkgapi_state(runner = runner),
-    returning = returning_json("Rebuild.schema"))
 }
 
 target_git_status <- function(path) {
