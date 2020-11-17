@@ -233,7 +233,7 @@ orderly_runner_ <- R6::R6Class(
       self$con$HSET(self$keys$key_timeout, key, timeout)
       key_report_id <- self$keys$key_report_id
       task_id <- self$submit(quote(
-        orderly.server:::runner_run(key_report_id, key, root, name,
+        orderly.server:::runner_run(key_report_id, key, root, name,   # nolint
                                     parameters, instance, ref, poll = poll)))
       self$con$HSET(self$keys$key_task_id, key, task_id)
       self$con$HSET(self$keys$task_id_key, task_id, key)
