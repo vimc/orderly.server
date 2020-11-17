@@ -353,53 +353,39 @@ test_that("Can't git change", {
                "Reference switching is disallowed in this runner")
 })
 
-test_that("kill", {
-  skip("add kill")
+test_that("kill - when running", {
   testthat::skip_on_cran()
   skip_on_windows()
-  skip_on_appveyor()
-  ## TODO: This test is fails to kill the process on travis but adding
-  ## print lines for debugging makes it pass on travis
-  ## We should fix this at some point, see VIMC-4066
-  skip_on_travis()
   path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
   runner <- orderly_runner(path)
   name <- "interactive"
-  key <- runner$queue(name)
-  runner$poll()
+  key <- runner$submit_task_report(name)
+
   id <- wait_for_id(runner, key)
   expect_true(runner$kill(key))
-  expect_error(runner$kill(key), "Can't kill")
-  expect_null(runner$process)
-  expect_equal(runner$poll(), "idle")
+  expect_error(runner$kill(key), paste0("Failed to kill ", key))
 })
 
-test_that("kill - wrong process", {
-  skip("add kill")
+test_that("kill - whist queued", {
   testthat::skip_on_cran()
   skip_on_windows()
-  skip_on_appveyor()
   path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
   runner <- orderly_runner(path)
   name <- "interactive"
-  key <- runner$queue(name)
-  runner$poll()
+  key <- runner$submit_task_report(name)
   id <- wait_for_id(runner, key)
 
-  key2 <- "virtual_plant"
-  expect_error(runner$kill(key2),
-               sprintf("Can't kill '%s' - currently running '%s'", key2, key))
-  runner$kill(key)
+  key2 <- runner$submit_task_report(name)
+  expect_true(runner$kill(key))
 })
 
 test_that("kill - no process", {
-  skip("add kill")
   testthat::skip_on_cran()
   path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
   runner <- orderly_runner(path)
   key <- "virtual_plant"
   expect_error(runner$kill(key),
-               "Can't kill 'virtual_plant' - not currently running a report")
+               "Failed to kill 'virtual_plant' task doesn't exist")
 })
 
 test_that("timeout", {

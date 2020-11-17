@@ -390,7 +390,6 @@ test_that("status - completed, with log", {
 
 
 test_that("kill - successful", {
-  skip("add kill endpoint")
   key <- "key-1"
   runner <- mock_runner()
 
@@ -407,7 +406,7 @@ test_that("kill - successful", {
   expect_equal(mockery::mock_args(runner$kill)[[2]], list(key))
 
   ## api
-  api <- build_api(runner)
+  api <- build_api(runner, runner$root)
   res_api <- api$request("DELETE", sprintf("/v1/reports/%s/kill/", key))
   expect_equal(res_api$status, 200L)
   expect_equal(res_api$headers[["Content-Type"]], "application/json")
@@ -417,11 +416,10 @@ test_that("kill - successful", {
 
 
 test_that("kill - failure", {
-  skip("add kill endpoint")
   key <- "key-1"
   runner <- mock_runner()
 
-  msg <- "Can't kill 'key-1' - not currently running a report"
+  msg <- "Failed to kill 'key-1' task doesn't exist"
   runner$kill <- mockery::mock(stop(msg), cycle = TRUE)
 
   res <- expect_error(target_kill(runner, key), class = "pkgapi_error")
@@ -440,7 +438,7 @@ test_that("kill - failure", {
   expect_equal(mockery::mock_args(runner$kill)[[2]], list(key))
 
   ## api
-  api <- build_api(runner)
+  api <- build_api(runner, runner$root)
   res_api <- api$request("DELETE", sprintf("/v1/reports/%s/kill/", key))
   expect_equal(res_api$status, 400L)
   expect_equal(res_api$headers[["Content-Type"]], "application/json")
