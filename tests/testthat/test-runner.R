@@ -250,7 +250,7 @@ test_that("run: error", {
   expect_equal(status$status, "error")
   expect_true(any(grepl(
     "Script did not produce expected artefacts: mygraph.png",
-    status$output$stderr)))
+    status$output)))
   expect_equal(status$task_position, 0)
 })
 

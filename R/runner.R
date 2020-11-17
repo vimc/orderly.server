@@ -201,9 +201,7 @@ orderly_runner_ <- R6::R6Class(
       }
       report_id <- self$con$HGET(self$keys$key_report_id, key)
       if (output) {
-        out <- list(
-          readlines_if_exists(path_stderr(self$root, key), NULL)
-        )
+        out <- readlines_if_exists(path_stderr(self$root, key), NULL)
       } else {
         out <- NULL
       }
