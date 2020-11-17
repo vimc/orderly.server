@@ -97,25 +97,61 @@ runner_run <- function(key_report_id, key, root, name, parameters, instance,
   )
 }
 
+#' Object for managing running jobs on the redis queue
+#'
+#' @keywords internal
 orderly_runner_ <- R6::R6Class(
   "orderly_runner",
   cloneable = FALSE,
   public = list(
+    #' @field root Orderly root
     root = NULL,
+    #' @field config Orderly config
     config = NULL,
+    #' @field allow_ref Allow git to change branch/ref for run
     allow_ref = FALSE,
-
-    path_id = NULL,
-
+    #' @field has_git Is git available on the runner
     has_git = NULL,
 
+    #' @field con Redis connection
     con = NULL,
+    #' @field cleanup_on_exit If TRUE workers are killed on exit
     cleanup_on_exit = NULL,
+    #' @field queue The redis queue
     queue = NULL,
+    #' @field queue_id Redis queue ID
     queue_id = NULL,
+    #' @field keys Set of redis keys for mapping between key, report_id
+    #' and task_id
     keys = NULL,
 
-    ## Timeout is worker timeout
+    #' @description
+    #' Create object, read configuration and setup redis connection.
+    #'
+    #' @param root Orderly root.
+    #' @param allow_ref Allow git to change branches/ref for run.  If not
+    #'   given, then we will look to see if the orderly configuration
+    #'   disallows branch changes (based on the
+    #'   \code{ORDERLY_API_SERVER_IDENTITY} environment variable and the
+    #'   \code{master_only} setting of the relevant server block.
+    #' @param backup_period Period (in seconds) between DB backups.  This
+    #'   is a guide only as backups cannot happen while a task is running
+    #'   - if more than this many seconds have elapsed when the runner is
+    #'   in its idle loop a backup of the db will be performed.  This
+    #'   creates a copy of orderly's destination database in
+    #'   \code{backup/db} with the same filename as the destination
+    #'   database, even if that database typically lives outside of the
+    #'   orderly tree.  In case of corruption of the database, this
+    #'   backup can be manually moved into place.  This is only needed if
+    #'   you are storing information alongside the core orderly tables
+    #'   (as done by OrderlyWeb).
+    #'   TODO: actually implement this
+    #' @param queue_id ID of an existing queue to connect to, creates a new one
+    #'   if NULL.
+    #' @param workers Number of workers to spawn.
+    #' @param cleanup_on_exit If TRUE workers are killed on exit.
+    #' @param worker_timeout How long worker should live for before it is
+    #' killed. Expect this is only finite during local testing.
     initialize = function(root, allow_ref = NULL, backup_period, queue_id,
                           workers, cleanup_on_exit = workers > 0,
                           worker_timeout = Inf) {
@@ -151,6 +187,14 @@ orderly_runner_ <- R6::R6Class(
       self$keys <- orderly_key(self$queue$queue_id)
     },
 
+    #' @description
+    #' Start n workers for this queue and optionally set a timeout.
+    #'
+    #' @param workers Number of workers to spawn.
+    #' @param timeout How long worker should live for before it is
+    #' killed. Expect this is only finite during local testing.
+    #'
+    #' @return TRUE, called for side effects.
     start_workers = function(workers, timeout) {
       if (workers > 0L) {
         ids <- rrq::worker_spawn(self$queue, workers)
@@ -158,8 +202,21 @@ orderly_runner_ <- R6::R6Class(
           self$queue$message_send_and_wait("TIMEOUT_SET", timeout, ids)
         }
       }
+      invisible(TRUE)
     },
 
+    #' @description
+    #' Queue a job to run an orderly report.
+    #'
+    #' @param name Name of report to be queued.
+    #' @param parameters List of parameters to pass to report.
+    #' @param ref The git sha to run the report.
+    #' @param instance The db instance for the report to pull data from.
+    #' @param poll How frequently to poll for the report ID being available.
+    #' @param timeout Timeout for the report run. TODO - impl
+    #'
+    #' @return The key for the job, note this is not the task id. The task id
+    #' can be retrieved from redis using the key.
     submit_task_report = function(name, parameters = NULL, ref = NULL,
                                   instance = NULL, poll = 0.1, timeout = 600) {
       if (!self$allow_ref && !is.null(ref)) {
@@ -183,10 +240,25 @@ orderly_runner_ <- R6::R6Class(
       key
     },
 
+    #' @description
+    #' Submit an arbitrary job on the queue
+    #'
+    #' @param job A quoted R expression.
+    #' @param environment Environment to run the expression in.
+    #'
+    #' @return Task id
     submit = function(job, environment = parent.frame()) {
        self$queue$enqueue_(job, environment)
     },
 
+    #' @description
+    #' Get the status of a job
+    #'
+    #' @param key The job key.
+    #' @param output If TRUE include the output from job running.
+    #'
+    #' @return List containing the key, status, report_id (if available),
+    #' output and the position of the job in the queue.
     status = function(key, output = FALSE) {
       task_id <- self$con$HGET(self$keys$key_task_id, key)
       status <- unname(self$queue$task_status(task_id))
@@ -215,11 +287,15 @@ orderly_runner_ <- R6::R6Class(
       )
     },
 
-    ## Not part of the api exposed functions, used in tests
+    #' @description
+    #' Destroy the queue. Not expected to be called directly, used in tests.
     destroy = function() {
       self$queue$destroy(delete = TRUE)
     },
 
+    #' @description
+    #' Cleanup workers and destroy the queue. Not expected to be called
+    #' directly, gets registered as finaliser of the object.
     cleanup = function() {
       if (self$cleanup_on_exit && !is.null(self$con)) {
         if (interactive()) {

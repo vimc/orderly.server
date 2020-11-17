@@ -12,18 +12,6 @@ test_that("root", {
 })
 
 
-# test_that("rebuild", {
-#   server <- start_test_server()
-#   on.exit(server$stop())
-#
-#   r <- httr::POST(server$api_url("/v1/reports/rebuild/"))
-#   dat <- content(r)
-#   expect_equal(dat$status, "success")
-#   expect_null(dat$data)
-#   expect_equal(dat$errors, NULL)
-# })
-
-
 test_that("error handling: invalid method", {
   server <- start_test_server()
   on.exit(server$stop())
