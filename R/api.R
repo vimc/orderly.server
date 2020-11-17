@@ -40,7 +40,7 @@ target_index <- function() {
          "/v1/reports/:name/run/",
          "/v1/reports/git/fetch/",
          "/v1/reports/git/pull/",
-         "/v1/reports/git/status/",
+         "/v1/reports/git/status/"
        ))
 }
 
