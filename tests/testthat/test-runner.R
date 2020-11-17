@@ -201,7 +201,7 @@ test_that("run: success", {
                                 "task_position"))
   expect_equal(status$key, key)
   expect_equal(status$status, "running")
-  expect_match(status$version, "^\\d{8}-\\d{6}-\\w{8}$")
+  expect_true(!is.null(status$version))
   expect_null(status$output)
   expect_equal(status$task_position, 0)
 
