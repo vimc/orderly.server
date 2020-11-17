@@ -302,3 +302,25 @@ test_that("get_report_parameters handles errors", {
       "Failed to parse yml for report 'report1' and commit 'commit1':",
       "\nParser error: "))
 })
+
+test_that("git commits won't interpret ambiguous hash as number", {
+  mock_log <- list(
+    success = TRUE,
+    code = 0,
+    output = c("1234e56,1604998406")
+  )
+  mockery::stub(git_commits, "git_run", mock_log)
+  commits <- git_commits("master")
+  expect_type(commits$id, "character")
+  expect_equal(commits$id, "1234e56")
+
+  mock_log <- list(
+    success = TRUE,
+    code = 0,
+    output = c("1234e23,1604998406",
+               "ab47854,1591708453")
+  )
+  mockery::stub(git_commits, "git_run", mock_log)
+  commits <- git_commits("master")
+  expect_type(commits$id, "character")
+})
