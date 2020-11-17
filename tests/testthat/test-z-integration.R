@@ -155,11 +155,15 @@ test_that("git error returns valid json", {
   git_run(c("remote", "remove", "origin"), root = path[["local"]])
 
   r <- content(httr::GET(server$api_url("/v1/reports/git/status/")))
-  res <- httr::POST(server$api_url("/v1/reports/git/fetch/"))
+  res <- httr::POST(server$api_url("/v1/reports/git/pull/"))
   json <- httr::content(res, "text", encoding = "UTF-8")
+  content <- httr::content(res)
 
-  ## TODO: What are the tests here?
-  ## https://github.com/vimc/orderly.server/commit/0479667e181ed2f0757faad186ffa8de1c739dba
+  expect_equal(content$status, "failure")
+  expect_length(content$errors, 1)
+  expect_valid_json(json, system.file("schema/response-failure.schema.json",
+                                      package = "pkgapi",
+                                      mustWork = TRUE))
 })
 
 
