@@ -261,6 +261,15 @@ orderly_runner_ <- R6::R6Class(
     #' output and the position of the job in the queue.
     status = function(key, output = FALSE) {
       task_id <- self$con$HGET(self$keys$key_task_id, key)
+      if (is.null(task_id)) {
+        return(list(
+          key = key,
+          status = "missing",
+          version = NULL,
+          output = NULL,
+          task_position = 0
+        ))
+      }
       status <- unname(self$queue$task_status(task_id))
       out_status <- switch(status,
                            "PENDING" = "queued",
@@ -285,6 +294,26 @@ orderly_runner_ <- R6::R6Class(
         output = out,
         task_position = task_position
       )
+    },
+
+    #' @description
+    #' Kill a job
+    #'
+    #' @param key The job key.
+    kill = function(key) {
+      task_id <- self$con$HGET(self$keys$key_task_id, key)
+      if (is.null(task_id)) {
+        pkgapi::pkgapi_stop(
+          sprintf("Failed to kill '%s' task doesn't exist", key))
+      }
+      tryCatch(
+        self$queue$task_cancel(task_id),
+        error = function(e) {
+          pkgapi::pkgapi_stop(
+            sprintf("Failed to kill '%s'\n  %s", key, e$message))
+        }
+      )
+      invisible(TRUE)
     },
 
     #' @description

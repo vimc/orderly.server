@@ -13,7 +13,7 @@ build_api <- function(runner, path) {
   api$handle(endpoint_bundle_import(path))
   api$handle(endpoint_run(runner))
   api$handle(endpoint_status(runner))
-  # api$handle(endpoint_kill(runner))
+  api$handle(endpoint_kill(runner))
   api$handle(endpoint_run_metadata(runner))
   api$setDocs(FALSE)
   api
@@ -255,8 +255,6 @@ endpoint_status <- function(runner) {
     returning = returning_json("Status.schema"))
 }
 
-## VIMC-3885: The kill endpoint should not error, but return better
-## data here (as in success TRUE/FALSE, message)
 target_kill <- function(runner, key) {
   tryCatch(
     jsonlite::unbox(runner$kill(key)),

@@ -45,10 +45,10 @@ wait_for_id <- function(runner, key, ...) {
   e$st <- NULL
   continue <- function() {
     e$st <- runner$status(key)
-    e$st$status == "running" && is.na(e$st$id)
+    e$st$status == "running" && is.null(e$st$version)
   }
   wait_while(continue)
-  e$st$id
+  e$st$version
 }
 
 wait_for_finished_runner <- function(runner, key) {
@@ -88,7 +88,7 @@ mock_runner <- function(key = NULL, status = NULL,
   list(
     submit_task_report = mockery::mock(key, cycle = TRUE),
     status = mockery::mock(status, cycle = TRUE),
-    #  kill = mockery::mock(TRUE, cycle = TRUE),
+    kill = mockery::mock(TRUE, cycle = TRUE),
     config = config,
     has_git = has_git,
     root = root
