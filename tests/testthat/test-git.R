@@ -312,7 +312,7 @@ test_that("can get parameters from a report", {
 
   ## get report parameters defaults to latest commit if NULL
   default_params <- get_report_parameters("global", NULL, path[["origin"]])
-  expect_equal(params, NULL)
+  expect_equal(default_params, NULL)
 })
 
 test_that("get_report_parameters handles errors", {
