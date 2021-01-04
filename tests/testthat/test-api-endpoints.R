@@ -392,6 +392,10 @@ test_that("run-metadata", {
 })
 
 test_that("run-metadata pulls information from runner", {
+
+})
+
+test_that("run-metadata pulls information from runner", {
   path <- orderly::orderly_example("minimal")
   runner <- orderly_runner(path)
 
@@ -574,6 +578,59 @@ test_that("run metadata can get name from config", {
     instances = list(
       source = c(scalar("production"), scalar("staging"))
     ),
+    changelog_types = NULL
+  ))
+})
+
+test_that("run metadata returns git & db instances supported info", {
+  path <- orderly::orderly_example("minimal")
+  yml <- c("database:",
+           "  source:",
+           "    driver: RSQLite::SQLite",
+           "    args:",
+           "      dbname: source.sqlite",
+           "      user: user",
+           "    instances:",
+           "      production:",
+           "        host: production.montagu.dide.ic.ac.uk",
+           "        port: 5432",
+           "        password: pwd",
+           "      staging:",
+           "        host: support.montagu.dide.ic.ac.uk",
+           "        port: 5432",
+           "        password: pwd",
+           "remote:",
+           "  production:",
+           "    driver: RSQLite::SQLite",
+           "    args:",
+           "      dbname: source.sqlite",
+           "      user: user",
+           "      host: production.montagu.dide.ic.ac.uk",
+           "      port: 5432",
+           "      password: pwd",
+           "    slack_url: slack_url",
+           "    teams_url: teams_url",
+           "    primary: TRUE",
+           "    master_only: TRUE",
+           "  staging:",
+           "    driver: RSQLite::SQLite",
+           "    args:",
+           "        host: support.montagu.dide.ic.ac.uk",
+           "        port: 5432",
+           "        password: pwd",
+           "    slack_url: slack_url",
+           "    teams_url: teams_url"
+  )
+  writeLines(yml, file.path(path, "orderly_config.yml"))
+  withr::with_envvar(c("ORDERLY_API_SERVER_IDENTITY" = "production"), {
+    runner <- orderly_runner(path)
+    metadata <- target_run_metadata(runner)
+  })
+  expect_equal(metadata, list(
+    name = scalar("production"),
+    instances_supported = scalar(FALSE),
+    git_supported = scalar(FALSE),
+    instances = NULL,
     changelog_types = NULL
   ))
 })
