@@ -309,6 +309,10 @@ test_that("can get parameters from a report", {
   expect_equal(nrow(other_commits), 1)
   params <- get_report_parameters("other", other_commits$id, path[["local"]])
   expect_equal(params, list(nmin = NULL))
+
+  ## get report parameters defaults to latest commit if NULL
+  default_params <- get_report_parameters("global", NULL, path[["origin"]])
+  expect_equal(params, NULL)
 })
 
 test_that("get_report_parameters handles errors", {
