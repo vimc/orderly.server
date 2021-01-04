@@ -120,10 +120,18 @@ git_commits <- function(branch, root = NULL) {
   commits
 }
 
+git_latest_commit <- function(root = NULL) {
+  args <- c("log", "--pretty='%h'", "-n", "1")
+  git_run(args, root = root, check = TRUE)$output
+}
+
 
 get_reports <- function(branch, commit, root) {
-  if (branch == "master") {
+  if (identical(branch, "master") || is.null(branch)) {
     ## Get all reports in commit if on master branch
+    if (is.null(commit)) {
+      commit <- git_latest_commit(root = root)
+    }
     reports <- git_run(c("ls-tree", "--name-only", "-d",
                          sprintf("%s:src/", commit)),
                        root = root, check = TRUE)$output

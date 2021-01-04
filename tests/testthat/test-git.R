@@ -191,6 +191,10 @@ test_that("can get report list from git", {
   expect_equal(nrow(other_commits), 1)
   other_reports <- get_reports("other", other_commits$id, path[["local"]])
   expect_equal(other_reports, "other")
+
+  ## git_commits works with NULL branch and commit
+  default_reports <- get_reports(NULL, NULL, path[["local"]])
+  expect_equal(default_reports, reports)
 })
 
 test_that("report only shows when pushed to remote", {
