@@ -392,10 +392,6 @@ test_that("run-metadata", {
 })
 
 test_that("run-metadata pulls information from runner", {
-
-})
-
-test_that("run-metadata pulls information from runner", {
   path <- orderly::orderly_example("minimal")
   runner <- orderly_runner(path)
 
