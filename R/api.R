@@ -200,7 +200,6 @@ target_run_metadata <- function(runner) {
     if (length(databases) > 0) {
       instances <- lapply(databases, function(db) {
         instances <- names(runner$config$database[[db]]$instances)
-        instances <- instances %||% c()
         vcapply(instances, scalar, USE.NAMES = FALSE)
       })
       names(instances) <- databases
