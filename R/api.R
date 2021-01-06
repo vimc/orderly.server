@@ -205,7 +205,7 @@ target_run_metadata <- function(runner) {
       })
       names(instances) <- databases
     }
-    instances_supported <- any(viapply(instances, length) > 0)
+    instances_supported <- any(lengths(instances) > 0)
   }
 
   git_supported <- !isTRUE(server_options$master_only) && isTRUE(runner$has_git)
