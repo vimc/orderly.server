@@ -192,21 +192,27 @@ target_run_metadata <- function(runner) {
     changelog <- vcapply(changelog, scalar, USE.NAMES = FALSE)
   }
 
-  databases <- names(runner$config$database)
+  server_options <- runner$config$server_options()
   instances <- NULL
-  if (length(databases) > 0) {
-    instances <- lapply(databases, function(db) {
-      instances <- names(runner$config$database[[db]]$instances)
-      instances <- instances %||% c()
-      vcapply(instances, scalar, USE.NAMES = FALSE)
-    })
-    names(instances) <- databases
+  instances_supported <- FALSE
+  if (!isTRUE(server_options$primary)) {
+    databases <- names(runner$config$database)
+    if (length(databases) > 0) {
+      instances <- lapply(databases, function(db) {
+        instances <- names(runner$config$database[[db]]$instances)
+        vcapply(instances, scalar, USE.NAMES = FALSE)
+      })
+      names(instances) <- databases
+    }
+    instances_supported <- any(lengths(instances) > 0)
   }
+
+  git_supported <- !isTRUE(server_options$master_only) && isTRUE(runner$has_git)
 
   list(
     name = scalar(runner$config$server_options()$name),
-    instances_supported = scalar(any(viapply(instances, length) > 0)),
-    git_supported = scalar(isTRUE(runner$has_git)),
+    instances_supported = scalar(instances_supported),
+    git_supported = scalar(git_supported),
     instances = instances,
     changelog_types = changelog
   )

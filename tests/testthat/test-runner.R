@@ -254,11 +254,10 @@ test_that("cleanup", {
 test_that("kill", {
   testthat::skip_on_cran()
   skip_on_windows()
-  skip_on_appveyor()
-  ## TODO: This test is fails to kill the process on travis but adding
-  ## print lines for debugging makes it pass on travis
+  ## TODO: This test is fails to kill the process on CI but adding
+  ## print lines for debugging makes it pass on CI
   ## We should fix this at some point, see VIMC-4066
-  skip_on_travis()
+  skip_on_ci()
   path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
   runner <- orderly_runner(path)
   name <- "interactive"
