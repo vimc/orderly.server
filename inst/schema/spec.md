@@ -2,6 +2,7 @@
 
 This API is built on top of [`pkgapi`](https://reside-ic.github.io/pkgapi) (itself influenced by [`hintr`](https://github.com/mrc-ide/hintr) and [montagu api](https://github.com/vimc/montagu-api/blob/master/spec/spec.md)).
 
+
 ## POST /reports/rebuild/
 
 Force orderly to rebuild the index.  This is useful in cases where the index is corrupt (seen in failed restores), or during a schema migration.  It's a relatively harmless operation, though it might get a little slow when the store is large.  Returns nothing.
@@ -148,6 +149,102 @@ Pull from remote git.  This updates the working tree
   " new | 1 +",
   " 1 file changed, 1 insertion(+)",
   " create mode 100644 new"
+]
+```
+
+
+## GET /git/branches/
+
+List git branches whose tips are not reachable from master branch i.e. branches with commits which haven't been merged into master and master branch itself.
+
+## Example
+
+```json
+[
+  {
+    "name":"master",
+    "last_commit":"2021-01-07 12:07:02",
+    "last_commit_age":23
+  },
+  {
+    "name":"other",
+    "last_commit":"2021-01-07 12:07:02",
+    "last_commit_age":23
+  }
+]
+```
+
+
+## GET /git/commits/
+
+List commits hashes, age and time of commit from a branch. If master branch then lists last 25 commits. If any other branch than master it lists unmerged commits up to limit of 25. 
+
+## Example
+
+```json
+[
+  {
+    "id":"b0c9c90",
+    "date_time":"2021-01-07 12:07:02",
+    "age":173
+  }
+]
+
+```
+
+
+## GET /run-metadata/
+
+Get metadata for Orderly Web report runner interface to control UI display
+
+## Example
+
+```json
+{
+  "name": "science",
+  "instances_supported": false,
+  "git_supported": true,
+  "instances": {
+    "source":[]
+  },
+  "changelog_types": [
+    "public"
+  ]
+}
+```
+
+
+## GET /reports/source
+
+List reports which can be run by Orderly Web. 
+
+Reports can be listed
+* With no branch or commit - lists all reports in src dir on latest commit on master branch
+* With a branch other than master & unmerged commit - lists all reports which have changes in them from this commit compared with master branch 
+* With master branch and a commit - lists all reports in src dir on this commit
+
+## Example
+
+```json
+[
+  "global",
+  "minimal"
+]
+```
+
+
+## GET /reports/<report_id>/parameters
+
+List parameters and any default values for a report on a specific commit.
+
+## Example
+
+```json
+[
+  {
+    "name":"nmin",
+    "default":null
+  }
 ]
 ```
 
