@@ -704,6 +704,167 @@ test_that("run metadata can get name from config", {
   ))
 })
 
+test_that("run metadata returns git & db instances supported info", {
+  path <- orderly::orderly_example("minimal")
+  yml <- c("database:",
+           "  source:",
+           "    driver: RSQLite::SQLite",
+           "    args:",
+           "      dbname: source.sqlite",
+           "      user: user",
+           "    instances:",
+           "      production:",
+           "        host: production.montagu.dide.ic.ac.uk",
+           "        port: 5432",
+           "        password: pwd",
+           "      staging:",
+           "        host: support.montagu.dide.ic.ac.uk",
+           "        port: 5432",
+           "        password: pwd",
+           "remote:",
+           "  production:",
+           "    driver: RSQLite::SQLite",
+           "    args:",
+           "      dbname: source.sqlite",
+           "      user: user",
+           "      host: production.montagu.dide.ic.ac.uk",
+           "      port: 5432",
+           "      password: pwd",
+           "    slack_url: slack_url",
+           "    teams_url: teams_url",
+           "    primary: TRUE",
+           "    master_only: TRUE",
+           "  staging:",
+           "    driver: RSQLite::SQLite",
+           "    args:",
+           "        host: support.montagu.dide.ic.ac.uk",
+           "        port: 5432",
+           "        password: pwd",
+           "    slack_url: slack_url",
+           "    teams_url: teams_url"
+  )
+  writeLines(yml, file.path(path, "orderly_config.yml"))
+  withr::with_envvar(c("ORDERLY_API_SERVER_IDENTITY" = "production"), {
+    runner <- orderly_runner(path)
+    metadata <- target_run_metadata(runner)
+  })
+  expect_equal(metadata, list(
+    name = scalar("production"),
+    instances_supported = scalar(FALSE),
+    git_supported = scalar(FALSE),
+    instances = NULL,
+    changelog_types = NULL
+  ))
+})
+
+test_that("git branches endpoint", {
+  path <- orderly_prepare_orderly_git_example()
+  branch_data <- data.frame(
+    name = c("master", "dev-branch"),
+    last_commit = c("Mon Jun 1 16:00:41 2020 +0100",
+                    "Mon Jun 4 12:32:41 2020 +0100"),
+    last_commit_age = c(601, 1643),
+    stringsAsFactors = FALSE)
+  runner <- mock_runner(git_branches_no_merged = branch_data)
+  endpoint <- endpoint_git_branches(runner)
+
+  branches <- endpoint$run()
+  expect_equal(branches$status_code, 200)
+  expect_equal(branches$data, branch_data)
+})
+
+test_that("git commits endpoint", {
+  path <- orderly_prepare_orderly_git_example()
+  commit_data <- data.frame(
+    id = c("2h38dns", "a2d862nd"),
+    date_time = c("20-04-31 23:12:32", "20-05-23 08:54:49"),
+    age = c(324, 124),
+    stringsAsFactors = FALSE
+  )
+  runner <- mock_runner(git_commits = commit_data)
+  endpoint <- endpoint_git_commits(runner)
+
+  commits <- endpoint$run("master")
+  expect_equal(commits$status_code, 200)
+  expect_equal(commits$data, commit_data)
+  args <- mockery::mock_args(runner$git_commits)
+  expect_length(args, 1)
+  expect_equal(args[[1]][[1]], "master")
+})
+
+test_that("can get available reports for a branch & commit", {
+  path <- orderly_prepare_orderly_git_example()
+  runner <- mock_runner(get_reports = c("report-1", "report-2"))
+  endpoint <- endpoint_available_reports(runner)
+
+  commits <- endpoint$run("master", "84hd82n")
+  expect_equal(commits$status_code, 200)
+  expect_equal(commits$data, c("report-1", "report-2"))
+  args <- mockery::mock_args(runner$get_reports)
+  expect_length(args, 1)
+  expect_equal(args[[1]][[1]], "master")
+  expect_equal(args[[1]][[2]], "84hd82n")
+})
+
+test_that("can get parameters for a report & commit", {
+  path <- orderly_prepare_orderly_git_example()
+  runner <- mock_runner(get_report_parameters = list(
+    a = NULL,
+    b = list(
+      default = "test"
+    ),
+    c = list(
+      default = 2
+    )
+  ))
+  endpoint <- endpoint_report_parameters(runner)
+
+  params <- endpoint$run("minimal", "84hd82n")
+  expect_equal(params$status_code, 200)
+  expect_equal(params$data, list(
+    list(name = scalar("a"), default = NULL),
+    list(name = scalar("b"), default = scalar("test")),
+    list(name = scalar("c"), default = scalar("2"))
+  ))
+  args <- mockery::mock_args(runner$get_report_parameters)
+  expect_length(args, 1)
+  expect_equal(args[[1]][[1]], "minimal")
+  expect_equal(args[[1]][[2]], "84hd82n")
+})
+
+test_that("report parameters endpoint supports no parameters", {
+  path <- orderly_prepare_orderly_git_example()
+  runner <- mock_runner(get_report_parameters = NULL)
+  endpoint <- endpoint_report_parameters(runner)
+
+  params <- endpoint$run("minimal", "84hd82n")
+  expect_equal(params$status_code, 200)
+  expect_equal(params$data, list())
+})
+
+test_that("report parameter endponits handles errors", {
+  path <- orderly_prepare_orderly_git_example()
+  runner <- mock_runner(get_report_parameters =
+                          stop("Failed to get report parameters"))
+  endpoint <- endpoint_report_parameters(runner)
+
+  params <- endpoint$run("minimal", "84hd82n")
+  expect_equal(params$status_code, 400)
+  expect_equal(params$error$data[[1]]$error, scalar("FAILED_RETRIEVE_PARAMS"))
+  expect_equal(params$error$data[[1]]$detail,
+               scalar("Failed to get report parameters"))
+
+  ## Invalid format of parameters throws an error
+  runner <- mock_runner(get_report_parameters = c("param1", "param2"))
+  endpoint <- endpoint_report_parameters(runner)
+
+  params <- endpoint$run("minimal", "84hd82n")
+  expect_equal(params$status_code, 400)
+  expect_equal(params$error$data[[1]]$error, scalar("INVALID_FORMAT"))
+  expect_equal(params$error$data[[1]]$detail, scalar(
+    "Failed to parse parameters for report 'minimal' and commit '84hd82n'"))
+})
+
 test_that("bundle pack can pack basic bundle", {
   tmp <- tempfile(fileext = ".zip")
   writeBin(as.raw(0:255), tmp)

@@ -122,10 +122,18 @@ git_commits <- function(branch, root = NULL) {
   commits
 }
 
+git_latest_commit <- function(root = NULL) {
+  args <- c("log", "--pretty='%h'", "-n", "1")
+  git_run(args, root = root, check = TRUE)$output
+}
 
 get_reports <- function(branch, commit, root) {
-  if (branch == "master") {
-    ## Get all reports in commit if on master branch
+  if (identical(branch, "master") || is.null(branch)) {
+    ## Get all reports in commit if on master branch and default to latest
+    ## if commit is missing
+    if (is.null(commit)) {
+      commit <- git_latest_commit(root = root)
+    }
     reports <- git_run(c("ls-tree", "--name-only", "-d",
                          sprintf("%s:src/", commit)),
                        root = root, check = TRUE)$output
@@ -148,6 +156,10 @@ get_reports <- function(branch, commit, root) {
 
 get_report_parameters <- function(report, commit, root) {
   tryCatch({
+    ## Default to latest commit if missing
+    if (is.null(commit)) {
+      commit <- git_latest_commit(root = root)
+    }
     yml <- git_run(
       c("show", paste0(commit, file.path(":src", report, "orderly.yml"))),
       root = root, check = TRUE)
