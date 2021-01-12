@@ -705,6 +705,7 @@ test_that("run metadata can get name from config", {
 })
 
 test_that("run metadata returns git & db instances supported info", {
+  skip_if_no_redis()
   path <- orderly::orderly_example("minimal")
   yml <- c("database:",
            "  source:",

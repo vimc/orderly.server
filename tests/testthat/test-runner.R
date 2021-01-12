@@ -355,6 +355,7 @@ test_that("Can't git change", {
 
 test_that("kill - when running", {
   testthat::skip_on_cran()
+  skip_if_no_redis()
   skip_on_windows()
   path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
   runner <- orderly_runner(path)
@@ -368,6 +369,7 @@ test_that("kill - when running", {
 
 test_that("kill - whist queued", {
   testthat::skip_on_cran()
+  skip_if_no_redis()
   skip_on_windows()
   path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
   runner <- orderly_runner(path)
@@ -381,6 +383,7 @@ test_that("kill - whist queued", {
 
 test_that("kill - no process", {
   testthat::skip_on_cran()
+  skip_if_no_redis()
   path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
   runner <- orderly_runner(path)
   key <- "virtual_plant"
