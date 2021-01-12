@@ -135,3 +135,19 @@ with_sqlite <- function(path, fun) {
   on.exit(DBI::dbDisconnect(con))
   fun(con)
 }
+
+## RSQLite prints "call dbDisconnect() when finished working with a connection
+## warning" once using momoised function warning_once. This is causing a
+## segfault on CI sometimes when running test. Suspect it's grabbing a
+## reference to a part of a connection object that is not always being
+## garbage collected at the right time. Manually trigger a warning before
+## running tests to avoid this.
+trigger_dbi_warning <- function() {
+  oo <- options(warn = 0)
+  on.exit(options(oo))
+  con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
+  rm(con)
+  suppressWarnings(gc())
+}
+
+trigger_dbi_warning()
