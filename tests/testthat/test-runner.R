@@ -363,7 +363,7 @@ test_that("kill - when running", {
 
   id <- wait_for_id(runner, key)
   expect_true(runner$kill(key))
-  expect_error(runner$kill(key), paste0("Failed to kill ", key))
+  expect_error(runner$kill(key), sprintf("Failed to kill '%s'", key))
 })
 
 test_that("kill - whist queued", {
