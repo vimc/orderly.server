@@ -195,15 +195,17 @@ test_that("run: success", {
 
   ## Run a report slow enough to reliably report back a "running" status
   key <- runner$submit_task_report("slow1")
-  Sys.sleep(1)
-  status <- runner$status(key)
-  expect_equal(names(status), c("key", "status", "version", "output",
-                                "task_position"))
-  expect_equal(status$key, key)
-  expect_equal(status$status, "running")
-  expect_true(!is.null(status$version))
-  expect_null(status$output)
-  expect_equal(status$task_position, 0)
+  testthat::try_again(5, {
+    Sys.sleep(1)
+    status <- runner$status(key)
+    expect_equal(names(status), c("key", "status", "version", "output",
+                                  "task_position"))
+    expect_equal(status$key, key)
+    expect_equal(status$status, "running")
+    expect_true(!is.null(status$version))
+    expect_null(status$output)
+    expect_equal(status$task_position, 0)
+  })
 
   task_id <- get_task_id_key(runner, key)
   expect_match(task_id, "^[[:xdigit:]]{32}$")
