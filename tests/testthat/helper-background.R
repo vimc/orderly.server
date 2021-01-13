@@ -62,7 +62,7 @@ orderly_server_background <- R6::R6Class(
     },
 
     stop = function() {
-      if (self$process$is_alive()) {
+      if (!is.null(self$process) && self$process$is_alive()) {
         message("Stopping server")
         self$process$kill()
         self$process <- NULL
