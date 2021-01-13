@@ -344,7 +344,6 @@ test_that("git_pull updates git", {
 
   pull <- git_pull(path[["local"]])
   expect_true(pull$success)
-  expect_equal(pull$output[[1]], "From upstream")
 
   commits <- git_commits("master", path[["local"]])
   expect_equal(nrow(commits), 2)
