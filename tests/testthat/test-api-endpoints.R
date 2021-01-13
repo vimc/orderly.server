@@ -239,6 +239,21 @@ test_that("run", {
   expect_equal(res_api$body, as.character(res_endpoint$body))
 })
 
+test_that("run with parameters", {
+  key <- "key-1"
+  runner <- mock_runner(key = key)
+
+  res <- target_run(runner, "example", parameters = '{"a": 1}')
+  expect_equal(
+    res,
+    list(name = scalar("example"),
+         key = scalar(key),
+         path = scalar(sprintf("/v1/reports/%s/status/", key))))
+  expect_equal(
+    mockery::mock_args(runner$submit_task_report)[[1]],
+    list("example", list(a = 1), NULL, NULL, timeout = 600))
+})
+
 
 test_that("status - queued behind nothing", {
   ## See mock.R

@@ -346,6 +346,23 @@ test_that("prevent ref change", {
                "Reference switching is disallowed in this runner")
 })
 
+test_that("status missing ID", {
+  testthat::skip_on_cran()
+  skip_on_appveyor()
+  skip_on_windows()
+  skip_if_no_redis()
+  path <- orderly_prepare_orderly_example("demo")
+  runner <- orderly_runner(path, workers = 0)
+  status <- runner$status("missing_key")
+  expect_equal(status, list(
+    key = "missing_key",
+    status = "missing",
+    version = NULL,
+    output = NULL,
+    task_position = 0
+  ))
+})
+
 test_that("Can't git change", {
   testthat::skip_on_cran()
   skip_if_no_redis()
