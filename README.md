@@ -136,7 +136,7 @@ See https://github.com/vimc/orderly.server/pull/30/commits/29376c630d57c0f74c5d0
 
 # Testing
 
-For local testing, bring up redis docker container via
+For local testing, bring up a redis docker container via
 ```
 ./scripts/redis start
 ```
