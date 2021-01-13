@@ -92,3 +92,11 @@ test_that("copy failure", {
                "Error copying files")
   expect_equal(readLines(path2), "b")
 })
+
+test_that("readlines_if_exists", {
+  t <- tempfile()
+  writeLines("sample text", t)
+  expect_equal(readlines_if_exists(t), "sample text")
+  test <- readlines_if_exists("missing/file", "it is missing")
+  expect_equal(test, "it is missing")
+})

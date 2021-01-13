@@ -334,3 +334,18 @@ test_that("git commits won't interpret ambiguous hash as number", {
   commits <- git_commits("master")
   expect_type(commits$id, "character")
 })
+
+test_that("git_pull updates git", {
+  testthat::skip_on_cran()
+  path <- orderly_prepare_orderly_git_example()
+
+  commits <- git_commits("master", path[["local"]])
+  expect_equal(nrow(commits), 1)
+
+  pull <- git_pull(path[["local"]])
+  expect_true(pull$success)
+  expect_equal(pull$output[[1]], "From upstream")
+
+  commits <- git_commits("master", path[["local"]])
+  expect_equal(nrow(commits), 2)
+})

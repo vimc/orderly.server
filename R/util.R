@@ -123,11 +123,6 @@ file_copy <- function(..., overwrite = TRUE) {
   ok
 }
 
-json_verbatim <- function(x) {
-  class(x) <- "json"
-  x
-}
-
 dir_create <- function(path) {
   dir.create(path, FALSE, TRUE)
 }
