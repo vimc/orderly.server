@@ -199,12 +199,12 @@ test_that("run: success", {
     Sys.sleep(1)
     status <- runner$status(key)
     expect_equal(names(status), c("key", "status", "version", "output",
-                                  "task_position"))
+                                  "queue"))
     expect_equal(status$key, key)
     expect_equal(status$status, "running")
     expect_true(!is.null(status$version))
     expect_null(status$output)
-    expect_equal(status$task_position, 0)
+    expect_equal(status$queue, list())
   })
 
   task_id <- get_task_id_key(runner, key)
@@ -219,7 +219,7 @@ test_that("run: success", {
   expect_equal(status$version, report_id)
   expect_match(status$output, paste0("\\[ id +\\]  ", report_id),
                all = FALSE)
-  expect_equal(status$task_position, 0)
+  expect_equal(status$queue, list())
 
   ## Report is in archive
   d <- orderly::orderly_list_archive(path)
@@ -253,7 +253,7 @@ test_that("run: error", {
   expect_true(any(grepl(
     "Script did not produce expected artefacts: mygraph.png",
     status$output)))
-  expect_equal(status$task_position, 0)
+  expect_equal(status$queue, list())
 })
 
 
@@ -359,7 +359,7 @@ test_that("status missing ID", {
     status = "missing",
     version = NULL,
     output = NULL,
-    task_position = 0
+    queue = list()
   ))
 })
 
@@ -648,7 +648,7 @@ test_that("runner can set instance", {
   ## Data in alternative db extracts only 10 rows
   expect_match(status$output, "\\[ data +\\]  source => dat: 10 x 2",
                all = FALSE)
-  expect_equal(status$task_position, 0)
+  expect_equal(status$queue, list())
 
 
   key_default <- runner$submit_task_report("minimal")
@@ -664,5 +664,5 @@ test_that("runner can set instance", {
   ## Data in default db extracts 20 rows
   expect_match(status_default$output, "\\[ data +\\]  source => dat: 20 x 2",
                all = FALSE)
-  expect_equal(status_default$task_position, 0)
+  expect_equal(status_default$queue, list())
 })

@@ -74,7 +74,7 @@ test_that("run", {
   st <- content(r)
   expect_equal(st$status, "success")
   cmp <- list(key = dat$data$key, status = "success",
-              version = id, output = NULL, task_position = 0)
+              version = id, output = NULL, queue = list())
   expect_equal(st$data, cmp)
 
   r <- httr::GET(server$api_url(dat$data$path), query = list(output = TRUE))
@@ -226,7 +226,7 @@ test_that("pass parameters", {
   st <- content(r)
   expect_equal(st$status, "success")
   cmp <- list(key = dat$data$key, status = "success",
-              version = version, output = NULL, task_position = 0)
+              version = version, output = NULL, queue = list())
   expect_equal(st$data, cmp)
 
   r <- httr::GET(server$api_url(dat$data$path), query = list(output = TRUE))
