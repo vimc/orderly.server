@@ -20,7 +20,7 @@ COPY docker/bin /usr/local/bin/
 
 RUN install_remote \
   mrc-ide/heartbeatr \
-  mrc-ide/rrq@vimc-4502 \
+  mrc-ide/rrq \
   ropensci/jsonvalidate
 
 RUN Rscript -e 'remotes::install_github("reside-ic/porcelain@22eef9b")'
