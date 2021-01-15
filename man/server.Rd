@@ -11,7 +11,8 @@ server(
   allow_ref = TRUE,
   go_signal = NULL,
   queue_id = NULL,
-  workers = 1
+  workers = 1,
+  backup_period = 600
 )
 }
 \arguments{

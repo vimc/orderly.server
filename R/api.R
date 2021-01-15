@@ -1,4 +1,4 @@
-build_api <- function(runner, path) {
+build_api <- function(runner, path, backup) {
   force(runner)
   api <- pkgapi::pkgapi$new()
   api$handle(endpoint_index())
@@ -17,6 +17,7 @@ build_api <- function(runner, path) {
   api$handle(endpoint_run_metadata(runner))
   api$setDocs(FALSE)
   api$registerHook("preroute", check_timeout(runner))
+  api$registerHook("preroute", backup$check_backup)
   api
 }
 

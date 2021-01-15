@@ -4,8 +4,7 @@ test_that("queue works as intended", {
   skip_if_no_redis()
 
   path <- orderly_prepare_orderly_example("demo")
-  runner <- orderly_runner_$new(path, NULL, backup_period = 600,
-                                queue_id = NULL, workers = 1,
+  runner <- orderly_runner_$new(path, NULL, queue_id = NULL, workers = 1,
                                 worker_timeout = 300)
   expect_equal(runner$queue$worker_len(), 1)
 
@@ -78,8 +77,7 @@ test_that("queue_id is returned if supplied", {
 test_that("test runner can start workers with timeout", {
   skip_if_no_redis()
   path <- orderly_prepare_orderly_example("demo")
-  runner <- orderly_runner_$new(path, NULL, backup_period = 600,
-                                queue_id = NULL, workers = 2,
+  runner <- orderly_runner_$new(path, NULL, queue_id = NULL, workers = 2,
                                 worker_timeout = 300)
   timeout <- runner$queue$message_send_and_wait("TIMEOUT_GET",
                                                 runner$queue$worker_list())
@@ -91,8 +89,7 @@ test_that("test runner can start workers with timeout", {
 test_that("queue starts up normally without a timeout", {
   skip_if_no_redis()
   path <- orderly_prepare_orderly_example("demo")
-  runner <- orderly_runner_$new(path, NULL, backup_period = 600,
-                                queue_id = NULL, workers = 1)
+  runner <- orderly_runner_$new(path, NULL, queue_id = NULL, workers = 1)
   timeout <- runner$queue$message_send_and_wait("TIMEOUT_GET",
                                                runner$queue$worker_list(),
                                                progress = FALSE)
@@ -562,31 +559,6 @@ test_that("allow ref logic", {
   expect_false(runner_allow_ref(TRUE, NULL, config))
 })
 
-
-test_that("backup", {
-  skip("add backup back in on a hook")
-  testthat::skip_on_cran()
-  path <- orderly_prepare_orderly_example("minimal")
-  id <- orderly::orderly_run("example", root = path, echo = FALSE)
-  orderly::orderly_commit(id, root = path)
-
-  db_orig <- file.path(path, "orderly.sqlite")
-  dat_orig <- with_sqlite(db_orig, function(con)
-    DBI::dbReadTable(con, "report_version"))
-
-  runner <- orderly_runner(path, backup_period = 1)
-
-  Sys.sleep(1.2)
-  runner$poll()
-
-  db_backup <- orderly_path_db_backup(path, "orderly.sqlite")
-  expect_true(file.exists(db_backup))
-
-  dat_backup <- with_sqlite(db_backup, function(con)
-    DBI::dbReadTable(con, "report_version"))
-
-  expect_equal(dat_orig, dat_backup)
-})
 
 test_that("runner can set instance", {
   testthat::skip_on_cran()

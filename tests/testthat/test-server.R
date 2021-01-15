@@ -45,10 +45,12 @@ test_that("run server", {
 
   api <- list(run = mockery::mock())
   runner <- mock_runner(root = path)
+  backup <- mock_backup()
 
   mock_wait_for_go_signal <- mockery::mock()
   mock_orderly_runner <- mockery::mock(runner)
   mock_build_api <- mockery::mock(api)
+  mock_orderly_backup <- mockery::mock(backup)
 
 
   msg <- capture_messages(
@@ -56,6 +58,7 @@ test_that("run server", {
       "orderly.server:::wait_for_go_signal" = mock_wait_for_go_signal,
       "orderly.server:::orderly_runner" = mock_orderly_runner,
       "orderly.server:::build_api" = mock_build_api,
+      "orderly.server:::orderly_backup" = mock_orderly_backup,
       server(path, port, host, allow_ref, go_signal)))
   expect_match(msg[[1]], "Starting orderly server on port 1234")
   expect_match(msg[[2]], "Orderly root:")
@@ -74,7 +77,12 @@ test_that("run server", {
   mockery::expect_called(mock_build_api, 1)
   expect_equal(
     mockery::mock_args(mock_build_api)[[1]],
-    list(runner, path))
+    list(runner, path, backup))
+
+  mockery::expect_called(mock_orderly_backup, 1)
+  expect_equal(
+    mockery::mock_args(mock_orderly_backup)[[1]],
+    list(NULL, 600))
 
   mockery::expect_called(api$run, 1)
   expect_equal(

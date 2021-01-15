@@ -9,7 +9,7 @@ test_that("index", {
   expect_true("/v1/reports/:key/status/" %in% res$endpoints)
 
   runner <- mock_runner()
-  api <- build_api(runner, "path")
+  api <- build_api(runner, "path", mock_backup())
   res <- api$request("GET", "/")
   expect_equal(res$status, 200L)
   expect_equal(res$headers[["Content-Type"]], "application/json")
@@ -231,7 +231,7 @@ test_that("run", {
   expect_equal(res_endpoint$data, res)
 
   ## api
-  api <- build_api(runner, "path")
+  api <- build_api(runner, "path", mock_backup())
   res_api <- api$request("POST", "/v1/reports/example/run/",
                          list(timeout = 600))
   expect_equal(res_api$status, 200L)
@@ -283,7 +283,7 @@ test_that("status - queued behind nothing", {
   expect_equal(mockery::mock_args(runner$status)[[2]], list(key, FALSE))
 
   ## api
-  api <- build_api(runner, "path")
+  api <- build_api(runner, "path", mock_backup())
   res_api <- api$request("GET", sprintf("/v1/reports/%s/status/", key))
   expect_equal(res_api$status, 200L)
   expect_equal(res_api$headers[["Content-Type"]], "application/json")
@@ -320,7 +320,7 @@ test_that("status - queued", {
   expect_equal(mockery::mock_args(runner$status)[[2]], list(key, FALSE))
 
   ## api
-  api <- build_api(runner, "path")
+  api <- build_api(runner, "path", mock_backup())
   res_api <- api$request("GET", sprintf("/v1/reports/%s/status/", key))
   expect_equal(res_api$status, 200L)
   expect_equal(res_api$headers[["Content-Type"]], "application/json")
@@ -356,7 +356,7 @@ test_that("status - completed, no log", {
   expect_equal(mockery::mock_args(runner$status)[[2]], list(key, FALSE))
 
   ## api
-  api <- build_api(runner, "path")
+  api <- build_api(runner, "path", mock_backup())
   res_api <- api$request("GET", sprintf("/v1/reports/%s/status/", key))
   expect_equal(res_api$status, 200L)
   expect_equal(res_api$headers[["Content-Type"]], "application/json")
@@ -392,7 +392,7 @@ test_that("status - completed, with log", {
   expect_equal(mockery::mock_args(runner$status)[[2]], list(key, TRUE))
 
   ## api
-  api <- build_api(runner, "path")
+  api <- build_api(runner, "path", mock_backup())
   res_api <- api$request("GET", sprintf("/v1/reports/%s/status/", key),
                          query = list(output = TRUE))
   expect_equal(res_api$status, 200L)
@@ -419,7 +419,7 @@ test_that("kill - successful", {
   expect_equal(mockery::mock_args(runner$kill)[[2]], list(key))
 
   ## api
-  api <- build_api(runner, runner$root)
+  api <- build_api(runner, runner$root, mock_backup())
   res_api <- api$request("DELETE", sprintf("/v1/reports/%s/kill/", key))
   expect_equal(res_api$status, 200L)
   expect_equal(res_api$headers[["Content-Type"]], "application/json")
@@ -451,7 +451,7 @@ test_that("kill - failure", {
   expect_equal(mockery::mock_args(runner$kill)[[2]], list(key))
 
   ## api
-  api <- build_api(runner, runner$root)
+  api <- build_api(runner, runner$root, mock_backup())
   res_api <- api$request("DELETE", sprintf("/v1/reports/%s/kill/", key))
   expect_equal(res_api$status, 400L)
   expect_equal(res_api$headers[["Content-Type"]], "application/json")
@@ -477,7 +477,7 @@ test_that("run can specify instance", {
     list("example", NULL, NULL, "myinstance", timeout = 100))
 
   ## and via the api
-  api <- build_api(runner, "path")
+  api <- build_api(runner, "path", mock_backup())
 
   res_api <- api$request("POST", "/v1/reports/example/run/",
                          list(timeout = 100, instance = "myinstance"))
@@ -520,7 +520,7 @@ test_that("run-metadata", {
   expect_equal(res$changelog_types, c(scalar("public")))
 
   ## test through API
-  api <- build_api(runner, "path")
+  api <- build_api(runner, "path", mock_backup())
   res <- api$request("GET", "/run-metadata")
   expect_equal(res$status, 200L)
   expect_equal(res$headers[["Content-Type"]], "application/json")
@@ -837,9 +837,39 @@ test_that("Can create and run bundles", {
 test_that("api preroute calls runner check_timeout", {
   path <- orderly_prepare_orderly_example("minimal")
   runner <- mock_runner()
-  api <- build_api(runner, path)
+  api <- build_api(runner, path, mock_backup())
 
   res <- api$request("GET", "/")
   expect_equal(res$status, 200L)
   mockery::expect_called(runner$check_timeout, 1)
+})
+
+test_that("api runs backup on preroute", {
+  path <- orderly_prepare_orderly_example("minimal")
+  runner <- orderly_runner(path)
+  backup <- orderly_backup(runner$config, backup_period = 1)
+  api <- build_api(runner, path, backup)
+  db_backup <- orderly_path_db_backup(path, "orderly.sqlite")
+  expect_true(file.exists(db_backup))
+  dat_backup <- with_sqlite(db_backup, function(con) {
+    DBI::dbReadTable(con, "report_version")
+  })
+  ## Nothing has been backed up yet
+  expect_equal(nrow(dat_backup), 0)
+
+  ## When report is run
+  id <- orderly::orderly_run("example", root = path, echo = FALSE)
+  orderly::orderly_commit(id, root = path)
+
+  ## Call API endpoint to trigger backup from preroute
+  Sys.sleep(1.2) ## ensure backup period has passed
+  res <- api$request("GET", "/")
+  expect_equal(res$status, 200L)
+
+  ## Data exists in backup
+  dat_backup <- with_sqlite(db_backup, function(con) {
+    DBI::dbReadTable(con, "report_version")
+  })
+  expect_equal(nrow(dat_backup), 1)
+  expect_equal(dat_backup$report, "example")
 })

@@ -14,18 +14,6 @@
 ##'   \code{ORDERLY_API_SERVER_IDENTITY} environment variable and the
 ##'   \code{master_only} setting of the relevant server block.
 ##'
-##' @param backup_period Period (in seconds) between DB backups.  This
-##'   is a guide only as backups cannot happen while a task is running
-##'   - if more than this many seconds have elapsed when the runner is
-##'   in its idle loop a backup of the db will be performed.  This
-##'   creates a copy of orderly's destination database in
-##'   \code{backup/db} with the same filename as the destination
-##'   database, even if that database typically lives outside of the
-##'   orderly tree.  In case of corruption of the database, this
-##'   backup can be manually moved into place.  This is only needed if
-##'   you are storing information alongside the core orderly tables
-##'   (as done by OrderlyWeb).
-##'
 ##' @param queue_id ID of an existing queue to connect to, creates a new one
 ##'   if NULL
 ##'
@@ -39,9 +27,9 @@
 ##'   path <- orderly::orderly_example("demo")
 ##'   runner <- orderly.server::orderly_runner(path, workers = 0)
 ##' }
-orderly_runner <- function(path, allow_ref = NULL, backup_period = 600,
-                           queue_id = NULL, workers = 1) {
-  orderly_runner_$new(path, allow_ref, backup_period, queue_id, workers)
+orderly_runner <- function(path, allow_ref = NULL, queue_id = NULL,
+                           workers = 1) {
+  orderly_runner_$new(path, allow_ref, queue_id, workers)
 }
 
 runner_run <- function(key_report_id, key, root, name, parameters, instance,
@@ -134,25 +122,13 @@ orderly_runner_ <- R6::R6Class(
     #'   disallows branch changes (based on the
     #'   \code{ORDERLY_API_SERVER_IDENTITY} environment variable and the
     #'   \code{master_only} setting of the relevant server block.
-    #' @param backup_period Period (in seconds) between DB backups.  This
-    #'   is a guide only as backups cannot happen while a task is running
-    #'   - if more than this many seconds have elapsed when the runner is
-    #'   in its idle loop a backup of the db will be performed.  This
-    #'   creates a copy of orderly's destination database in
-    #'   \code{backup/db} with the same filename as the destination
-    #'   database, even if that database typically lives outside of the
-    #'   orderly tree.  In case of corruption of the database, this
-    #'   backup can be manually moved into place.  This is only needed if
-    #'   you are storing information alongside the core orderly tables
-    #'   (as done by OrderlyWeb).
-    #'   TODO: actually implement this
     #' @param queue_id ID of an existing queue to connect to, creates a new one
     #'   if NULL.
     #' @param workers Number of workers to spawn.
     #' @param cleanup_on_exit If TRUE workers are killed on exit.
     #' @param worker_timeout How long worker should live for before it is
     #' killed. Expect this is only finite during local testing.
-    initialize = function(root, allow_ref = NULL, backup_period, queue_id,
+    initialize = function(root, allow_ref = NULL, queue_id,
                           workers, cleanup_on_exit = workers > 0,
                           worker_timeout = Inf) {
       self$config <- orderly::orderly_config(root)

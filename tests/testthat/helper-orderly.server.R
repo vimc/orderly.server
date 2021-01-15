@@ -97,6 +97,12 @@ mock_runner <- function(key = NULL, status = NULL,
   )
 }
 
+mock_backup <- function() {
+  list(
+    check_backup = function() TRUE
+  )
+}
+
 
 ## This is an experiment to reduce duplication in the testing.  It
 ## does not work for endpoints that take any args as these come
