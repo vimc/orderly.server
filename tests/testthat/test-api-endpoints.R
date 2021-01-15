@@ -833,3 +833,13 @@ test_that("Can create and run bundles", {
     orderly::orderly_list_archive(path),
     data.frame(name = "other", id = res$id, stringsAsFactors = FALSE))
 })
+
+test_that("api preroute calls runner check_timeout", {
+  path <- orderly_prepare_orderly_example("minimal")
+  runner <- mock_runner()
+  api <- build_api(runner, path)
+
+  res <- api$request("GET", "/")
+  expect_equal(res$status, 200L)
+  mockery::expect_called(runner$check_timeout, 1)
+})

@@ -363,6 +363,83 @@ test_that("status missing ID", {
   ))
 })
 
+test_that("check_timeout kills timed out reports", {
+  testthat::skip_on_cran()
+  skip_on_appveyor()
+  skip_on_windows()
+  skip_if_no_redis()
+  path <- orderly_prepare_orderly_example("demo")
+  runner <- orderly_runner(path, workers = 2)
+
+  key1 <- runner$submit_task_report("minimal", timeout = 0)
+  key2 <- runner$submit_task_report("slow10", timeout = 0)
+  ## Sleep for a bit to allow "minimal" report to post TASK_COMPLETE message
+  Sys.sleep(3)
+  msg <- capture_messages(killed <- runner$check_timeout())
+  task2 <- get_task_id_key(runner, key2)
+  expect_equal(killed, task2)
+  expect_equal(msg, sprintf("Successfully killed '%s', exceeded timeout of 0\n",
+                            task2))
+})
+
+test_that("check_timeout doesn't kill reports with long timeout", {
+  testthat::skip_on_cran()
+  skip_on_appveyor()
+  skip_on_windows()
+  skip_if_no_redis()
+  path <- orderly_prepare_orderly_example("demo")
+  runner <- orderly_runner(path, workers = 2)
+
+  key1 <- runner$submit_task_report("minimal", timeout = 20)
+  key2 <- runner$submit_task_report("slow10", timeout = 20)
+  Sys.sleep(1) ## Sleep so both reports get started
+  msg <- capture_messages(killed <- runner$check_timeout())
+  expect_equal(killed, character(0))
+  expect_equal(msg, character(0))
+})
+
+test_that("check_timeout returns NULL if no reports being run", {
+  testthat::skip_on_cran()
+  skip_on_appveyor()
+  skip_on_windows()
+  skip_if_no_redis()
+  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
+  runner <- orderly_runner(path)
+  msg <- capture_messages(killed <- runner$check_timeout())
+  expect_null(killed)
+  expect_equal(msg, character(0))
+})
+
+test_that("check_timeout prints message if fails to kill a report", {
+  testthat::skip_on_cran()
+  skip_on_appveyor()
+  skip_on_windows()
+  skip_if_no_redis()
+  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
+  runner <- orderly_runner(path)
+
+  ## Setup mock queue with realistic worker log
+  key1 <- runner$submit_task_report("interactive", timeout = 0)
+  Sys.sleep(0.5) ## Sleep to wait for runner to pick up task
+  logs <- runner$queue$worker_log_tail()
+
+  queue <- runner$queue
+  mock_queue <- list(
+    worker_log_tail = function() logs,
+    task_cancel = function(task_id) stop("Failed to cancel"),
+    ## Needed for cleanup
+    worker_stop = function(type) queue$worker_stop(type = "kill"),
+    destroy = function(delete) queue$destroy(delete = TRUE)
+  )
+  runner$queue <- mock_queue
+
+  msg <- capture_messages(killed <- runner$check_timeout())
+  expect_equal(killed, character(0))
+  task_id <- get_task_id_key(runner, key1)
+  expect_equal(msg,
+               sprintf("Failed to kill '%s'\n  Failed to cancel\n", task_id))
+})
+
 test_that("Can't git change", {
   testthat::skip_on_cran()
   skip_if_no_redis()
@@ -408,21 +485,6 @@ test_that("kill - no process", {
   key <- "virtual_plant"
   expect_error(runner$kill(key),
                "Failed to kill 'virtual_plant' task doesn't exist")
-})
-
-test_that("timeout", {
-  skip("add timeout")
-  testthat::skip_on_cran()
-  skip_on_windows()
-  skip_on_appveyor()
-  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
-  runner <- orderly_runner(path)
-  name <- "interactive"
-  key <- runner$queue(name, timeout = 0)
-  runner$poll()
-  id <- wait_for_id(runner, key)
-  expect_equal(runner$poll(), structure("timeout", key = key))
-  expect_equal(runner$poll(), "idle")
 })
 
 test_that("queue_status", {

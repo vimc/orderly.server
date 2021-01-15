@@ -25,7 +25,7 @@ wait_for_process_termination <- function(process, ...) {
 wait_for_finished <- function(key, server, ...) {
   is_running <- function() {
     r <- httr::GET(server$api_url("/v1/reports/%s/status/", key))
-    !(content(r)$data$status %in% c("success", "error", "killed"))
+    !(content(r)$data$status %in% c("success", "error", "interrupted"))
   }
   wait_while(is_running, ...)
 }
@@ -84,10 +84,12 @@ read_json <- function(path, ...) {
 
 ## There is going to be some work here to keep these up-to-date:
 mock_runner <- function(key = NULL, status = NULL,
-                        config = NULL, has_git = TRUE, root = NULL) {
+                        config = NULL, has_git = TRUE, root = NULL,
+                        check_timeout = NULL) {
   list(
     submit_task_report = mockery::mock(key, cycle = TRUE),
     status = mockery::mock(status, cycle = TRUE),
+    check_timeout = mockery::mock(check_timeout, cycle = TRUE),
     kill = mockery::mock(TRUE, cycle = TRUE),
     config = config,
     has_git = has_git,

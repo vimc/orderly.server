@@ -16,6 +16,7 @@ build_api <- function(runner, path) {
   api$handle(endpoint_kill(runner))
   api$handle(endpoint_run_metadata(runner))
   api$setDocs(FALSE)
+  api$registerHook("preroute", check_timeout(runner))
   api
 }
 
@@ -306,4 +307,10 @@ endpoint_run_metadata <- function(runner) {
    pkgapi::pkgapi_state(runner = runner),
    returning = returning_json("RunMetadata.schema")
  )
+}
+
+check_timeout <- function(runner) {
+  function() {
+    runner$check_timeout()
+  }
 }

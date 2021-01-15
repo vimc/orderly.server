@@ -158,13 +158,11 @@ test_that("git error returns valid json", {
 
 
 test_that("run report honours timeout", {
-  skip("Add timeout on hook")
   server <- start_test_server()
   on.exit(server$stop())
 
   p <- file.path(server$path, "src", "count", "parameters.json")
-  writeLines(jsonlite::toJSON(list(time = 2, poll = 0.1), auto_unbox = TRUE),
-             p)
+  writeLines(jsonlite::toJSON(list(time = 3, poll = 0.1), auto_unbox = TRUE), p)
 
   r <- httr::POST(server$api_url("/v1/reports/count/run/"),
                   query = list(timeout = 1))
@@ -174,7 +172,7 @@ test_that("run report honours timeout", {
   r <- httr::GET(server$api_url(dat$data$path))
   expect_equal(httr::status_code(r), 200)
   st <- content(r)
-  expect_equal(st$data$status, "killed")
+  expect_equal(st$data$status, "interrupted")
 
   r <- httr::POST(server$api_url("/v1/reports/count/run/"),
                   query = list(timeout = 60))
