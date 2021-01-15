@@ -221,7 +221,7 @@ test_that("run", {
          path = scalar(sprintf("/v1/reports/%s/status/", key))))
   expect_equal(
     mockery::mock_args(runner$submit_task_report)[[1]],
-    list("example", NULL, NULL, NULL, timeout = 600))
+    list("example", NULL, NULL, NULL, timeout = 10800))
 
   ## endpoint
   endpoint <- endpoint_run(runner)
@@ -251,7 +251,7 @@ test_that("run with parameters", {
          path = scalar(sprintf("/v1/reports/%s/status/", key))))
   expect_equal(
     mockery::mock_args(runner$submit_task_report)[[1]],
-    list("example", list(a = 1), NULL, NULL, timeout = 600))
+    list("example", list(a = 1), NULL, NULL, timeout = 10800))
 })
 
 

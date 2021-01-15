@@ -22,7 +22,7 @@ Accepts as `POST` body json that will be passed directly through to the report. 
 
 Accepts the query parameter `ref`, to try running the report against a particular git reference (e.g., a branch or a commit).
 
-Accepts the query parameter `timeout`, which sets the the number of seconds to wait before the job is terminated.  The default is 600s (10 minutes).
+Accepts the query parameter `timeout`, which sets the the number of seconds to wait before the job is terminated.  The default is 10800s (3 hours).
 
 Returns information to query the status of the report via the next endpoint
 

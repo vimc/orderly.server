@@ -213,12 +213,13 @@ orderly_runner_ <- R6::R6Class(
     #' @param ref The git sha to run the report.
     #' @param instance The db instance for the report to pull data from.
     #' @param poll How frequently to poll for the report ID being available.
-    #' @param timeout Timeout for the report run.
+    #' @param timeout Timeout for the report run default 3 hours.
     #'
     #' @return The key for the job, note this is not the task id. The task id
     #' can be retrieved from redis using the key.
     submit_task_report = function(name, parameters = NULL, ref = NULL,
-                                  instance = NULL, poll = 0.1, timeout = 600) {
+                                  instance = NULL, poll = 0.1,
+                                  timeout = 10800) {
       if (!self$allow_ref && !is.null(ref)) {
         stop("Reference switching is disallowed in this runner",
              call. = FALSE)
@@ -226,10 +227,6 @@ orderly_runner_ <- R6::R6Class(
 
       root <- self$root
       key <- ids::adjective_animal()
-      ## TODO: key timeout? create timeout on queue, check jobs running, the time
-      ## they have been running for and kill them if over timeout
-      ## Add a check_timeout method as a hook on the api build which calls this
-      ## SO then old jobs get killed
       key_report_id <- self$keys$key_report_id
       task_id <- self$submit(quote(
         orderly.server:::runner_run(key_report_id, key, root, name,   # nolint
@@ -296,6 +293,12 @@ orderly_runner_ <- R6::R6Class(
       )
     },
 
+    #' @description
+    #' Check if any running tasks have passed their timeouts. This is run
+    #' by the API on a preroute - we check for timeouts everytime someone
+    #' interacts with the API. Not intended to be run directly.
+    #'
+    #' @return List of killed reports.
     check_timeout = function() {
       logs <- self$queue$worker_log_tail()
       ## Incomplete tasks are those where latest log is a START message

@@ -210,7 +210,7 @@ endpoint_bundle_import <- function(path, data) {
 }
 
 target_run <- function(runner, name, parameters = NULL, ref = NULL,
-                       instance = NULL, timeout = 600) {
+                       instance = NULL, timeout = 10800) {
   if (!is.null(parameters)) {
     parameters <- jsonlite::fromJSON(parameters)
   }

@@ -41,6 +41,8 @@ and task_id}
 \item \href{#method-submit_task_report}{\code{orderly_runner_$submit_task_report()}}
 \item \href{#method-submit}{\code{orderly_runner_$submit()}}
 \item \href{#method-status}{\code{orderly_runner_$status()}}
+\item \href{#method-check_timeout}{\code{orderly_runner_$check_timeout()}}
+\item \href{#method-kill}{\code{orderly_runner_$kill()}}
 \item \href{#method-destroy}{\code{orderly_runner_$destroy()}}
 \item \href{#method-cleanup}{\code{orderly_runner_$cleanup()}}
 }
@@ -134,7 +136,7 @@ Queue a job to run an orderly report.
   ref = NULL,
   instance = NULL,
   poll = 0.1,
-  timeout = 600
+  timeout = 10800
 )}\if{html}{\out{</div>}}
 }
 
@@ -151,7 +153,7 @@ Queue a job to run an orderly report.
 
 \item{\code{poll}}{How frequently to poll for the report ID being available.}
 
-\item{\code{timeout}}{Timeout for the report run. TODO - impl}
+\item{\code{timeout}}{Timeout for the report run default 3 hours.}
 }
 \if{html}{\out{</div>}}
 }
@@ -203,6 +205,38 @@ Get the status of a job
 \subsection{Returns}{
 List containing the key, status, report_id (if available),
 output and the position of the job in the queue.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-check_timeout"></a>}}
+\if{latex}{\out{\hypertarget{method-check_timeout}{}}}
+\subsection{Method \code{check_timeout()}}{
+Check if any running tasks have passed their timeouts. This is run
+by the API on a preroute - we check for timeouts everytime someone
+interacts with the API. Not intended to be run directly.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{orderly_runner_$check_timeout()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+List of killed reports.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-kill"></a>}}
+\if{latex}{\out{\hypertarget{method-kill}{}}}
+\subsection{Method \code{kill()}}{
+Kill a job
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{orderly_runner_$kill(key)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{key}}{The job key.}
+}
+\if{html}{\out{</div>}}
 }
 }
 \if{html}{\out{<hr>}}
