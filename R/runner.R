@@ -213,12 +213,13 @@ orderly_runner_ <- R6::R6Class(
     #' @param ref The git sha to run the report.
     #' @param instance The db instance for the report to pull data from.
     #' @param poll How frequently to poll for the report ID being available.
-    #' @param timeout Timeout for the report run. TODO - impl
+    #' @param timeout Timeout for the report run default 3 hours.
     #'
     #' @return The key for the job, note this is not the task id. The task id
     #' can be retrieved from redis using the key.
     submit_task_report = function(name, parameters = NULL, ref = NULL,
-                                  instance = NULL, poll = 0.1, timeout = 600) {
+                                  instance = NULL, poll = 0.1,
+                                  timeout = 60 * 60 * 3) {
       if (!self$allow_ref && !is.null(ref)) {
         stop("Reference switching is disallowed in this runner",
              call. = FALSE)
@@ -226,17 +227,13 @@ orderly_runner_ <- R6::R6Class(
 
       root <- self$root
       key <- ids::adjective_animal()
-      ## TODO: key timeout? create timeout on queue, check jobs running, the time
-      ## they have been running for and kill them if over timeout
-      ## Add a check_timeout method as a hook on the api build which calls this
-      ## SO then old jobs get killed
-      self$con$HSET(self$keys$key_timeout, key, timeout)
       key_report_id <- self$keys$key_report_id
       task_id <- self$submit(quote(
         orderly.server:::runner_run(key_report_id, key, root, name,   # nolint
                                     parameters, instance, ref, poll = poll)))
       self$con$HSET(self$keys$key_task_id, key, task_id)
       self$con$HSET(self$keys$task_id_key, task_id, key)
+      self$con$HSET(self$keys$task_timeout, task_id, timeout)
       key
     },
 
@@ -287,6 +284,13 @@ orderly_runner_ <- R6::R6Class(
         out <- NULL
       }
 
+      ## Clear up task_timeout key if task has completed i.e. if the task is
+      ## not queued or running
+      running_status <- c("queued", "running")
+      if (!(out_status %in% running_status)) {
+        self$con$HDEL(self$keys$task_timeout, task_id)
+      }
+
       list(
         key = key,
         status = out_status,
@@ -294,6 +298,41 @@ orderly_runner_ <- R6::R6Class(
         output = out,
         queue = queued_keys
       )
+    },
+
+    #' @description
+    #' Check if any running tasks have passed their timeouts. This is run
+    #' by the API on a preroute - we check for timeouts everytime someone
+    #' interacts with the API. Not intended to be run directly.
+    #'
+    #' @return List of killed reports.
+    check_timeout = function() {
+      logs <- self$queue$worker_log_tail()
+      ## Incomplete tasks are those where latest log is a START message
+      incomplete <- logs[logs$command == "TASK_START", ]
+      if (nrow(incomplete) == 0) {
+        return(invisible(NULL))
+      }
+      incomplete$timeout <- redux::from_redis_hash(
+        self$con, self$keys$task_timeout, incomplete$message, f = as.numeric)
+      now <- as.numeric(Sys.time())
+      to_kill <- incomplete[incomplete$time + incomplete$timeout < now, ]
+
+      kill_task <- function(task_id, timeout) {
+        tryCatch({
+          self$queue$task_cancel(task_id)
+          message(sprintf("Successfully killed '%s', exceeded timeout of %s",
+                          task_id, timeout))
+          task_id
+        }, error = function(e) {
+          message(sprintf("Failed to kill '%s'\n  %s", task_id, e$message))
+          NA_character_
+        })
+      }
+
+      ## log message contains the task_id
+      killed <- Map(kill_task, to_kill$message, to_kill$timeout)
+      invisible(unname(unlist(killed[!is.na(killed)])))
     },
 
     #' @description
@@ -392,6 +431,6 @@ path_id_file <- function(root, key) {
 orderly_key <- function(base) {
   list(key_task_id = sprintf("%s:orderly.server:key_task_id", base),
        task_id_key = sprintf("%s:orderly.server:task_id_key", base),
-       key_timeout = sprintf("%s:orderly.server:key_timeout", base),
+       task_timeout = sprintf("%s:orderly.server:task_timeout", base),
        key_report_id = sprintf("%s:orderly.server:key_report_id", base))
 }

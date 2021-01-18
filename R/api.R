@@ -1,4 +1,4 @@
-build_api <- function(runner, path) {
+build_api <- function(runner, path, rate_limit = 2 * 60) {
   force(runner)
   api <- pkgapi::pkgapi$new()
   api$handle(endpoint_index())
@@ -16,6 +16,7 @@ build_api <- function(runner, path) {
   api$handle(endpoint_kill(runner))
   api$handle(endpoint_run_metadata(runner))
   api$setDocs(FALSE)
+  api$registerHook("preroute", check_timeout(runner, rate_limit))
   api
 }
 
@@ -209,7 +210,7 @@ endpoint_bundle_import <- function(path, data) {
 }
 
 target_run <- function(runner, name, parameters = NULL, ref = NULL,
-                       instance = NULL, timeout = 600) {
+                       instance = NULL, timeout = 60 * 60 * 3) {
   if (!is.null(parameters)) {
     parameters <- jsonlite::fromJSON(parameters)
   }
@@ -306,4 +307,8 @@ endpoint_run_metadata <- function(runner) {
    pkgapi::pkgapi_state(runner = runner),
    returning = returning_json("RunMetadata.schema")
  )
+}
+
+check_timeout <- function(runner, rate_limit = 2 * 60) {
+  throttle(runner$check_timeout, rate_limit)
 }

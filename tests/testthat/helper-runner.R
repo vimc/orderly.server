@@ -24,5 +24,9 @@ skip_if_no_redis <- function() {
 }
 
 get_task_id_key <- function(runner, key) {
-  task_id <- runner$con$HGET(runner$keys$key_task_id, key)
+  runner$con$HGET(runner$keys$key_task_id, key)
+}
+
+get_report_id_key <- function(runner, key) {
+  runner$con$HGET(runner$keys$key_report_id, key)
 }

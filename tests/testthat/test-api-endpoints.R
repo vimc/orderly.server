@@ -221,7 +221,7 @@ test_that("run", {
          path = scalar(sprintf("/v1/reports/%s/status/", key))))
   expect_equal(
     mockery::mock_args(runner$submit_task_report)[[1]],
-    list("example", NULL, NULL, NULL, timeout = 600))
+    list("example", NULL, NULL, NULL, timeout = 60 * 60 * 3))
 
   ## endpoint
   endpoint <- endpoint_run(runner)
@@ -251,7 +251,7 @@ test_that("run with parameters", {
          path = scalar(sprintf("/v1/reports/%s/status/", key))))
   expect_equal(
     mockery::mock_args(runner$submit_task_report)[[1]],
-    list("example", list(a = 1), NULL, NULL, timeout = 600))
+    list("example", list(a = 1), NULL, NULL, timeout = 60 * 60 * 3))
 })
 
 
@@ -832,4 +832,19 @@ test_that("Can create and run bundles", {
   expect_equal(
     orderly::orderly_list_archive(path),
     data.frame(name = "other", id = res$id, stringsAsFactors = FALSE))
+})
+
+test_that("api preroute calls runner check_timeout with rate limit", {
+  path <- orderly_prepare_orderly_example("minimal")
+  runner <- mock_runner()
+  api <- build_api(runner, path)
+
+  res <- api$request("GET", "/")
+  expect_equal(res$status, 200L)
+  mockery::expect_called(runner$check_timeout, 1)
+
+  res <- api$request("GET", "/")
+  expect_equal(res$status, 200L)
+  ## Check_timeout is rate limited so not called 2nd time
+  mockery::expect_called(runner$check_timeout, 1)
 })
