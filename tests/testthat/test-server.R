@@ -77,7 +77,7 @@ test_that("run server", {
   mockery::expect_called(mock_build_api, 1)
   expect_equal(
     mockery::mock_args(mock_build_api)[[1]],
-    list(runner, path, backup))
+    list(runner, path, backup, rate_limit = 120))
 
   mockery::expect_called(mock_orderly_backup, 1)
   expect_equal(

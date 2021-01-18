@@ -100,3 +100,14 @@ test_that("readlines_if_exists", {
   test <- readlines_if_exists("missing/file", "it is missing")
   expect_equal(test, "it is missing")
 })
+
+test_that("throttle does not call functions very often", {
+  f <- mockery::mock(1, 2)
+  g <- throttle(f, 0.5)
+  expect_equal(g(), 1)
+  expect_null(g())
+  mockery::expect_called(f, 1)
+  Sys.sleep(0.6)
+  expect_equal(g(), 2)
+  mockery::expect_called(f, 2)
+})

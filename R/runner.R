@@ -195,7 +195,7 @@ orderly_runner_ <- R6::R6Class(
     #' can be retrieved from redis using the key.
     submit_task_report = function(name, parameters = NULL, ref = NULL,
                                   instance = NULL, poll = 0.1,
-                                  timeout = 10800) {
+                                  timeout = 60 * 60 * 3) {
       if (!self$allow_ref && !is.null(ref)) {
         stop("Reference switching is disallowed in this runner",
              call. = FALSE)
@@ -209,7 +209,7 @@ orderly_runner_ <- R6::R6Class(
                                     parameters, instance, ref, poll = poll)))
       self$con$HSET(self$keys$key_task_id, key, task_id)
       self$con$HSET(self$keys$task_id_key, task_id, key)
-      self$con$HSET(self$keys$task_id_timeout, task_id, timeout)
+      self$con$HSET(self$keys$task_timeout, task_id, timeout)
       key
     },
 
@@ -260,6 +260,13 @@ orderly_runner_ <- R6::R6Class(
         out <- NULL
       }
 
+      ## Clear up task_timeout key if task has completed i.e. if the task is
+      ## not queued or running
+      running_status <- c("queued", "running")
+      if (!(out_status %in% running_status)) {
+        self$con$HDEL(self$keys$task_timeout, task_id)
+      }
+
       list(
         key = key,
         status = out_status,
@@ -282,25 +289,26 @@ orderly_runner_ <- R6::R6Class(
       if (nrow(incomplete) == 0) {
         return(invisible(NULL))
       }
-      incomplete$timeout <- as.numeric(unlist(
-        self$con$HMGET(self$keys$task_id_timeout, incomplete$message)))
-      now <- sprintf("%.04f", Sys.time()) ## Use same format as rrq
+      incomplete$timeout <- redux::from_redis_hash(
+        self$con, self$keys$task_timeout, incomplete$message, f = as.numeric)
+      now <- as.numeric(Sys.time())
       to_kill <- incomplete[incomplete$time + incomplete$timeout < now, ]
 
-      killed <- vapply(seq_len(nrow(to_kill)), function(row) {
+      kill_task <- function(task_id, timeout) {
         tryCatch({
-          task_id <- to_kill[row, "message"]
           self$queue$task_cancel(task_id)
           message(sprintf("Successfully killed '%s', exceeded timeout of %s",
-                          task_id, to_kill[row, "timeout"]))
+                          task_id, timeout))
           task_id
         }, error = function(e) {
-          message(sprintf("Failed to kill '%s'\n  %s", to_kill[row, "message"],
-                          e$message))
+          message(sprintf("Failed to kill '%s'\n  %s", task_id, e$message))
           NA_character_
         })
-      }, character(1))
-      invisible(killed[!is.na(killed)])
+      }
+
+      ## log message contains the task_id
+      killed <- Map(kill_task, to_kill$message, to_kill$timeout)
+      invisible(unname(unlist(killed[!is.na(killed)])))
     },
 
     #' @description
@@ -399,6 +407,6 @@ path_id_file <- function(root, key) {
 orderly_key <- function(base) {
   list(key_task_id = sprintf("%s:orderly.server:key_task_id", base),
        task_id_key = sprintf("%s:orderly.server:task_id_key", base),
-       task_id_timeout = sprintf("%s:orderly.server:task_id_timeout", base),
+       task_timeout = sprintf("%s:orderly.server:task_timeout", base),
        key_report_id = sprintf("%s:orderly.server:key_report_id", base))
 }

@@ -193,7 +193,7 @@ test_that("run: success", {
   ## Run a report slow enough to reliably report back a "running" status
   key <- runner$submit_task_report("slow1")
   testthat::try_again(5, {
-    Sys.sleep(1)
+    Sys.sleep(0.5)
     status <- runner$status(key)
     expect_equal(names(status), c("key", "status", "version", "output",
                                   "queue"))
@@ -385,13 +385,12 @@ test_that("check_timeout doesn't kill reports with long timeout", {
   skip_on_windows()
   skip_if_no_redis()
   path <- orderly_prepare_orderly_example("demo")
-  runner <- orderly_runner(path, workers = 2)
+  runner <- orderly_runner(path, workers = 1)
 
-  key1 <- runner$submit_task_report("minimal", timeout = 20)
-  key2 <- runner$submit_task_report("slow10", timeout = 20)
-  Sys.sleep(1) ## Sleep so both reports get started
+  key <- runner$submit_task_report("slow10", timeout = 20)
+  id <- wait_for_id(runner, key)
   msg <- capture_messages(killed <- runner$check_timeout())
-  expect_equal(killed, character(0))
+  expect_null(killed)
   expect_equal(msg, character(0))
 })
 
@@ -415,11 +414,16 @@ test_that("check_timeout prints message if fails to kill a report", {
   path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
   runner <- orderly_runner(path)
 
+  ## Here I want to test the case where in between getting the logs which
+  ## say that task A can be killed the task then completing before we call
+  ## cancel, meaning that the call to cancel the task will fail. This makes
+  ## for some pretty messy setup.
   ## Setup mock queue with realistic worker log
   key1 <- runner$submit_task_report("interactive", timeout = 0)
   Sys.sleep(0.5) ## Sleep to wait for runner to pick up task
   logs <- runner$queue$worker_log_tail()
 
+  ## Create a mock queue to return our mocked log data
   queue <- runner$queue
   mock_queue <- list(
     worker_log_tail = function() logs,
@@ -431,7 +435,7 @@ test_that("check_timeout prints message if fails to kill a report", {
   runner$queue <- mock_queue
 
   msg <- capture_messages(killed <- runner$check_timeout())
-  expect_equal(killed, character(0))
+  expect_null(killed)
   task_id <- get_task_id_key(runner, key1)
   expect_equal(msg,
                sprintf("Failed to kill '%s'\n  Failed to cancel\n", task_id))
@@ -616,4 +620,35 @@ test_that("runner can set instance", {
   expect_match(status_default$output, "\\[ data +\\]  source => dat: 20 x 2",
                all = FALSE)
   expect_equal(status_default$queue, list())
+})
+
+test_that("status: clears task_timeout from redis", {
+  testthat::skip_on_cran()
+  skip_on_appveyor()
+  skip_on_windows()
+  skip_if_no_redis()
+  path <- orderly_prepare_orderly_example("demo")
+  expect_false(file.exists(file.path(path, "orderly.sqlite")))
+  runner <- orderly_runner(path)
+  expect_true(file.exists(file.path(path, "orderly.sqlite")))
+
+  ## Run a report slow enough to reliably report back a "running" status
+  key <- runner$submit_task_report("slow1", timeout = 10)
+  task_id <- runner$con$HGET(runner$keys$key_task_id, key)
+  testthat::try_again(5, {
+    Sys.sleep(0.5)
+    status <- runner$status(key)
+    expect_equal(status$key, key)
+    expect_equal(status$status, "running")
+    ## timeout stored in redis
+    task_id <- get_task_id_key(runner, key)
+    expect_equal(runner$con$HGET(runner$keys$task_timeout, task_id), "10")
+  })
+
+  result <- runner$queue$task_wait(task_id)
+  status <- runner$status(key, output = TRUE)
+  expect_equal(status$key, key)
+  expect_equal(status$status, "success")
+  ## timeout has been removed from redis
+  expect_null(runner$con$HGET(runner$keys$task_timeout, task_id))
 })

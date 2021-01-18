@@ -23,11 +23,14 @@
 ##'
 ##' @param workers Number of workers to spawn
 ##'
+##' @param timeout_rate_limit How frequently should the API check for timeouts
+##' default 2 mins.
+##'
 ##' @export
 ##' @importFrom httpuv runServer
 server <- function(path, port, host = "0.0.0.0", allow_ref = TRUE,
                    go_signal = NULL, queue_id = NULL, workers = 1,
-                   backup_period = 600) {
+                   backup_period = 600, timeout_rate_limit = 2 * 60) {
   message("Starting orderly server on port ", port)
   message("Orderly root: ", path)
 
@@ -35,7 +38,7 @@ server <- function(path, port, host = "0.0.0.0", allow_ref = TRUE,
   runner <- orderly_runner(path, allow_ref, queue_id = queue_id,
                            workers = workers)
   backup <- orderly_backup(runner$config, backup_period)
-  api <- build_api(runner, runner$root, backup)
+  api <- build_api(runner, runner$root, backup, rate_limit = timeout_rate_limit)
   api$run(host, port)
 
   message("Server exiting")
