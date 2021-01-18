@@ -394,7 +394,7 @@ test_that("check_timeout doesn't kill reports with long timeout", {
   key2 <- runner$submit_task_report("slow10", timeout = 20)
   Sys.sleep(1) ## Sleep so both reports get started
   msg <- capture_messages(killed <- runner$check_timeout())
-  expect_equal(killed, character(0))
+  expect_null(killed)
   expect_equal(msg, character(0))
 })
 
@@ -439,7 +439,7 @@ test_that("check_timeout prints message if fails to kill a report", {
   runner$queue <- mock_queue
 
   msg <- capture_messages(killed <- runner$check_timeout())
-  expect_equal(killed, character(0))
+  expect_null(killed)
   task_id <- get_task_id_key(runner, key1)
   expect_equal(msg,
                sprintf("Failed to kill '%s'\n  Failed to cancel\n", task_id))

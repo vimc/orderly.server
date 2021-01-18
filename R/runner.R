@@ -311,20 +311,21 @@ orderly_runner_ <- R6::R6Class(
       now <- as.numeric(Sys.time())
       to_kill <- incomplete[incomplete$time + incomplete$timeout < now, ]
 
-      killed <- vapply(seq_len(nrow(to_kill)), function(row) {
+      kill_task <- function(task_id, timeout) {
         tryCatch({
-          task_id <- to_kill[row, "message"]
           self$queue$task_cancel(task_id)
           message(sprintf("Successfully killed '%s', exceeded timeout of %s",
-                          task_id, to_kill[row, "timeout"]))
+                          task_id, timeout))
           task_id
         }, error = function(e) {
-          message(sprintf("Failed to kill '%s'\n  %s", to_kill[row, "message"],
-                          e$message))
+          message(sprintf("Failed to kill '%s'\n  %s", task_id, e$message))
           NA_character_
         })
-      }, character(1))
-      invisible(killed[!is.na(killed)])
+      }
+
+      ## log message contains the task_id
+      killed <- Map(kill_task, to_kill$message, to_kill$timeout)
+      invisible(unname(unlist(killed[!is.na(killed)])))
     },
 
     #' @description
