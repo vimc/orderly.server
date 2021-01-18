@@ -233,7 +233,7 @@ orderly_runner_ <- R6::R6Class(
                                     parameters, instance, ref, poll = poll)))
       self$con$HSET(self$keys$key_task_id, key, task_id)
       self$con$HSET(self$keys$task_id_key, task_id, key)
-      self$con$HSET(self$keys$task_id_timeout, task_id, timeout)
+      self$con$HSET(self$keys$task_timeout, task_id, timeout)
       key
     },
 
@@ -307,7 +307,7 @@ orderly_runner_ <- R6::R6Class(
         return(invisible(NULL))
       }
       incomplete$timeout <- as.numeric(unlist(
-        self$con$HMGET(self$keys$task_id_timeout, incomplete$message)))
+        self$con$HMGET(self$keys$task_timeout, incomplete$message)))
       now <- sprintf("%.04f", Sys.time()) ## Use same format as rrq
       to_kill <- incomplete[incomplete$time + incomplete$timeout < now, ]
 
@@ -423,6 +423,6 @@ path_id_file <- function(root, key) {
 orderly_key <- function(base) {
   list(key_task_id = sprintf("%s:orderly.server:key_task_id", base),
        task_id_key = sprintf("%s:orderly.server:task_id_key", base),
-       task_id_timeout = sprintf("%s:orderly.server:task_id_timeout", base),
+       task_timeout = sprintf("%s:orderly.server:task_timeout", base),
        key_report_id = sprintf("%s:orderly.server:key_report_id", base))
 }
