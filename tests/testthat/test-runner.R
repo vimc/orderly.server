@@ -418,11 +418,16 @@ test_that("check_timeout prints message if fails to kill a report", {
   path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
   runner <- orderly_runner(path)
 
+  ## Here I want to test the case where in between getting the logs which
+  ## say that task A can be killed the task then completing before we call
+  ## cancel, meaning that the call to cancel the task will fail. This makes
+  ## for some pretty messy setup.
   ## Setup mock queue with realistic worker log
   key1 <- runner$submit_task_report("interactive", timeout = 0)
   Sys.sleep(0.5) ## Sleep to wait for runner to pick up task
   logs <- runner$queue$worker_log_tail()
 
+  ## Create a mock queue to return our mocked log data
   queue <- runner$queue
   mock_queue <- list(
     worker_log_tail = function() logs,
