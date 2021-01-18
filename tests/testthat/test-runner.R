@@ -196,7 +196,7 @@ test_that("run: success", {
   ## Run a report slow enough to reliably report back a "running" status
   key <- runner$submit_task_report("slow1")
   testthat::try_again(5, {
-    Sys.sleep(1)
+    Sys.sleep(0.5)
     status <- runner$status(key)
     expect_equal(names(status), c("key", "status", "version", "output",
                                   "queue"))
@@ -648,4 +648,35 @@ test_that("runner can set instance", {
   expect_match(status_default$output, "\\[ data +\\]  source => dat: 20 x 2",
                all = FALSE)
   expect_equal(status_default$queue, list())
+})
+
+test_that("status: clears task_timeout from redis", {
+  testthat::skip_on_cran()
+  skip_on_appveyor()
+  skip_on_windows()
+  skip_if_no_redis()
+  path <- orderly_prepare_orderly_example("demo")
+  expect_false(file.exists(file.path(path, "orderly.sqlite")))
+  runner <- orderly_runner(path)
+  expect_true(file.exists(file.path(path, "orderly.sqlite")))
+
+  ## Run a report slow enough to reliably report back a "running" status
+  key <- runner$submit_task_report("slow1", timeout = 10)
+  task_id <- runner$con$HGET(runner$keys$key_task_id, key)
+  testthat::try_again(5, {
+    Sys.sleep(0.5)
+    status <- runner$status(key)
+    expect_equal(status$key, key)
+    expect_equal(status$status, "running")
+    ## timeout stored in redis
+    task_id <- get_task_id_key(runner, key)
+    expect_equal(runner$con$HGET(runner$keys$task_timeout, task_id), "10")
+  })
+
+  result <- runner$queue$task_wait(task_id)
+  status <- runner$status(key, output = TRUE)
+  expect_equal(status$key, key)
+  expect_equal(status$status, "success")
+  ## timeout has been removed from redis
+  expect_null(runner$con$HGET(runner$keys$task_timeout, task_id))
 })

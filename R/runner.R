@@ -284,6 +284,13 @@ orderly_runner_ <- R6::R6Class(
         out <- NULL
       }
 
+      ## Clear up task_timeout key if task has completed i.e. if the task is
+      ## not queued or running
+      running_status <- c("queued", "running")
+      if (!(out_status %in% running_status)) {
+        self$con$HDEL(self$keys$task_timeout, task_id)
+      }
+
       list(
         key = key,
         status = out_status,
