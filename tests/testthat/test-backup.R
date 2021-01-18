@@ -31,3 +31,19 @@ test_that("backup is run when expected", {
   mockery::expect_called(mock_backup, 2)
   mockery::expect_args(mock_backup, 2, backup$config)
 })
+
+test_that("backup is not run if period is NULL", {
+  mock_backup <- mockery::mock(TRUE, cycle = TRUE)
+  with_mock("orderly:::orderly_backup" = mock_backup, {
+    msg <- capture_messages(backup <- orderly_backup("cfg", NULL))
+  })
+  expect_equal(msg, character(0))
+  expect_equal(backup$backup_period, NULL)
+  mockery::expect_called(mock_backup, 0)
+
+  with_mock("orderly:::orderly_backup" = mock_backup, {
+    msg <- capture_messages(backup$check_backup())
+  })
+  expect_equal(msg, character(0))
+  mockery::expect_called(mock_backup, 0)
+})

@@ -26,6 +26,9 @@
 ##' @param timeout_rate_limit How frequently should the API check for timeouts
 ##' default 2 mins.
 ##'
+##' @param backup_period How frequently should backup be run, if NULL backup
+##' is skipped
+##'
 ##' @export
 ##' @importFrom httpuv runServer
 server <- function(path, port, host = "0.0.0.0", allow_ref = TRUE,

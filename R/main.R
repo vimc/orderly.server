@@ -8,19 +8,26 @@ main_args <- function(args) {
   orderly.server [options] <path>
 
 Options:
-  --port=PORT       Port to run on [default: 8321]
-  --host=HOST       IP address owned by this server [default: 0.0.0.0]
-  --no-ref          Prevent git reference switching
-  --go-signal=PATH  Relative path for go signal
-  --workers=WORKERS Number of workers to spawn [default: 0]"
+  --port=PORT                    Port to run on [default: 8321]
+  --host=HOST                    IP address owned by this server [default: 0.0.0.0]
+  --no-ref                       Prevent git reference switching
+  --go-signal=PATH               Relative path for go signal
+  --workers=WORKERS              Number of workers to spawn [default: 0]
+  --backup-period=BACKUP_PERIOD  How frequently should backup be run negative for no backup [default: 600]"
   res <- docopt_parse(doc, args)
+
+  backup_period <- as.integer(res[["backup_period"]])
+  if (backup_period < 0) {
+    backup_period <- NULL
+  }
 
   list(path = res[["path"]],
        port = as.integer(res[["port"]]),
        host = res[["host"]],
        allow_ref = !res[["no_ref"]],
        go_signal = res[["go_signal"]],
-       workers = as.integer(res[["workers"]]))
+       workers = as.integer(res[["workers"]]),
+       backup_period = backup_period)
 }
 
 docopt_parse <- function(doc, args) {

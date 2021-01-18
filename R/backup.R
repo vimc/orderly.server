@@ -10,7 +10,7 @@
 #'   lives outside of the orderly tree.  In case of corruption of the
 #'   database, this backup can be manually moved into place.  This is only
 #'   needed if you are storing information alongside the core orderly
-#'   tables (as done by OrderlyWeb).
+#'   tables (as done by OrderlyWeb). If NULL backup is skipped.
 #'
 #' @return orderly_backup_ object
 #'
@@ -49,7 +49,7 @@ orderly_backup_ <- R6::R6Class(
     #'   lives outside of the orderly tree.  In case of corruption of the
     #'   database, this backup can be manually moved into place.  This is only
     #'   needed if you are storing information alongside the core orderly
-    #'   tables (as done by OrderlyWeb).
+    #'   tables (as done by OrderlyWeb). If NULL then backup is skipped.
     initialize = function(config, backup_period) {
       self$config <- config
       self$backup_period <- backup_period
@@ -59,7 +59,8 @@ orderly_backup_ <- R6::R6Class(
     #' @description
     #' Check if a backup is due to be run, and run it if it is due.
     check_backup = function() {
-      if (self$last_backup + self$backup_period < Sys.time()) {
+      if (!is.null(self$backup_period) && (
+          self$last_backup + self$backup_period < Sys.time())) {
         self$do_backup()
       }
     },
@@ -67,6 +68,9 @@ orderly_backup_ <- R6::R6Class(
     #' @description
     #' Backup the orderly database.
     do_backup = function() {
+      if (is.null(self$backup_period)) {
+        return(invisible(FALSE))
+      }
       now <- Sys.time()
       message(sprintf("%s - Backing up orderly db", now))
       orderly:::orderly_backup(self$config)
