@@ -126,3 +126,16 @@ file_copy <- function(..., overwrite = TRUE) {
 dir_create <- function(path) {
   dir.create(path, FALSE, TRUE)
 }
+
+# Run a command with a rate limiter - this is used to throttle the
+# timeout check.
+throttle <- function(f, every) {
+  last <- Sys.time() - every
+  function() {
+    now <- Sys.time()
+    if (now - every > last) {
+      last <<- now
+      f()
+    }
+  }
+}

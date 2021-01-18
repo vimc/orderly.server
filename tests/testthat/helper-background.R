@@ -49,9 +49,11 @@ orderly_server_background <- R6::R6Class(
         stop("Server already listening on port ", port)
       }
 
+      ## For testing don't rate limit server
       self$process <- callr::r_bg(
         function(path, port) {
-          orderly.server::server(path, port, "127.0.0.1")
+          orderly.server::server(path, port, "127.0.0.1",
+                                 timeout_rate_limit = 0)
         },
         args = list(path = self$path, port = self$port)
       )

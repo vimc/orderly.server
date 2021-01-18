@@ -1,4 +1,4 @@
-build_api <- function(runner, path) {
+build_api <- function(runner, path, rate_limit = 2 * 60) {
   force(runner)
   api <- pkgapi::pkgapi$new()
   api$handle(endpoint_index())
@@ -16,7 +16,7 @@ build_api <- function(runner, path) {
   api$handle(endpoint_kill(runner))
   api$handle(endpoint_run_metadata(runner))
   api$setDocs(FALSE)
-  api$registerHook("preroute", check_timeout(runner))
+  api$registerHook("preroute", check_timeout(runner, rate_limit))
   api
 }
 
@@ -309,8 +309,6 @@ endpoint_run_metadata <- function(runner) {
  )
 }
 
-check_timeout <- function(runner) {
-  function() {
-    runner$check_timeout()
-  }
+check_timeout <- function(runner, rate_limit = 2 * 60) {
+  throttle(runner$check_timeout, rate_limit)
 }
