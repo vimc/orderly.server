@@ -219,7 +219,7 @@ orderly_runner_ <- R6::R6Class(
     #' can be retrieved from redis using the key.
     submit_task_report = function(name, parameters = NULL, ref = NULL,
                                   instance = NULL, poll = 0.1,
-                                  timeout = 10800) {
+                                  timeout = 60 * 60 * 3) {
       if (!self$allow_ref && !is.null(ref)) {
         stop("Reference switching is disallowed in this runner",
              call. = FALSE)

@@ -136,7 +136,7 @@ Queue a job to run an orderly report.
   ref = NULL,
   instance = NULL,
   poll = 0.1,
-  timeout = 10800
+  timeout = 60 * 60 * 3
 )}\if{html}{\out{</div>}}
 }
 
