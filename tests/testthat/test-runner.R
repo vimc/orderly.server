@@ -199,12 +199,12 @@ test_that("run: success", {
     Sys.sleep(1)
     status <- runner$status(key)
     expect_equal(names(status), c("key", "status", "version", "output",
-                                  "task_position"))
+                                  "queue"))
     expect_equal(status$key, key)
     expect_equal(status$status, "running")
     expect_true(!is.null(status$version))
     expect_null(status$output)
-    expect_equal(status$task_position, 0)
+    expect_equal(status$queue, list())
   })
 
   task_id <- get_task_id_key(runner, key)
@@ -219,7 +219,7 @@ test_that("run: success", {
   expect_equal(status$version, report_id)
   expect_match(status$output, paste0("\\[ id +\\]  ", report_id),
                all = FALSE)
-  expect_equal(status$task_position, 0)
+  expect_equal(status$queue, list())
 
   ## Report is in archive
   d <- orderly::orderly_list_archive(path)
@@ -253,7 +253,7 @@ test_that("run: error", {
   expect_true(any(grepl(
     "Script did not produce expected artefacts: mygraph.png",
     status$output)))
-  expect_equal(status$task_position, 0)
+  expect_equal(status$queue, list())
 })
 
 
@@ -359,7 +359,7 @@ test_that("status missing ID", {
     status = "missing",
     version = NULL,
     output = NULL,
-    task_position = 0
+    queue = list()
   ))
 })
 
@@ -424,89 +424,6 @@ test_that("timeout", {
   expect_equal(runner$poll(), structure("timeout", key = key))
   expect_equal(runner$poll(), "idle")
 })
-
-test_that("queue_status", {
-  skip("return queue info in status")
-  testthat::skip_on_cran()
-  skip_on_windows()
-  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
-  runner <- orderly_runner(path)
-
-  expect_equal(
-    runner$queue_status(NULL),
-    list(status = "idle", queue = runner_queue$new()$get_df(), current = NULL))
-
-  name <- "interactive"
-  key1 <- runner$queue(name)
-  key2 <- runner$queue(name)
-
-  expect_equal(
-    runner$queue_status(NULL),
-    list(status = "idle", queue = runner$data$get_df(), current = NULL))
-
-  runner$poll()
-  res <- runner$queue_status()
-  expect_equal(res$status, "running")
-  expect_equal(res$queue, runner$data$get_df())
-  expect_equal(nrow(res$queue), 2)
-  expect_equal(res$current$key, key1)
-  expect_equal(res$current$name, "interactive")
-  expect_is(res$current$start_at, "POSIXt")
-  expect_is(res$current$kill_at, "POSIXt")
-
-  expect_equal(res$current$elapsed + res$current$remaining, 600)
-  expect_null(res$current$output)
-
-  res <- runner$queue_status(TRUE)
-  expect_is(res$current$output$stderr, "character")
-  expect_is(res$current$output$stdout, "character")
-
-  res <- runner$queue_status(limit = 1)
-  expect_equal(nrow(res$queue), 1L)
-})
-
-
-test_that("queue status", {
-  skip("return queue info in status")
-  testthat::skip_on_cran()
-  skip_on_windows()
-  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
-  runner <- orderly_runner(path)
-
-  name <- "interactive"
-  key1 <- runner$queue(name)
-  key2 <- runner$queue(name)
-  key3 <- runner$queue(name)
-
-  expect_equal(runner$status(key1)$output$stdout, character())
-  expect_equal(runner$status(key2)$output$stdout,
-               sprintf("queued:%s:%s", key1, "interactive"))
-  expect_equal(runner$status(key3)$output$stdout,
-               sprintf("queued:%s:%s", c(key1, key2), "interactive"))
-
-  tmp <- runner$poll()
-  id <- wait_for_id(runner, key1)
-
-  expect_null(runner$status(key1)$output$stdout)
-  expect_equal(runner$status(key2)$output$stdout,
-               sprintf("running:%s:%s", key1, "interactive"))
-  expect_equal(runner$status(key3)$output$stdout,
-               sprintf("%s:%s:%s", c("running", "queued"),
-                       c(key1, key2), "interactive"))
-
-  ## into the main bit of output here:
-  expect_equal(names(runner$status(key1, output = TRUE)$output),
-               c("stderr", "stdout"))
-
-  writeLines("continue", file.path(path, "draft", name, id, "resume"))
-  wait_while_running(runner)
-
-  expect_null(runner$status(key1)$output$stdout)
-  expect_equal(runner$status(key2)$output$stdout, character(0))
-  expect_equal(runner$status(key3)$output$stdout,
-               sprintf("queued:%s:%s", key2, "interactive"))
-})
-
 
 test_that("prevent git changes", {
   testthat::skip_on_cran()
@@ -648,7 +565,7 @@ test_that("runner can set instance", {
   ## Data in alternative db extracts only 10 rows
   expect_match(status$output, "\\[ data +\\]  source => dat: 10 x 2",
                all = FALSE)
-  expect_equal(status$task_position, 0)
+  expect_equal(status$queue, list())
 
 
   key_default <- runner$submit_task_report("minimal")
@@ -664,5 +581,5 @@ test_that("runner can set instance", {
   ## Data in default db extracts 20 rows
   expect_match(status_default$output, "\\[ data +\\]  source => dat: 20 x 2",
                all = FALSE)
-  expect_equal(status_default$task_position, 0)
+  expect_equal(status_default$queue, list())
 })

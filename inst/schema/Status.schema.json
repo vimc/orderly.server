@@ -30,8 +30,11 @@
                 }
             ]
         },
-        "task_position": { "type": "integer" }
+        "queue": {
+            "type": "array",
+            "items": { "type": "string" }
+         }
     },
-    "required": ["key", "status", "version", "output"],
+    "required": ["key", "status", "version", "output", "queue"],
     "additionalProperties": false
 }

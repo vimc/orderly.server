@@ -267,7 +267,7 @@ orderly_runner_ <- R6::R6Class(
           status = "missing",
           version = NULL,
           output = NULL,
-          task_position = 0
+          queue = list()
         ))
       }
       status <- unname(self$queue$task_status(task_id))
@@ -276,10 +276,10 @@ orderly_runner_ <- R6::R6Class(
                            "COMPLETE" = "success",
                            tolower(status)
       )
-      task_position <- self$queue$task_position(task_id)
-      if (status %in% c("ERROR", "ORPHAN", "INTERRUPTED", "COMPLETE")) {
-        task_position <- 0
-      }
+      queued_tasks <- self$queue$task_preceeding(task_id)
+      queued_keys <- lapply(queued_tasks, function(task) {
+        self$con$HGET(self$keys$task_id_key, task)
+      })
       report_id <- self$con$HGET(self$keys$key_report_id, key)
       if (output) {
         out <- readlines_if_exists(path_stderr(self$root, key), NULL)
@@ -292,7 +292,7 @@ orderly_runner_ <- R6::R6Class(
         status = out_status,
         version = report_id,
         output = out,
-        task_position = task_position
+        queue = queued_keys
       )
     },
 

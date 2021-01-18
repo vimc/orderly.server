@@ -259,7 +259,7 @@ test_that("status - queued behind nothing", {
   ## See mock.R
   key <- "key-2"
   status <- list(key = key, status = "queued", version = NULL,
-                 task_position = 1)
+                 queue = NULL)
 
   runner <- mock_runner(key, status)
 
@@ -270,7 +270,7 @@ test_that("status - queued behind nothing", {
          status = scalar("queued"),
          version = NULL,
          output = NULL,
-         task_position = scalar(1)))
+         queue = list()))
 
   expect_equal(mockery::mock_args(runner$status)[[1]], list(key, FALSE))
 
@@ -293,13 +293,10 @@ test_that("status - queued behind nothing", {
 
 
 test_that("status - queued", {
-  testthat::skip("TODO: how do we want to return queue info?")
-  ## Add another field for this info, alongside task_position
-  ## See mock.R
   key <- "key-3"
   status <- list(
     key = key, status = "queued", version = NA_character_,
-    output = sprintf("queued:key-%d:example", 1:2))
+    queue = c("key-1", "key-2"))
 
   runner <- mock_runner(key, status)
 
@@ -309,8 +306,9 @@ test_that("status - queued", {
     list(key = scalar(key),
          status = scalar("queued"),
          version = scalar(NA_character_),
-         output = list(scalar("queued:key-1:example"),
-                       scalar("queued:key-2:example"))))
+         output = NULL,
+         queue = list(scalar("key-1"),
+                       scalar("key-2"))))
   expect_equal(mockery::mock_args(runner$status)[[1]], list(key, FALSE))
 
   ## endpoint
@@ -335,7 +333,7 @@ test_that("status - completed, no log", {
   key <- "key-1"
   version <- "20200414-123013-a1df28f7"
   status <- list(key = key, status = "success", version = version,
-                 output = NULL, task_position = 0)
+                 output = NULL, queue = character(0))
 
   runner <- mock_runner(key, status)
 
@@ -346,7 +344,7 @@ test_that("status - completed, no log", {
          status = scalar("success"),
          version = scalar(version),
          output = NULL,
-         task_position = scalar(0)))
+         queue = list()))
   expect_equal(mockery::mock_args(runner$status)[[1]], list(key, FALSE))
 
   ## endpoint
@@ -372,7 +370,7 @@ test_that("status - completed, with log", {
   version <- "20200414-123013-a1df28f7"
   status <- list(key = key, status = "success", version = version,
                  output = c("a message", "in the logs"),
-                 task_position = 0)
+                 queue = character(0))
   runner <- mock_runner(key, status)
 
   res <- target_status(runner, key, TRUE)
@@ -382,7 +380,7 @@ test_that("status - completed, with log", {
          status = scalar("success"),
          version = scalar(version),
          output = c("a message", "in the logs"),
-         task_position = scalar(0)))
+         queue = list()))
   expect_equal(mockery::mock_args(runner$status)[[1]], list(key, TRUE))
 
   ## endpoint
