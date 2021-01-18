@@ -306,9 +306,9 @@ orderly_runner_ <- R6::R6Class(
       if (nrow(incomplete) == 0) {
         return(invisible(NULL))
       }
-      incomplete$timeout <- as.numeric(unlist(
-        self$con$HMGET(self$keys$task_timeout, incomplete$message)))
-      now <- sprintf("%.04f", Sys.time()) ## Use same format as rrq
+      incomplete$timeout <- redux::from_redis_hash(
+        self$con, self$keys$task_timeout, incomplete$message, f = as.numeric)
+      now <- as.numeric(Sys.time())
       to_kill <- incomplete[incomplete$time + incomplete$timeout < now, ]
 
       killed <- vapply(seq_len(nrow(to_kill)), function(row) {
