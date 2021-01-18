@@ -388,11 +388,10 @@ test_that("check_timeout doesn't kill reports with long timeout", {
   skip_on_windows()
   skip_if_no_redis()
   path <- orderly_prepare_orderly_example("demo")
-  runner <- orderly_runner(path, workers = 2)
+  runner <- orderly_runner(path, workers = 1)
 
-  key1 <- runner$submit_task_report("minimal", timeout = 20)
-  key2 <- runner$submit_task_report("slow10", timeout = 20)
-  Sys.sleep(1) ## Sleep so both reports get started
+  key <- runner$submit_task_report("slow10", timeout = 20)
+  id <- wait_for_id(runner, key)
   msg <- capture_messages(killed <- runner$check_timeout())
   expect_null(killed)
   expect_equal(msg, character(0))
