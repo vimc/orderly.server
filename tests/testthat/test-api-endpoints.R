@@ -850,6 +850,7 @@ test_that("api preroute calls runner check_timeout with rate limit", {
 })
 
 test_that("api runs backup on preroute", {
+  skip_if_no_redis()
   path <- orderly_prepare_orderly_example("minimal")
   runner <- orderly_runner(path)
   backup <- orderly_backup(runner$config, backup_period = 1)
