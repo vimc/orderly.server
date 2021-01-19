@@ -18,7 +18,7 @@ filename as the destination database, even if that database typically
 lives outside of the orderly tree.  In case of corruption of the
 database, this backup can be manually moved into place.  This is only
 needed if you are storing information alongside the core orderly
-tables (as done by OrderlyWeb).}
+tables (as done by OrderlyWeb). If NULL backup is skipped.}
 }
 \value{
 orderly_backup_ object
