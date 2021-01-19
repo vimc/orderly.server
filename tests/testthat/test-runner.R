@@ -105,7 +105,7 @@ test_that("runner can run a report", {
   dir_create(dirname(path_id_file(path, "ignore")))
 
   out <- runner_run("key_id", "test_key", path, "minimal", parameters = NULL,
-                    instance = NULL, ref = NULL)
+                    instance = NULL, ref = NULL, has_git = FALSE)
   expect_equal(out$report_name, "minimal")
   expect_match(out$report_id, "^\\d{8}-\\d{6}-\\w{8}")
 
@@ -130,7 +130,8 @@ test_that("runner can run a report with parameters", {
   dir_create(dirname(path_id_file(path, "ignore")))
 
   out <- runner_run("key_id", "test_key", path, "other",
-                    parameters = list(nmin = 0.5), instance = NULL, ref = NULL)
+                    parameters = list(nmin = 0.5), instance = NULL, ref = NULL,
+                    has_git = FALSE)
   expect_equal(out$report_name, "other")
   expect_match(out$report_id, "^\\d{8}-\\d{6}-\\w{8}")
 
@@ -160,7 +161,8 @@ test_that("runner can return errors", {
   dir_create(dirname(path_id_file(path, "ignore")))
 
   err <- expect_error(runner_run("key_report_id", "test_key", path, "example",
-                    parameters = NULL, instance = NULL, ref = NULL))
+                    parameters = NULL, instance = NULL, ref = NULL,
+                    has_git = FALSE))
 
   ## Report ID still can be retrieved
   con <- redux::hiredis()
@@ -290,48 +292,6 @@ test_that("run in branch (local)", {
   expect_equal(nrow(d), 1L)
   expect_equal(d$name, "other")
   expect_equal(d$id, result$report_id)
-})
-
-test_that("run missing ref", {
-  testthat::skip_on_cran()
-  skip_if_no_redis()
-  path <- orderly_prepare_orderly_git_example()
-  path1 <- path[["origin"]]
-  path2 <- path[["local"]]
-
-  sha1 <- git_ref_to_sha("HEAD", path1)
-  sha2 <- git_ref_to_sha("HEAD", path2)
-
-  runner <- orderly_runner(path2)
-
-  expect_false(git_ref_exists("unknown", path2))
-
-  key <- runner$submit_task_report("minimal", ref = "unknown")
-  task_id <- get_task_id_key(runner, key)
-  result <- runner$queue$task_wait(task_id)
-  res <- runner$status(key)
-  expect_equal(res$status, "error")
-  expect_s3_class(result, "error")
-  ## TODO: Improve error message when unknown ref for checking out
-  expect_match(result$message, "Error code 128 running command:\n")
-
-  ## TODO: sort update behaviour - should we just always pull?
-  ## In orderly (on client) if --ref exists fetch first
-  ## if it doesn't exist but if update does -- update then pull
-
-  skip("fix update")
-  id <- runner$queue("minimal", ref = sha1, update = TRUE)
-  expect_is(id, "character")
-  expect_equal(runner$data$length(), 1)
-
-  expect_true(git_ref_exists(sha1, path2))
-  expect_equal(git_ref_to_sha("HEAD", path2), sha2)
-
-  id <- runner$queue("minimal", ref = NULL)
-  expect_equal(git_ref_to_sha("HEAD", path2), sha2)
-
-  id <- runner$queue("minimal", ref = NULL, update = TRUE)
-  expect_equal(git_ref_to_sha("HEAD", path2), sha1)
 })
 
 test_that("prevent ref change", {
@@ -651,4 +611,36 @@ test_that("status: clears task_timeout from redis", {
   expect_equal(status$status, "success")
   ## timeout has been removed from redis
   expect_null(runner$con$HGET(runner$keys$task_timeout, task_id))
+})
+
+test_that("runner run passes git args to orderly CLI", {
+  skip_if_no_redis()
+  mock_processx <- mockery::mock(list(
+    is_alive = function() FALSE,
+    get_exit_status = function() 0L), cycle = TRUE)
+  mockery::stub(runner_run, "processx::process$new", mock_processx)
+  run <- runner_run("key_report_id", "key", ".", "test", NULL, NULL,
+                    ref = NULL, has_git = TRUE)
+  mockery::expect_called(mock_processx, 1)
+  args <- mockery::mock_args(mock_processx)[[1]][[2]]
+  expect_equal(args, c("--root", ".", "run", "test", "--print-log",
+                       "--id-file", "./runner/id/key.id_file",
+                       "--pull"))
+
+  mockery::stub(runner_run, "processx::process$new", mock_processx)
+  run <- runner_run("key_report_id", "key", ".", "test", NULL, NULL,
+                    ref = "123", has_git = TRUE)
+  mockery::expect_called(mock_processx, 2)
+  args <- mockery::mock_args(mock_processx)[[2]][[2]]
+  expect_equal(args, c("--root", ".", "run", "test", "--print-log",
+                       "--id-file", "./runner/id/key.id_file",
+                       "--fetch", "--ref", "123"))
+
+  mockery::stub(runner_run, "processx::process$new", mock_processx)
+  run <- runner_run("key_report_id", "key", ".", "test", NULL, NULL,
+                    ref = NULL, has_git = FALSE)
+  mockery::expect_called(mock_processx, 3)
+  args <- mockery::mock_args(mock_processx)[[3]][[2]]
+  expect_equal(args, c("--root", ".", "run", "test", "--print-log",
+                       "--id-file", "./runner/id/key.id_file"))
 })
