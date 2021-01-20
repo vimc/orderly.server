@@ -40,8 +40,8 @@ server <- function(path, port, host = "0.0.0.0", allow_ref = TRUE,
   wait_for_go_signal(path, go_signal)
   runner <- orderly_runner(path, allow_ref, queue_id = queue_id,
                            workers = workers)
-  backup <- orderly_backup(runner$config, backup_period)
-  api <- build_api(runner, runner$root, backup, rate_limit = timeout_rate_limit)
+  api <- build_api(runner, runner$root, backup_period,
+                   rate_limit = timeout_rate_limit)
   api$run(host, port)
 
   message("Server exiting")
