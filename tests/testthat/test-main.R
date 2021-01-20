@@ -49,7 +49,7 @@ test_that("Set workers", {
 
 test_that("Set backup period", {
   expect_equal(
-    main_args(c("path", "--backup-period", "-5")),
+    main_args(c("path", "--backup-period", "0")),
     list(path = "path", port = 8321, host = "0.0.0.0", allow_ref = TRUE,
          go_signal = NULL, workers = 0, backup_period = NULL))
 })
