@@ -31,7 +31,7 @@ docker run --rm -d --network=$NAME_NETWORK \
     -e REDIS_URL=redis://redis:6379 \
     -p 8321:8321 \
     --mount type=bind,src=$PACKAGE_ROOT/orderly-demo,dst=/demo \
-    --name $NAME_SERVER $TAG_SHA demo
+    --name $NAME_SERVER $TAG_SHA --backup-period=0 demo
 
 ## Sleep first here as otherwise receive an error
 ## curl: (56) Recv failure: Connection reset by peer

@@ -11,7 +11,9 @@ server(
   allow_ref = TRUE,
   go_signal = NULL,
   queue_id = NULL,
-  workers = 1
+  workers = 1,
+  backup_period = 600,
+  timeout_rate_limit = 2 * 60
 )
 }
 \arguments{
@@ -36,6 +38,12 @@ requests.}
 if NULL}
 
 \item{workers}{Number of workers to spawn}
+
+\item{backup_period}{How frequently should backup be run, if NULL backup
+is skipped}
+
+\item{timeout_rate_limit}{How frequently should the API check for timeouts
+default 2 mins.}
 }
 \description{
 Run orderly server

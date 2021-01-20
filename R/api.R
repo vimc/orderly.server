@@ -1,4 +1,4 @@
-build_api <- function(runner, path, rate_limit = 2 * 60) {
+build_api <- function(runner, path, backup_period = NULL, rate_limit = 2 * 60) {
   force(runner)
   api <- pkgapi::pkgapi$new()
   api$handle(endpoint_index())
@@ -16,6 +16,8 @@ build_api <- function(runner, path, rate_limit = 2 * 60) {
   api$handle(endpoint_kill(runner))
   api$handle(endpoint_run_metadata(runner))
   api$setDocs(FALSE)
+  backup <- orderly_backup(runner$config, backup_period)
+  api$registerHook("preroute", backup$check_backup)
   api$registerHook("preroute", check_timeout(runner, rate_limit))
   api
 }

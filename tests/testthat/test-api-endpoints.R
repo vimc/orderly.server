@@ -848,3 +848,33 @@ test_that("api preroute calls runner check_timeout with rate limit", {
   ## Check_timeout is rate limited so not called 2nd time
   mockery::expect_called(runner$check_timeout, 1)
 })
+
+test_that("api runs backup on preroute", {
+  skip_if_no_redis()
+  path <- orderly_prepare_orderly_example("minimal")
+  runner <- orderly_runner(path)
+  api <- build_api(runner, path, backup_period = 1)
+  db_backup <- orderly_path_db_backup(path, "orderly.sqlite")
+  expect_true(file.exists(db_backup))
+  dat_backup <- with_sqlite(db_backup, function(con) {
+    DBI::dbReadTable(con, "report_version")
+  })
+  ## Nothing has been backed up yet
+  expect_equal(nrow(dat_backup), 0)
+
+  ## When report is run
+  id <- orderly::orderly_run("example", root = path, echo = FALSE)
+  orderly::orderly_commit(id, root = path)
+
+  ## Call API endpoint to trigger backup from preroute
+  Sys.sleep(1.2) ## ensure backup period has passed
+  res <- api$request("GET", "/")
+  expect_equal(res$status, 200L)
+
+  ## Data exists in backup
+  dat_backup <- with_sqlite(db_backup, function(con) {
+    DBI::dbReadTable(con, "report_version")
+  })
+  expect_equal(nrow(dat_backup), 1)
+  expect_equal(dat_backup$report, "example")
+})

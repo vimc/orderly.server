@@ -5,10 +5,12 @@ on:
     branches:
       - main
       - master
+      - vimc-4192
   pull_request:
     branches:
       - main
       - master
+      - vimc-4192
 
 name: R-CMD-check
 
