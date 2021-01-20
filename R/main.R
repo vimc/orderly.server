@@ -13,11 +13,11 @@ Options:
   --no-ref                       Prevent git reference switching
   --go-signal=PATH               Relative path for go signal
   --workers=WORKERS              Number of workers to spawn [default: 0]
-  --backup-period=BACKUP_PERIOD  How frequently should backup be run negative for no backup [default: 600]"
+  --backup-period=BACKUP_PERIOD  How frequently should backup be run, 0 or negative for no backup [default: 600]"
   res <- docopt_parse(doc, args)
 
   backup_period <- as.integer(res[["backup_period"]])
-  if (backup_period < 0) {
+  if (backup_period <= 0) {
     backup_period <- NULL
   }
 
