@@ -33,7 +33,7 @@ orderly_runner <- function(path, allow_ref = NULL, queue_id = NULL,
 }
 
 runner_run <- function(key_report_id, key, root, name, parameters, instance,
-                       ref, poll = 0.1) {
+                       ref, has_git, poll = 0.1) {
   con <- redux::hiredis()
   bin <- tempfile()
   dir.create(bin)
@@ -46,9 +46,17 @@ runner_run <- function(key_report_id, key, root, name, parameters, instance,
     parameters <- sprintf("%s=%s", names(parameters),
                           vcapply(parameters, format))
   }
+  git_args <- NULL
+  if (has_git) {
+    if (is.null(ref)) {
+      git_args <- "--pull"
+    } else {
+      git_args <- c("--fetch", "--ref", ref)
+    }
+  }
   args <- c("--root", root,
             "run", name, "--print-log", "--id-file", id_file,
-            if (!is.null(ref)) c("--ref", ref),
+            git_args,
             if (!is.null(instance)) c("--instance", instance),
             parameters)
   log_err <- path_stderr(root, key)
@@ -204,9 +212,11 @@ orderly_runner_ <- R6::R6Class(
       root <- self$root
       key <- ids::adjective_animal()
       key_report_id <- self$keys$key_report_id
+      has_git <- self$has_git
       task_id <- self$submit(quote(
         orderly.server:::runner_run(key_report_id, key, root, name,   # nolint
-                                    parameters, instance, ref, poll = poll)))
+                                    parameters, instance, ref, has_git,
+                                    poll = poll)))
       self$con$HSET(self$keys$key_task_id, key, task_id)
       self$con$HSET(self$keys$task_id_key, task_id, key)
       self$con$HSET(self$keys$task_timeout, task_id, timeout)
