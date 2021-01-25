@@ -3,6 +3,7 @@ on:
     branches:
       - main
       - master
+      - vimc-4192
 
 name: pkgdown
 
