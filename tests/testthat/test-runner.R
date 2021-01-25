@@ -644,3 +644,32 @@ test_that("runner run passes git args to orderly CLI", {
   expect_equal(args, c("--root", ".", "run", "test", "--print-log",
                        "--id-file", "./runner/id/key.id_file"))
 })
+
+test_that("status: lists queued tasks", {
+  testthat::skip_on_cran()
+  skip_on_appveyor()
+  skip_on_windows()
+  skip_if_no_redis()
+  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
+  runner <- orderly_runner(path)
+
+  key1 <- runner$submit_task_report("interactive")
+  key2 <- runner$submit_task_report("interactive")
+  key3 <- runner$submit_task_report("interactive")
+  key4 <- runner$submit_task_report("interactive")
+  testthat::try_again(5, {
+    Sys.sleep(0.5)
+    key4_status <- runner$status(key4)
+    expect_equal(key4_status$key, key4)
+    expect_equal(key4_status$status, "queued")
+  })
+  ## Key1 is running, key 2, 3 & 4 are queued
+  expect_equal(runner$status(key1)$status, "running")
+  key2_status <- runner$status(key2)
+  expect_equal(key2_status$status, "queued")
+  expect_equal(key2_status$queue, list())
+  key3_status <- runner$status(key3)
+  expect_equal(key3_status$status, "queued")
+  expect_equal(key3_status$queue, list(key2))
+  expect_equal(key4_status$queue, list(key2, key3))
+})
