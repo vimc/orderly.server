@@ -59,6 +59,7 @@
 
       </header><div class="row">
   <div class="contents col-md-9">
+
 <div id="orderlyserver" class="section level1">
 <div class="page-header"><h1 class="hasAnchor">
 <a href="#orderlyserver" class="anchor"></a>orderly.server</h1></div>
@@ -68,7 +69,6 @@
 <p>Endpoints are shown in <a href="inst/schema/spec.html">the spec</a></p>
 <p>Current API:</p>
 <pre><code>GET  /
-POST /v1/reports/rebuild/
 POST /v1/reports/:name/run/
 GET  /v1/reports/:key/status/
 GET  /v1/reports/git/status/
@@ -90,7 +90,6 @@ docker run --rm -p 8321:8321 -v ${PWD}/orderly:/orderly --user ${UID} $IMAGE /or
     "version": "0.0.0",
     "endpoints": [
       "/",
-      "/v1/reports/rebuild/",
       "/v1/reports/:name/run/",
       "/v1/reports/:key/status/",
       "/v1/reports/git/status/",
@@ -147,13 +146,6 @@ docker run --rm -p 8321:8321 -v ${PWD}/orderly:/orderly --user ${UID} $IMAGE /or
   },
   "errors": []
 }</code></pre>
-<p>Rebuild the orderly index:</p>
-<pre><code>$ curl -s -X POST http://localhost:8321/v1/reports/rebuild/ | jq
-{
-  "status": "success",
-  "data": null,
-  "errors": []
-}</code></pre>
 <div id="security" class="section level2">
 <h2 class="hasAnchor">
 <a href="#security" class="anchor"></a>Security</h2>
@@ -177,6 +169,15 @@ if (file.exists(stderr)) {
 <p>See <a href="https://github.com/vimc/orderly.server/pull/30/commits/29376c630d57c0f74c5d08a127ac23116e0a9bef" class="uri">https://github.com/vimc/orderly.server/pull/30/commits/29376c630d57c0f74c5d08a127ac23116e0a9bef</a> for an example.</p>
 </div>
 </div>
+<div id="testing" class="section level1">
+<h1 class="hasAnchor">
+<a href="#testing" class="anchor"></a>Testing</h1>
+<p>For local testing, bring up redis docker container via</p>
+<pre><code>./scripts/redis start</code></pre>
+<p>this can then be removed via</p>
+<pre><code>./scripts/redis stop</code></pre>
+</div>
+
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
