@@ -2,17 +2,6 @@
 
 This API is built on top of [`pkgapi`](https://reside-ic.github.io/pkgapi) (itself influenced by [`hintr`](https://github.com/mrc-ide/hintr) and [montagu api](https://github.com/vimc/montagu-api/blob/master/spec/spec.md)).
 
-## POST /reports/rebuild/
-
-Force orderly to rebuild the index.  This is useful in cases where the index is corrupt (seen in failed restores), or during a schema migration.  It's a relatively harmless operation, though it might get a little slow when the store is large.  Returns nothing.
-
-Schema: [`Rebuild.schema.json`](Rebuild.schema.json)
-
-### Example
-
-```json
-null
-```
 
 ## POST /reports/:name/run/
 
@@ -23,6 +12,8 @@ Accepts as `POST` body json that will be passed directly through to the report. 
 Accepts the query parameter `ref`, to try running the report against a particular git reference (e.g., a branch or a commit).
 
 Accepts the query parameter `timeout`, which sets the the number of seconds to wait before the job is terminated.  The default is 3 hours (10800 seconds).
+
+Accepts the query parameter `instance`, to run the report against a particular source database.
 
 Returns information to query the status of the report via the next endpoint
 
@@ -42,7 +33,9 @@ Schema: [`Run.schema.json`](Run.schema.json)
 
 Get the status of a report.
 
-This works only for reports that were queued by the runner itself/
+Accepts query parameter `output`, which if TRUE returns the log from the job run.
+
+This works only for reports that were queued by the runner itself.
 
 Schema: [`Status.schema.json`](Status.schema.json)
 
@@ -53,34 +46,40 @@ Schema: [`Status.schema.json`](Status.schema.json)
     "key": "adjective_animal",
     "status": "success",
     "version": "20170912-091103-41c62920",
-    "output": {
-        "stderr": [
-            "[ name      ]  example",
-            "[ id        ]  20170912-091103-41c62920",
-            "[ id_file   ]  /var/folders/3z/86tv450j7kb4w5y4wpxj6d5r0000gn/T//RtmpozkWqn/fileaf521bb78e78",
-            "[ data      ]  dat: 20 x 2",
-            "[ start     ]  2017-09-12 09:11:03",
-            "[ end       ]  2017-09-12 09:11:03",
-            "[ artefact  ]  mygraph.png: b7de1d29f37d7913392832db6bc49c99",
-            "[ commit    ]  example/20170912-091103-41c62920",
-            "[ copy      ]",
-            "[ success   ]  :)",
-            "id:20170912-091103-41c62920"],
-        "stdout": [
-            "",
-            "> png(\"mygraph.png\")",
-            "",
-            "> par(mar = c(15, 4, 0.5, 0.5))",
-            "",
-            "> barplot(setNames(dat$number, dat$name), las = 2)",
-            "",
-            "> dev.off()",
-            "null device ",
-            "          1 "
-        ]
-    }
+    "output": [
+        "[ name      ]  example",
+        "[ id        ]  20170912-091103-41c62920",
+        "[ id_file   ]  /var/folders/3z/86tv450j7kb4w5y4wpxj6d5r0000gn/T//RtmpozkWqn/fileaf521bb78e78",
+        "[ data      ]  dat: 20 x 2",
+        "[ start     ]  2017-09-12 09:11:03",
+        "",
+        "> png(\"mygraph.png\")",
+        "",
+        "> par(mar = c(15, 4, 0.5, 0.5))",
+        "",
+        "> barplot(setNames(dat$number, dat$name), las = 2)",
+        "",
+        "> dev.off()",
+        "null device ",
+        "          1 "
+        "[ end       ]  2017-09-12 09:11:03",
+        "[ artefact  ]  mygraph.png: b7de1d29f37d7913392832db6bc49c99",
+        "[ commit    ]  example/20170912-091103-41c62920",
+        "[ copy      ]",
+        "[ success   ]  :)",
+        "id:20170912-091103-41c62920"
+    ],
+    "queue": []
 }
 ```
+
+If there are queued reports `queue` will show details like,
+
+```
+"queue": ["pictural_watermoccasin"]
+```
+
+showing the items queued in front of this task, note that any currently running reports are not listed in the queue.
 
 ## DELETE /reports/:name/:version/kill/
 
@@ -94,21 +93,9 @@ Schema: [`Kill.schema.json`](Kill.schema.json)
 true
 ```
 
-## POST /reports/:name/:version/publish/
-
-Publish a report.  Sets the status of the "published" flag.  With no parameters sets the flag to `true` but reports can be unpublished by passing the query parameter `?value=false`.
-
-Schema: [`Publish.schema.json`](Publish.schema.json)
-
-### Example
-
-``` json
-true
-```
-
 ## GET /reports/git/status/
 
-Get git status.  This does not quite map onto `git status` but includes output from `git status --porcelain=v1` along with branch and hash informationl.  When running on a server, ideally the `output` section will be an empty array (otherwise branch changing is disabled)
+Get git status.  This does not quite map onto `git status` but includes output from `git status --porcelain=v1` along with branch and hash information.  When running on a server, ideally the `output` section will be an empty array (otherwise branch changing is disabled)
 
 ## Example
 
