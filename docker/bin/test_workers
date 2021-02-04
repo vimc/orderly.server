@@ -1,0 +1,7 @@
+#!/usr/bin/env Rscript
+runner <- orderly.server::orderly_runner("demo", workers = 0)
+if (runner$queue$worker_len() == 0) {
+  message("No registered workers")
+  quit(status = 1)
+}
+message("Found registered worker")
