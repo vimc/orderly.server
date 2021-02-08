@@ -148,13 +148,13 @@ target_report_parameters <- function(path, report_id, commit) {
       "INVALID_FORMAT")
   }
   lapply(names(parameters), function(param) {
-    default <- parameters[[param]]$default
-    if (!is.null(default)) {
-      default <- as.character(default)
+    value <- parameters[[param]]$default
+    if (!is.null(value)) {
+      value <- as.character(value)
     }
     list(
       name = scalar(param),
-      default = scalar(default)
+      value = scalar(value)
     )
   })
 }

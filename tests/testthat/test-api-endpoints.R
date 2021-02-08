@@ -158,15 +158,15 @@ test_that("can get parameters for a report & commit", {
   expect_equal(res$data, list(
     list(
       name = scalar("a"),
-      default = NULL
+      value = NULL
     ),
     list(
       name = scalar("b"),
-      default = scalar("test")
+      value = scalar("test")
     ),
     list(
       name = scalar("c"),
-      default = scalar("2")
+      value = scalar("2")
     )
   ))
   mockery::expect_args(mock_report_parameters, 1, "id", "1234567", "test_path")
@@ -796,7 +796,6 @@ test_that("bundle pack can pack basic bundle", {
 test_that("bundle pack can pass parameters and instance", {
   tmp <- tempfile(fileext = ".zip")
   writeBin(as.raw(0:255), tmp)
-
   mock_bundle_pack <- mockery::mock(list(path = tmp))
   with_mock("orderly::orderly_bundle_pack" = mock_bundle_pack, {
     endpoint <- endpoint_bundle_pack("root")

@@ -332,7 +332,7 @@ test_that("can get report parameters", {
   expect_equal(other_params$status, "success")
   expect_equal(other_params$data, list(
     list(name = "nmin",
-         default = NULL)
+         value = NULL)
   ))
 })
 
