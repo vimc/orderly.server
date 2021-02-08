@@ -696,9 +696,9 @@ test_that("can get parameters for a report & commit", {
   params <- endpoint$run("minimal", "84hd82n")
   expect_equal(params$status_code, 200)
   expect_equal(params$data, list(
-    list(name = scalar("a"), default = NULL),
-    list(name = scalar("b"), default = scalar("test")),
-    list(name = scalar("c"), default = scalar("2"))
+    list(name = scalar("a"), value = NULL),
+    list(name = scalar("b"), value = scalar("test")),
+    list(name = scalar("c"), value = scalar("2"))
   ))
   args <- mockery::mock_args(runner$get_report_parameters)
   expect_length(args, 1)
