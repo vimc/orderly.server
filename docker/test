@@ -5,12 +5,14 @@ HERE=$(dirname $0)
 
 NAME_SERVER=orderly_server
 NAME_REDIS=orderly_server_redis
+NAME_WORKER=orderly_worker
 NAME_NETWORK=orderly_server_network
 
 function cleanup {
   echo "Cleaning up"
-  docker kill $NAME_REDIS > /dev/null || true
+  docker kill $NAME_WORKER > /dev/null || true
   docker kill $NAME_SERVER > /dev/null || true
+  docker kill $NAME_REDIS > /dev/null || true
   docker network rm $NAME_NETWORK > /dev/null || true
   rm -rf $PACKAGE_ROOT/orderly-demo
 }
@@ -33,6 +35,11 @@ docker run --rm -d --network=$NAME_NETWORK \
     --mount type=bind,src=$PACKAGE_ROOT/orderly-demo,dst=/demo \
     --name $NAME_SERVER $TAG_SHA --backup-period=0 demo
 
+docker run --rm -d --network=$NAME_NETWORK \
+    -e REDIS_URL=redis://redis:6379 \
+    --mount type=bind,src=$PACKAGE_ROOT/orderly-demo,dst=/demo \
+    --name $NAME_WORKER $TAG_WORKER_SHA
+
 ## Sleep first here as otherwise receive an error
 ## curl: (56) Recv failure: Connection reset by peer
 ## which exists instantly
@@ -47,9 +54,10 @@ for attempt in $(seq 10); do
     RESPONSE=$(curl --silent --write-out "%{http_code}\n" --output /dev/null \
                http://localhost:8321)
     if [ "$RESPONSE" == "200" ]; then
-        echo "SUCCESS"
-        exit 0
+        echo "CONNECTED SUCCESS"
     fi
+    docker exec $NAME_WORKER test_workers
+    exit $?
 done
 
 echo "FAIL"
