@@ -645,7 +645,7 @@ test_that("runner run passes git args to orderly CLI", {
                        "--id-file", "./runner/id/key.id_file"))
 })
 
-test_that("get_status: lists queued tasks", {
+test_that("status: lists queued tasks", {
   testthat::skip_on_cran()
   skip_on_appveyor()
   skip_on_windows()
