@@ -296,7 +296,16 @@ test_that("status - queued", {
   key <- "key-3"
   status <- list(
     key = key, status = "queued", version = NA_character_,
-    queue = c("key-1", "key-2"))
+    queue = list(
+      list(
+        key = "key-1",
+        status = "running",
+        name = "minimal"
+      ),
+      list(
+        key = "key-2",
+        status = "queued",
+        name = "minimal")))
 
   runner <- mock_runner(key, status)
 
@@ -307,8 +316,16 @@ test_that("status - queued", {
          status = scalar("queued"),
          version = scalar(NA_character_),
          output = NULL,
-         queue = list(scalar("key-1"),
-                       scalar("key-2"))))
+         queue = list(
+           list(
+             key = scalar("key-1"),
+             status = scalar("running"),
+             name = scalar("minimal")
+           ),
+           list(
+             key = scalar("key-2"),
+             status = scalar("queued"),
+             name = scalar("minimal")))))
   expect_equal(mockery::mock_args(runner$status)[[1]], list(key, FALSE))
 
   ## endpoint
