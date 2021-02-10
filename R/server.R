@@ -19,7 +19,6 @@
 ##'   requests.
 ##'
 ##' @export
-##' @importFrom httpuv runServer
 server <- function(path, port, host = "0.0.0.0", allow_ref = TRUE,
                    go_signal = NULL) {
   message("Starting orderly server on port ", port)
