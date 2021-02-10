@@ -1,13 +1,12 @@
 Package: orderly.server
 Title: Serve Orderly
-Version: 0.2.6
+Version: 0.2.7
 Description: Run orderly reports as a server.
 License: MIT + file LICENSE
 Author: Rich FitzJohn
 Maintainer: Rich FitzJohn <rich.fitzjohn@gmail.com>
 Imports:
     R6,
-    httpuv,
     jsonlite,
     DBI,
     docopt (>= 0.7.1),
@@ -25,7 +24,7 @@ Suggests:
     sys,
     testthat,
     withr
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 Encoding: UTF-8
 Remotes:
     reside-ic/porcelain@22eef9b,
