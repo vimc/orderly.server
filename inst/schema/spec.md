@@ -39,7 +39,30 @@ This works only for reports that were queued by the runner itself.
 
 Schema: [`Status.schema.json`](Status.schema.json)
 
-### Example
+### Example queued status
+
+```json
+{
+    "key": "adjective_animal",
+    "status": "queued",
+    "version": null,
+    "output": null,
+    "queue": [
+        {
+            "key": "antiutopian_peregrinefalcon",
+            "status": "running",
+            "name": "minimal"
+        },
+        {
+            "key": "flavoured_bassethound",
+            "status": "queued",
+            "name": "other"
+        }
+    ]
+}
+```
+
+### Example completed status
 
 ```json
 {
