@@ -353,6 +353,20 @@ test_that("can get report parameters", {
   ))
 })
 
+test_that("can get report parameters with no commit ID", {
+  path <- orderly_prepare_orderly_git_example()
+  orderly:::git_checkout_branch("other", root = path[["local"]])
+  server <- start_test_server(path[["local"]])
+  on.exit(server$stop())
+
+  params <- content(httr::GET(server$api_url("/reports/other/parameters")))
+  expect_equal(params$status, "success")
+  expect_equal(params$data, list(
+    list(name = "nmin",
+         value = NULL)
+  ))
+})
+
 
 test_that("Can pack, run and import a bundle", {
   server <- start_test_server()
