@@ -355,7 +355,7 @@ test_that("can get report parameters", {
 
 test_that("can get report parameters with no commit ID", {
   path <- orderly_prepare_orderly_git_example()
-  orderly:::git_checkout_branch("other", root = path[["local"]])
+  orderly_git_checkout_branch("other", root = path[["local"]])
   server <- start_test_server(path[["local"]])
   on.exit(server$stop())
 
