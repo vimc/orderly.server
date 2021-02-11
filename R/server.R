@@ -30,7 +30,6 @@
 ##' is skipped
 ##'
 ##' @export
-##' @importFrom httpuv runServer
 server <- function(path, port, host = "0.0.0.0", allow_ref = TRUE,
                    go_signal = NULL, queue_id = NULL, workers = 1,
                    backup_period = 600, timeout_rate_limit = 2 * 60) {
