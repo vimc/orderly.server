@@ -253,16 +253,12 @@ orderly_runner_ <- R6::R6Class(
           queue = list()
         ))
       }
-      status <- unname(self$queue$task_status(task_id))
-      out_status <- switch(status,
-                           "PENDING" = "queued",
-                           "COMPLETE" = "success",
-                           tolower(status)
-      )
-      queued_tasks <- self$queue$task_preceeding(task_id)
-      queued_keys <- lapply(queued_tasks, function(task) {
-        self$con$HGET(self$keys$task_id_key, task)
-      })
+      out_status <- private$task_status(task_id)
+      if (out_status == "queued") {
+        queued <- self$get_preceeding_tasks(key)
+      } else {
+        queued <- list()
+      }
       report_id <- self$con$HGET(self$keys$key_report_id, key)
       if (output) {
         out <- readlines_if_exists(path_stderr(self$root, key), NULL)
@@ -282,8 +278,33 @@ orderly_runner_ <- R6::R6Class(
         status = out_status,
         version = report_id,
         output = out,
-        queue = queued_keys
+        queue = queued
       )
+    },
+
+    #' @description
+    #' Get the running and queued tasks in front of key in the queue
+    #'
+    #' @param key The job key.
+    #'
+    #' @return List containing the key, status and report name of any
+    #' running tasks and any queued tasks in front of key in the queue.
+    get_preceeding_tasks = function(key) {
+      get_task_details <- function(task_id) {
+        key <- self$con$HGET(self$keys$task_id_key, task_id)
+        task_data <- self$queue$task_data(task_id)
+        list(
+          key = key,
+          status = private$task_status(task_id),
+          name = task_data$objects$name
+        )
+      }
+      task_id <- self$con$HGET(self$keys$key_task_id, key)
+      running <- self$queue$worker_task_id()
+      running_details <- lapply(unname(running), get_task_details)
+      queued_tasks <- self$queue$task_preceeding(task_id)
+      queued_details <- lapply(queued_tasks, get_task_details)
+      c(running_details, queued_details)
     },
 
     #' @description
@@ -364,6 +385,15 @@ orderly_runner_ <- R6::R6Class(
   private = list(
     finalize = function() {
       self$cleanup()
+    },
+
+    task_status = function(task_id) {
+      status <- unname(self$queue$task_status(task_id))
+      switch(status,
+             "PENDING" = "queued",
+             "COMPLETE" = "success",
+             tolower(status)
+      )
     }
   )
 )
