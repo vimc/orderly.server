@@ -226,7 +226,7 @@ endpoint_run_metadata <- function(runner) {
  )
 }
 
-target_available_reports <- function(runner, branch, commit) {
+target_available_reports <- function(runner, branch = NULL, commit = NULL) {
   runner$get_reports(branch, commit)
 }
 

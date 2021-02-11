@@ -317,6 +317,16 @@ test_that("can get available reports", {
   expect_equal(other_reports$data, "other")
 })
 
+test_that("can get available reports without parameters", {
+  path <- orderly_prepare_orderly_git_example()
+  server <- start_test_server(path[["local"]])
+  on.exit(server$stop())
+
+  reports <- content(httr::GET(server$api_url("/reports/source")))
+  expect_equal(reports$status, "success")
+  expect_equal(reports$data, c("global", "minimal"))
+})
+
 test_that("can get report parameters", {
   path <- orderly_prepare_orderly_git_example()
   server <- start_test_server(path[["local"]])
