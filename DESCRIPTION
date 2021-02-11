@@ -11,7 +11,6 @@ Imports:
     R6,
     docopt (>= 0.7.1),
     heartbeatr,
-    httpuv,
     ids,
     jsonlite,
     orderly (>= 1.2.18),
