@@ -96,14 +96,6 @@ Schema: [`Status.schema.json`](Status.schema.json)
 }
 ```
 
-If there are queued reports `queue` will show details like,
-
-```
-"queue": ["pictural_watermoccasin"]
-```
-
-showing the items queued in front of this task, note that any currently running reports are not listed in the queue.
-
 ## DELETE /reports/:name/:version/kill/
 
 Kill a running report.  If the report was running then `true` will be returned.  Otherwise an error will be thrown.
