@@ -18,15 +18,29 @@
 ##'   During this period the server will not respond to any http
 ##'   requests.
 ##'
+##' @param queue_id ID of an existing queue to connect to, creates a new one
+##'   if NULL
+##'
+##' @param workers Number of workers to spawn
+##'
+##' @param timeout_rate_limit How frequently should the API check for timeouts
+##' default 2 mins.
+##'
+##' @param backup_period How frequently should backup be run, if NULL backup
+##' is skipped
+##'
 ##' @export
 server <- function(path, port, host = "0.0.0.0", allow_ref = TRUE,
-                   go_signal = NULL) {
+                   go_signal = NULL, queue_id = NULL, workers = 1,
+                   backup_period = 600, timeout_rate_limit = 2 * 60) {
   message("Starting orderly server on port ", port)
   message("Orderly root: ", path)
 
   wait_for_go_signal(path, go_signal)
-  runner <- orderly_runner(path, allow_ref)
-  api <- build_api(runner)
+  runner <- orderly_runner(path, allow_ref, queue_id = queue_id,
+                           workers = workers)
+  api <- build_api(runner, runner$root, backup_period,
+                   rate_limit = timeout_rate_limit)
   api$run(host, port)
 
   message("Server exiting")
@@ -37,7 +51,7 @@ wait_for_go_signal <- function(path, go_signal) {
   if (is.null(go_signal)) {
     return(invisible())
   }
-  if (!grepl("^(/|[A-Z][a-z]:)", go_signal)) {
+  if (!grepl("^(/|[A-Z][a-z]:)", go_signal) && !is.null(path)) {
     go_signal <- file.path(path, go_signal)
   }
   message(sprintf("Waiting for go signal at '%s'", go_signal))

@@ -25,7 +25,7 @@ wait_for_process_termination <- function(process, ...) {
 wait_for_finished <- function(key, server, ...) {
   is_running <- function() {
     r <- httr::GET(server$api_url("/v1/reports/%s/status/", key))
-    !(content(r)$data$status %in% c("success", "error", "killed"))
+    !(content(r)$data$status %in% c("success", "error", "interrupted"))
   }
   wait_while(is_running, ...)
 }
@@ -45,10 +45,10 @@ wait_for_id <- function(runner, key, ...) {
   e$st <- NULL
   continue <- function() {
     e$st <- runner$status(key)
-    e$st$status == "running" && is.na(e$st$id)
+    e$st$status == "running" && is.null(e$st$version)
   }
   wait_while(continue)
-  e$st$id
+  e$st$version
 }
 
 wait_for_finished_runner <- function(runner, key) {
@@ -83,29 +83,18 @@ read_json <- function(path, ...) {
 
 
 ## There is going to be some work here to keep these up-to-date:
-mock_runner <- function(keys = NULL, status = NULL, git_status = NULL,
-                        git_fetch = NULL, git_pull = NULL,
-                        git_branches_no_merged = NULL, git_commits = NULL,
-                        config = NULL, has_git = TRUE, get_reports = NULL,
-                        get_report_parameters = NULL,
-                        bundle_pack = NULL, bundle_import = NULL) {
+mock_runner <- function(key = NULL, status = NULL,
+                        config = NULL, has_git = TRUE, root = NULL,
+                        check_timeout = NULL) {
   list(
-    rebuild = mockery::mock(TRUE, cycle = TRUE),
-    queue = mockery::mock(keys, cycle = TRUE),
+    submit_task_report = mockery::mock(key, cycle = TRUE),
     status = mockery::mock(status, cycle = TRUE),
+    check_timeout = mockery::mock(check_timeout, cycle = TRUE),
     kill = mockery::mock(TRUE, cycle = TRUE),
-    git_status = mockery::mock(git_status, cycle = TRUE),
-    git_fetch = mockery::mock(git_fetch, cycle = TRUE),
-    git_pull = mockery::mock(git_pull, cycle = TRUE),
-    git_branches_no_merged =
-      mockery::mock(git_branches_no_merged, cycle = TRUE),
-    git_commits = mockery::mock(git_commits, cycle = TRUE),
     config = config,
     has_git = has_git,
-    get_reports = mockery::mock(get_reports, cycle = TRUE),
-    get_report_parameters = mockery::mock(get_report_parameters, cycle = TRUE),
-    bundle_pack = mockery::mock(bundle_pack, cycle = TRUE),
-    bundle_import = mockery::mock(bundle_import, cycle = TRUE))
+    root = root
+  )
 }
 
 
@@ -148,3 +137,19 @@ with_sqlite <- function(path, fun) {
   on.exit(DBI::dbDisconnect(con))
   fun(con)
 }
+
+## RSQLite prints "call dbDisconnect() when finished working with a connection
+## warning" once using momoised function warning_once. This is causing a
+## segfault on CI sometimes when running test. Suspect it's grabbing a
+## reference to a part of a connection object that is not always being
+## garbage collected at the right time. Manually trigger a warning before
+## running tests to avoid this.
+trigger_dbi_warning <- function() {
+  oo <- options(warn = 0)
+  on.exit(options(oo))
+  con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
+  rm(con)
+  suppressWarnings(gc())
+}
+
+trigger_dbi_warning()

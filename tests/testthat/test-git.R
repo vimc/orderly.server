@@ -77,38 +77,6 @@ test_that("detect missing ref", {
   expect_false(git_ref_exists("foo", path2))
 })
 
-test_that("run missing ref", {
-  testthat::skip_on_cran()
-  path <- orderly_prepare_orderly_git_example()
-  path1 <- path[["origin"]]
-  path2 <- path[["local"]]
-
-  sha1 <- git_ref_to_sha("HEAD", path1)
-  sha2 <- git_ref_to_sha("HEAD", path2)
-
-  runner <- orderly_runner(path2)
-
-  expect_false(git_ref_exists("unknown", path2))
-
-  expect_error(runner$queue("minimal", ref = "unknown"),
-               "Git reference 'unknown' not found")
-  expect_equal(runner$data$length(), 0)
-
-  id <- runner$queue("minimal", ref = sha1, update = TRUE)
-  expect_is(id, "character")
-  expect_equal(runner$data$length(), 1)
-
-  expect_true(git_ref_exists(sha1, path2))
-  expect_equal(git_ref_to_sha("HEAD", path2), sha2)
-
-  id <- runner$queue("minimal", ref = NULL)
-  expect_equal(git_ref_to_sha("HEAD", path2), sha2)
-
-  id <- runner$queue("minimal", ref = NULL, update = TRUE)
-  expect_equal(git_ref_to_sha("HEAD", path2), sha1)
-})
-
-
 test_that("handle failure", {
   testthat::skip_on_cran()
   path <- orderly_prepare_orderly_git_example()
@@ -343,4 +311,40 @@ test_that("get_report_parameters handles errors", {
     paste0(
       "Failed to parse yml for report 'report1' and commit 'commit1':",
       "\nParser error: "))
+})
+
+test_that("git commits won't interpret ambiguous hash as number", {
+  mock_log <- list(
+    success = TRUE,
+    code = 0,
+    output = c("1234e56,1604998406")
+  )
+  mockery::stub(git_commits, "git_run", mock_log)
+  commits <- git_commits("master")
+  expect_type(commits$id, "character")
+  expect_equal(commits$id, "1234e56")
+
+  mock_log <- list(
+    success = TRUE,
+    code = 0,
+    output = c("1234e23,1604998406",
+               "ab47854,1591708453")
+  )
+  mockery::stub(git_commits, "git_run", mock_log)
+  commits <- git_commits("master")
+  expect_type(commits$id, "character")
+})
+
+test_that("git_pull updates git", {
+  testthat::skip_on_cran()
+  path <- orderly_prepare_orderly_git_example()
+
+  commits <- git_commits("master", path[["local"]])
+  expect_equal(nrow(commits), 1)
+
+  pull <- git_pull(path[["local"]])
+  expect_true(pull$success)
+
+  commits <- git_commits("master", path[["local"]])
+  expect_equal(nrow(commits), 2)
 })

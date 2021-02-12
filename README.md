@@ -16,7 +16,6 @@ Current API:
 
 ```
 GET  /
-POST /v1/reports/rebuild/
 POST /v1/reports/:name/run/
 GET  /v1/reports/:key/status/
 GET  /v1/reports/git/status/
@@ -46,7 +45,6 @@ $ curl -s -X GET http://localhost:8321/ | jq
     "version": "0.0.0",
     "endpoints": [
       "/",
-      "/v1/reports/rebuild/",
       "/v1/reports/:name/run/",
       "/v1/reports/:key/status/",
       "/v1/reports/git/status/",
@@ -111,17 +109,6 @@ $ curl -s -X GET http://localhost:8321/v1/reports/flirtatious_komododragon/statu
 }
 ```
 
-Rebuild the orderly index:
-
-```
-$ curl -s -X POST http://localhost:8321/v1/reports/rebuild/ | jq
-{
-  "status": "success",
-  "data": null,
-  "errors": []
-}
-```
-
 ## Security
 
 This server lets people run arbitrary R code on your computer without authentication.
@@ -146,3 +133,14 @@ if (file.exists(stderr)) {
 ```
 
 See https://github.com/vimc/orderly.server/pull/30/commits/29376c630d57c0f74c5d08a127ac23116e0a9bef for an example.
+
+# Testing
+
+For local testing, bring up redis docker container via
+```
+./scripts/redis start
+```
+this can then be removed via
+```
+./scripts/redis stop
+```

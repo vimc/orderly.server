@@ -1,399 +1,457 @@
 context("orderly_runner")
 
-test_that("runner queue", {
-  testthat::skip_on_cran()
-  queue <- runner_queue$new()
-  expect_equal(queue$status(""), list(state = "unknown", id = NA_character_))
-  expect_null(queue$next_queued())
+test_that("queue works as intended", {
+  skip_if_no_redis()
 
-  key1 <- queue$insert("a")
-  expect_equal(queue$status(key1), list(state = "queued", id = NA_character_))
-  key2 <- queue$insert("b", "parameters")
-  key3 <- queue$insert("c", ref = "ref")
-  key4 <- queue$insert("d", timeout = 200)
-  key5 <- queue$insert("e", instance = "instance")
+  path <- orderly_prepare_orderly_example("demo")
+  runner <- orderly_runner_$new(path, NULL, queue_id = NULL, workers = 1,
+                                worker_timeout = 300)
+  expect_equal(runner$queue$worker_len(), 1)
 
-  d <- queue$next_queued()
-  expect_equal(d, list(key = key1, state = "queued", name = "a",
-                       parameters = NA_character_, ref = NA_character_,
-                       instance = NA_character_, id = NA_character_,
-                       timeout = 600))
+  worker_1 <- runner$queue$worker_list()[[1]]
 
-  expect_true(queue$set_state(key1, "running"))
-  expect_equal(queue$status(key1), list(state = "running", id = NA_character_))
+  expect_equal(nrow(runner$queue$worker_log_tail(worker_1)), 1)
+  expect_equal(runner$queue$worker_log_tail(worker_1, n = 3)[1, "command"],
+               "ALIVE")
+  expect_equal(runner$queue$worker_log_tail(worker_1, n = 3)[3, "message"],
+               "TIMEOUT_SET")
 
-  d <- queue$next_queued()
-  expect_equal(d, list(key = key2, state = "queued", name = "b",
-                       parameters = "parameters", ref = NA_character_,
-                       instance = NA_character_, id = NA_character_,
-                       timeout = 600))
+  expect_length(runner$queue$task_list(), 0)
 
-  expect_true(queue$set_state(key2, "running", "new_id2"))
+  ## jobs can be pushed to queue
+  job_id <- runner$submit(quote({
+    Sys.sleep(1)
+    1 + 1
+  }))
+  expect_length(runner$queue$task_list(), 1)
 
-  d <- queue$next_queued()
-  expect_equal(d, list(key = key3, state = "queued", name = "c",
-                       parameters = NA_character_, ref = "ref",
-                       instance = NA_character_, id = NA_character_,
-                       timeout = 600))
+  ## status can be retrieved
+  ## sleep to ensure job has been picked up by runner otherwise
+  ## will be pending
+  Sys.sleep(0.1)
+  status <- runner$queue$task_status(job_id)
+  expect_equivalent(status, "RUNNING")
 
-  expect_true(queue$set_state(key3, "running", "new_id3"))
+  ## After task has completed
+  Sys.sleep(1)
+  result <- runner$queue$task_wait(job_id)
+  status <- runner$queue$task_status(job_id)
+  expect_equivalent(status, "COMPLETE")
 
-  d <- queue$next_queued()
-  expect_equal(d, list(key = key4, state = "queued", name = "d",
-                       parameters = NA_character_, ref = NA_character_,
-                       instance = NA_character_, id = NA_character_,
-                       timeout = 200))
-  expect_true(queue$set_state(key4, "running", "new_id4"))
+  ## Cleanup removes workers
+  con <- runner$con
+  worker_name <- runner$queue$keys$worker_name
+  expect_equal(con$SCARD(worker_name), 1)
 
-  d <- queue$next_queued()
-  expect_equal(d, list(key = key5, state = "queued", name = "e",
-                       parameters = NA_character_, ref = NA_character_,
-                       instance = "instance", id = NA_character_,
-                       timeout = 600))
-  expect_true(queue$set_state(key5, "running", "new_id5"))
+  rm(runner)
+  gc()
 
-  expect_null(queue$next_queued())
-
-  expect_false(queue$set_state("unknown", "running", "id"))
+  expect_equal(con$SCARD(worker_name), 0)
 })
+
+
+test_that("queue_id is generated if not supplied", {
+  withr::with_envvar(
+    c("ORDERLY_SERVER_QUEUE_ID" = NA),
+    expect_match(orderly_queue_id(NULL), "^orderly.server:[[:xdigit:]]+$"))
+  withr::with_envvar(
+    c("ORDERLY_SERVER_QUEUE_ID" = "myqueue"),
+    expect_equal(orderly_queue_id(NULL), "myqueue"))
+})
+
+
+test_that("queue_id is required for workers", {
+  withr::with_envvar(
+    c("ORDERLY_SERVER_QUEUE_ID" = NA),
+    expect_error(orderly_queue_id(NULL, TRUE),
+                 "Environment variable 'ORDERLY_SERVER_QUEUE_ID' is not set"))
+})
+
+test_that("queue_id is returned if supplied", {
+  withr::with_envvar(
+    c("ORDERLY_SERVER_QUEUE_ID" = NA),
+    expect_equal(orderly_queue_id("myqueue", TRUE), "myqueue"))
+})
+
+
+test_that("test runner can start workers with timeout", {
+  skip_if_no_redis()
+  path <- orderly_prepare_orderly_example("demo")
+  runner <- orderly_runner_$new(path, NULL, queue_id = NULL, workers = 2,
+                                worker_timeout = 300)
+  timeout <- runner$queue$message_send_and_wait("TIMEOUT_GET",
+                                                runner$queue$worker_list())
+  expect_length(timeout, 2)
+  expect_equal(timeout[[1]][["timeout"]], 300.0)
+  expect_equal(timeout[[2]][["timeout"]], 300.0)
+})
+
+test_that("queue starts up normally without a timeout", {
+  skip_if_no_redis()
+  path <- orderly_prepare_orderly_example("demo")
+  runner <- orderly_runner_$new(path, NULL, queue_id = NULL, workers = 1)
+  timeout <- runner$queue$message_send_and_wait("TIMEOUT_GET",
+                                               runner$queue$worker_list(),
+                                               progress = FALSE)
+  expect_equal(timeout[[1]], c("timeout" = Inf, remaining = Inf))
+})
+
+
+test_that("runner can run a report", {
+  ## Setup dir for testing
+  skip_if_no_redis()
+  path <- orderly_prepare_orderly_example("demo")
+  dir_create(dirname(path_stderr(path, "ignore")))
+  dir_create(dirname(path_id_file(path, "ignore")))
+
+  out <- runner_run("key_id", "test_key", path, "minimal", parameters = NULL,
+                    instance = NULL, ref = NULL, has_git = FALSE)
+  expect_equal(out$report_name, "minimal")
+  expect_match(out$report_id, "^\\d{8}-\\d{6}-\\w{8}")
+
+  ## Report has been added to archive
+  report_dir <- file.path(path, "archive", "minimal", out$report_id)
+  expect_true(file.exists(report_dir))
+
+  ## Report id has been written to redis
+  con <- redux::hiredis()
+  expect_equal(con$HGET("key_id", "test_key"), out$report_id)
+
+  ## Can read log file as it has been copied to destination
+  expect_true(file.exists(file.path(report_dir, "orderly.log")))
+})
+
+
+test_that("runner can run a report with parameters", {
+  ## Setup dir for testing
+  skip_if_no_redis()
+  path <- orderly_prepare_orderly_example("demo")
+  dir_create(dirname(path_stderr(path, "ignore")))
+  dir_create(dirname(path_id_file(path, "ignore")))
+
+  out <- runner_run("key_id", "test_key", path, "other",
+                    parameters = list(nmin = 0.5), instance = NULL, ref = NULL,
+                    has_git = FALSE)
+  expect_equal(out$report_name, "other")
+  expect_match(out$report_id, "^\\d{8}-\\d{6}-\\w{8}")
+
+  ## Report has been added to archive
+  report_dir <- file.path(path, "archive", "other", out$report_id)
+  expect_true(file.exists(report_dir))
+
+  ## Report id has been written to redis
+  con <- redux::hiredis()
+  expect_equal(con$HGET("key_id", "test_key"), out$report_id)
+
+  ## Can read log file as it has been copied to destination
+  expect_true(file.exists(file.path(report_dir, "orderly.log")))
+
+  run <- readRDS(orderly_path_orderly_run_rds(
+    file.path(path, "archive", "other", out$report_id)))
+  expect_equal(run$meta$parameters, list(nmin = 0.5))
+})
+
+
+test_that("runner can return errors", {
+  ## Setup dir for testing
+  skip_if_no_redis()
+  path <- orderly_prepare_orderly_example("minimal")
+  writeLines("1 + 1", file.path(path, "src/example/script.R"))
+  dir_create(dirname(path_stderr(path, "ignore")))
+  dir_create(dirname(path_id_file(path, "ignore")))
+
+  err <- expect_error(runner_run("key_report_id", "test_key", path, "example",
+                    parameters = NULL, instance = NULL, ref = NULL,
+                    has_git = FALSE))
+
+  ## Report ID still can be retrieved
+  con <- redux::hiredis()
+  report_id <- con$HGET("key_report_id", "test_key")
+  expect_match(report_id, "^\\d{8}-\\d{6}-\\w{8}")
+
+  ## Report has been added to drafts
+  draft <- file.path(path, "draft", "example", report_id)
+  expect_true(file.exists(draft))
+
+  ## Can read log file as it has been copied to destination
+  expect_true(file.exists(file.path(draft, "orderly.log")))
+
+  ## Error from run matches formatted orderly log
+  log <- readLines(file.path(draft, "orderly.log"))
+  expect_equal(err$message, paste(log, collapse = "\n"))
+})
+
 
 test_that("run: success", {
   testthat::skip_on_cran()
   skip_on_appveyor()
   skip_on_windows()
-  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
-
+  skip_if_no_redis()
+  path <- orderly_prepare_orderly_example("demo")
   expect_false(file.exists(file.path(path, "orderly.sqlite")))
   runner <- orderly_runner(path)
   expect_true(file.exists(file.path(path, "orderly.sqlite")))
-  name <- "interactive"
-  key <- runner$queue(name)
 
-  expect_equal(runner$status(key),
-               list(key = key,
-                    status = "queued",
-                    id = NA_character_,
-                    output = list(stdout = character(), stderr = NULL)))
+  ## Run a report slow enough to reliably report back a "running" status
+  key <- runner$submit_task_report("slow1")
+  testthat::try_again(5, {
+    Sys.sleep(0.5)
+    status <- runner$status(key)
+    expect_equal(names(status), c("key", "status", "version", "output",
+                                  "queue"))
+    expect_equal(status$key, key)
+    expect_equal(status$status, "running")
+    expect_true(!is.null(status$version))
+    expect_null(status$output)
+    expect_equal(status$queue, list())
+  })
 
-  tmp <- runner$poll()
-  expect_equal(tmp, structure("create", key = key))
-  id <- wait_for_id(runner, key)
-
-  st <- runner$status(key)
-  expect_is(st$id, "character")
-  expect_equal(st$status, "running")
-
-  dat <- runner$status(key, TRUE)
-  expect_equal(names(dat$output), c("stderr", "stdout"))
-  expect_match(dat$output$stderr, paste0("\\[ id +\\]  ", id),
+  task_id <- get_task_id_key(runner, key)
+  expect_match(task_id, "^[[:xdigit:]]{32}$")
+  result <- runner$queue$task_wait(task_id)
+  report_id <- result$report_id
+  expect_match(result$report_id, "^\\d{8}-\\d{6}-\\w{8}$")
+  expect_equal(result$report_id, status$version)
+  status <- runner$status(key, output = TRUE)
+  expect_equal(status$key, key)
+  expect_equal(status$status, "success")
+  expect_equal(status$version, report_id)
+  expect_match(status$output, paste0("\\[ id +\\]  ", report_id),
                all = FALSE)
+  expect_equal(status$queue, list())
 
-  wait_for_path(file.path(path, "draft", name, id, "started"))
-  writeLines("continue", file.path(path, "draft", name, id, "resume"))
-  wait_while_running(runner)
-
-  dat2 <- runner$status(key, TRUE)
-  expect_equal(dat2$status, "success")
-
-  expect_equal(dat2$output$stdout[seq_along(dat$output$stdout)],
-               dat$output$stdout)
-  expect_equal(dat2$output$stderr[seq_along(dat$output$stderr)],
-               dat$output$stderr)
-  expect_gt(length(dat2$output$stderr), length(dat$output$stderr))
-  expect_equal(dat$output$stdout, character())
+  ## Report is in archive
+  d <- orderly::orderly_list_archive(path)
+  expect_equal(d$name, "slow1")
+  expect_equal(d$id, report_id)
 })
+
 
 test_that("run: error", {
   testthat::skip_on_cran()
   skip_on_appveyor()
   skip_on_windows()
+  skip_if_no_redis()
 
-  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
+  ## Setup report which will error
+  path <- orderly_prepare_orderly_example("minimal")
+  writeLines("1 + 1", file.path(path, "src/example/script.R"))
+
   runner <- orderly_runner(path)
-  dat <- runner_start_interactive(runner)
+  key <- runner$submit_task_report("example")
+  task_id <- get_task_id_key(runner, key)
+  expect_match(task_id, "^[[:xdigit:]]{32}$")
+  result <- runner$queue$task_wait(task_id)
 
-  writeLines("error", file.path(path, "draft", dat$name, dat$id, "resume"))
-  wait_for_process_termination(runner$process$px)
-
-  res <- runner$status(dat$key, TRUE)
-  expect_equal(res$status, "running")
-
-  expect_equal(runner$poll(), structure("finish", key = dat$key))
-  res <- runner$status(dat$key, TRUE)
-  expect_equal(res$status, "error")
+  expect_s3_class(result, "rrq_task_error")
+  expect_match(result$message,
+               "Script did not produce expected artefacts: mygraph.png")
+  status <- runner$status(key, output = TRUE)
+  expect_equal(status$key, key)
+  expect_equal(status$status, "error")
+  expect_true(any(grepl(
+    "Script did not produce expected artefacts: mygraph.png",
+    status$output)))
+  expect_equal(status$queue, list())
 })
 
 
 test_that("run report with parameters", {
   testthat::skip_on_cran()
   skip_on_windows()
+  skip_if_no_redis()
   path <- orderly_prepare_orderly_example("demo")
   runner <- orderly_runner(path)
-  pars <- '{"nmin":0.5}'
-  key <- runner$queue("other", parameters = pars)
-  runner$poll()
-  id <- wait_for_id(runner, key)
-  wait_while_running(runner)
+  key <- runner$submit_task_report("other", parameters = list(nmin = 0.5))
+  task_id <- get_task_id_key(runner, key)
+  result <- runner$queue$task_wait(task_id)
+
   d <- orderly::orderly_list_archive(path)
   expect_equal(d$name, "other")
-  expect_equal(d$id, id)
+  expect_equal(d$id, result$report_id)
 
   d <- readRDS(orderly_path_orderly_run_rds(
-    file.path(path, "archive", "other", id)))
+    file.path(path, "archive", "other", result$report_id)))
   expect_equal(d$meta$parameters, list(nmin = 0.5))
-})
-
-
-test_that("rebuild", {
-  testthat::skip_on_cran()
-  path <- orderly_prepare_orderly_example("minimal")
-  runner <- orderly_runner(path)
-
-  name <- "example"
-  id <- orderly::orderly_run(name, root = path, echo = FALSE)
-  orderly::orderly_commit(id, name, root = path)
-
-  path_db <- file.path(path, "orderly.sqlite")
-  file.remove(path_db)
-  expect_true(runner$rebuild())
-  expect_true(file.exists(path_db))
 })
 
 test_that("run in branch (local)", {
   testthat::skip_on_cran()
   skip_on_appveyor()
   skip_on_windows()
+  skip_if_no_redis()
   path <- orderly_unzip_git_demo()
   runner <- orderly_runner(path)
 
-  pars <- '{"nmin":0}'
-  key <- runner$queue("other", parameters = pars, ref = "other")
-  runner$poll()
-  id <- wait_for_id(runner, key)
-  wait_while_running(runner)
+  key <- runner$submit_task_report("other", parameters = list(nmin = 0),
+                                       ref = "other")
+  task_id <- get_task_id_key(runner, key)
+  result <- runner$queue$task_wait(task_id)
 
   d <- orderly::orderly_list_archive(path)
   expect_equal(nrow(d), 1L)
   expect_equal(d$name, "other")
-  expect_equal(d$id, id)
+  expect_equal(d$id, result$report_id)
 })
 
-test_that("fetch / detach / pull", {
+test_that("prevent ref change", {
   testthat::skip_on_cran()
-  path <- orderly_prepare_orderly_git_example()
-  path1 <- path[["origin"]]
-  path2 <- path[["local"]]
-
-  sha <- git_ref_to_sha("master", path2)
-  expect_equal(git_ref_to_sha("origin/master", path2), sha)
-
-  runner <- orderly_runner(path2)
-  res <- runner$git_fetch()
-  expect_equal(res$code, 0)
-  expect_is(res$output, "character")
-
-  sha2 <- git_ref_to_sha("HEAD", path1)
-  expect_true(sha != sha2)
-  expect_equal(git_ref_to_sha("origin/master", path2), sha2)
-  expect_equal(git_ref_to_sha("HEAD", path2), sha)
-
-  res <- runner$git_pull()
-  expect_equal(res$code, 0)
-  expect_is(res$output, "character")
-
-  expect_equal(git_ref_to_sha("origin/master", path2), sha2)
-  expect_equal(git_ref_to_sha("HEAD", path2), sha2)
-
-  res <- runner$git_status()
-  expect_equal(res$output, character(0))
-  expect_equal(res$clean, TRUE)
-  expect_equal(res$branch, "master")
-  expect_equal(res$hash, sha2)
-})
-
-test_that("prevent git change", {
-  testthat::skip_on_cran()
+  skip_if_no_redis()
   path <- orderly_unzip_git_demo()
   runner <- orderly_runner(path, FALSE)
-  expect_error(runner$queue("other", ref = "other"),
+  expect_error(runner$submit_task_report("other", ref = "other"),
                "Reference switching is disallowed in this runner")
+})
+
+test_that("status missing ID", {
+  testthat::skip_on_cran()
+  skip_on_appveyor()
+  skip_on_windows()
+  skip_if_no_redis()
+  path <- orderly_prepare_orderly_example("demo")
+  runner <- orderly_runner(path, workers = 0)
+  status <- runner$status("missing_key")
+  expect_equal(status, list(
+    key = "missing_key",
+    status = "missing",
+    version = NULL,
+    output = NULL,
+    queue = list()
+  ))
+})
+
+test_that("check_timeout kills timed out reports", {
+  testthat::skip_on_cran()
+  skip_on_appveyor()
+  skip_on_windows()
+  skip_if_no_redis()
+  path <- orderly_prepare_orderly_example("demo")
+  runner <- orderly_runner(path, workers = 2)
+
+  key1 <- runner$submit_task_report("minimal", timeout = 0)
+  key2 <- runner$submit_task_report("slow10", timeout = 0)
+  ## Sleep for a bit to allow "minimal" report to post TASK_COMPLETE message
+  Sys.sleep(3)
+  msg <- capture_messages(killed <- runner$check_timeout())
+  task2 <- get_task_id_key(runner, key2)
+  expect_equal(killed, task2)
+  expect_equal(msg, sprintf("Successfully killed '%s', exceeded timeout of 0\n",
+                            task2))
+})
+
+test_that("check_timeout doesn't kill reports with long timeout", {
+  testthat::skip_on_cran()
+  skip_on_appveyor()
+  skip_on_windows()
+  skip_if_no_redis()
+  path <- orderly_prepare_orderly_example("demo")
+  runner <- orderly_runner(path, workers = 1)
+
+  key <- runner$submit_task_report("slow10", timeout = 20)
+  id <- wait_for_id(runner, key)
+  msg <- capture_messages(killed <- runner$check_timeout())
+  expect_null(killed)
+  expect_equal(msg, character(0))
+})
+
+test_that("check_timeout returns NULL if no reports being run", {
+  testthat::skip_on_cran()
+  skip_on_appveyor()
+  skip_on_windows()
+  skip_if_no_redis()
+  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
+  runner <- orderly_runner(path)
+  msg <- capture_messages(killed <- runner$check_timeout())
+  expect_null(killed)
+  expect_equal(msg, character(0))
+})
+
+test_that("check_timeout prints message if fails to kill a report", {
+  testthat::skip_on_cran()
+  skip_on_appveyor()
+  skip_on_windows()
+  skip_if_no_redis()
+  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
+  runner <- orderly_runner(path)
+
+  ## Here I want to test the case where in between getting the logs which
+  ## say that task A can be killed the task then completing before we call
+  ## cancel, meaning that the call to cancel the task will fail. This makes
+  ## for some pretty messy setup.
+  ## Setup mock queue with realistic worker log
+  key1 <- runner$submit_task_report("interactive", timeout = 0)
+  Sys.sleep(0.5) ## Sleep to wait for runner to pick up task
+  logs <- runner$queue$worker_log_tail()
+
+  ## Create a mock queue to return our mocked log data
+  queue <- runner$queue
+  mock_queue <- list(
+    worker_log_tail = function() logs,
+    task_cancel = function(task_id) stop("Failed to cancel"),
+    ## Needed for cleanup
+    worker_stop = function(type) queue$worker_stop(type = "kill"),
+    destroy = function(delete) queue$destroy(delete = TRUE)
+  )
+  runner$queue <- mock_queue
+
+  msg <- capture_messages(killed <- runner$check_timeout())
+  expect_null(killed)
+  task_id <- get_task_id_key(runner, key1)
+  expect_equal(msg,
+               sprintf("Failed to kill '%s'\n  Failed to cancel\n", task_id))
 })
 
 test_that("Can't git change", {
   testthat::skip_on_cran()
+  skip_if_no_redis()
   path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
   runner <- orderly_runner(path)
-  expect_error(runner$queue("other", ref = "other"),
+  expect_error(runner$submit_task_report("other", ref = "other"),
                "Reference switching is disallowed in this runner")
 })
 
-
-test_that("cleanup", {
+test_that("kill - when running", {
   testthat::skip_on_cran()
-  path <- orderly_prepare_orderly_example("minimal")
-  on.exit(unlink(path, recursive = TRUE))
-
-  id <- orderly::orderly_run("example", root = path, echo = FALSE)
-  orderly::orderly_commit(id, root = path)
-
-  writeLines("1 + 1", file.path(path, "src/example/script.R"))
-  expect_error(orderly::orderly_run("example", root = path, echo = FALSE),
-               "Script did not produce")
-
-  runner <- orderly_runner(path)
-  expect_message(runner$cleanup(), "clean.+draft/example")
-  expect_silent(runner$cleanup())
-
-  expect_equal(
-    nrow(orderly::orderly_list_drafts(TRUE, root = path, include_failed = TRUE)),
-    0L)
-  expect_equal(orderly::orderly_list_archive(FALSE, root = path)$id, id)
-})
-
-
-test_that("kill", {
-  testthat::skip_on_cran()
+  skip_if_no_redis()
   skip_on_windows()
-  ## TODO: This test is fails to kill the process on CI but adding
-  ## print lines for debugging makes it pass on CI
-  ## We should fix this at some point, see VIMC-4066
-  skip_on_ci()
   path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
   runner <- orderly_runner(path)
   name <- "interactive"
-  key <- runner$queue(name)
-  runner$poll()
+  key <- runner$submit_task_report(name)
+
   id <- wait_for_id(runner, key)
   expect_true(runner$kill(key))
-  expect_error(runner$kill(key), "Can't kill")
-  expect_null(runner$process)
-  expect_equal(runner$poll(), "idle")
+  expect_error(runner$kill(key), sprintf("Failed to kill '%s'", key))
 })
 
-test_that("kill - wrong process", {
+test_that("kill - whist queued", {
   testthat::skip_on_cran()
+  skip_if_no_redis()
   skip_on_windows()
-  skip_on_appveyor()
   path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
   runner <- orderly_runner(path)
   name <- "interactive"
-  key <- runner$queue(name)
-  runner$poll()
+  key <- runner$submit_task_report(name)
   id <- wait_for_id(runner, key)
 
-  key2 <- "virtual_plant"
-  expect_error(runner$kill(key2),
-               sprintf("Can't kill '%s' - currently running '%s'", key2, key))
-  runner$kill(key)
+  key2 <- runner$submit_task_report(name)
+  expect_true(runner$kill(key))
 })
 
 test_that("kill - no process", {
   testthat::skip_on_cran()
+  skip_if_no_redis()
   path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
   runner <- orderly_runner(path)
   key <- "virtual_plant"
   expect_error(runner$kill(key),
-               "Can't kill 'virtual_plant' - not currently running a report")
+               "Failed to kill 'virtual_plant' task doesn't exist")
 })
-
-test_that("timeout", {
-  testthat::skip_on_cran()
-  skip_on_windows()
-  skip_on_appveyor()
-  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
-  runner <- orderly_runner(path)
-  name <- "interactive"
-  key <- runner$queue(name, timeout = 0)
-  runner$poll()
-  id <- wait_for_id(runner, key)
-  expect_equal(runner$poll(), structure("timeout", key = key))
-  expect_equal(runner$poll(), "idle")
-})
-
-test_that("queue_status", {
-  testthat::skip_on_cran()
-  skip_on_windows()
-  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
-  runner <- orderly_runner(path)
-
-  expect_equal(
-    runner$queue_status(NULL),
-    list(status = "idle", queue = runner_queue$new()$get_df(), current = NULL))
-
-  name <- "interactive"
-  key1 <- runner$queue(name)
-  key2 <- runner$queue(name)
-
-  expect_equal(
-    runner$queue_status(NULL),
-    list(status = "idle", queue = runner$data$get_df(), current = NULL))
-
-  runner$poll()
-  res <- runner$queue_status()
-  expect_equal(res$status, "running")
-  expect_equal(res$queue, runner$data$get_df())
-  expect_equal(nrow(res$queue), 2)
-  expect_equal(res$current$key, key1)
-  expect_equal(res$current$name, "interactive")
-  expect_is(res$current$start_at, "POSIXt")
-  expect_is(res$current$kill_at, "POSIXt")
-
-  expect_equal(res$current$elapsed + res$current$remaining, 600)
-  expect_null(res$current$output)
-
-  res <- runner$queue_status(TRUE)
-  expect_is(res$current$output$stderr, "character")
-  expect_is(res$current$output$stdout, "character")
-
-  res <- runner$queue_status(limit = 1)
-  expect_equal(nrow(res$queue), 1L)
-})
-
-
-test_that("queue status", {
-  testthat::skip_on_cran()
-  skip_on_windows()
-  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
-  runner <- orderly_runner(path)
-
-  name <- "interactive"
-  key1 <- runner$queue(name)
-  key2 <- runner$queue(name)
-  key3 <- runner$queue(name)
-
-  expect_equal(runner$status(key1)$output$stdout, character())
-  expect_equal(runner$status(key2)$output$stdout,
-               sprintf("queued:%s:%s", key1, "interactive"))
-  expect_equal(runner$status(key3)$output$stdout,
-               sprintf("queued:%s:%s", c(key1, key2), "interactive"))
-
-  tmp <- runner$poll()
-  id <- wait_for_id(runner, key1)
-
-  expect_null(runner$status(key1)$output$stdout)
-  expect_equal(runner$status(key2)$output$stdout,
-               sprintf("running:%s:%s", key1, "interactive"))
-  expect_equal(runner$status(key3)$output$stdout,
-               sprintf("%s:%s:%s", c("running", "queued"),
-                       c(key1, key2), "interactive"))
-
-  ## into the main bit of output here:
-  expect_equal(names(runner$status(key1, output = TRUE)$output),
-               c("stderr", "stdout"))
-
-  writeLines("continue", file.path(path, "draft", name, id, "resume"))
-  wait_while_running(runner)
-
-  expect_null(runner$status(key1)$output$stdout)
-  expect_equal(runner$status(key2)$output$stdout, character(0))
-  expect_equal(runner$status(key3)$output$stdout,
-               sprintf("queued:%s:%s", key2, "interactive"))
-})
-
 
 test_that("prevent git changes", {
   testthat::skip_on_cran()
   skip_on_windows()
+  skip_if_no_redis()
   path <- orderly_prepare_orderly_git_example()
 
   cfg <- list(
@@ -420,24 +478,23 @@ test_that("prevent git changes", {
     orderly_runner(path_local))
   expect_false(runner$allow_ref)
   expect_error(
-    runner$queue("example", ref = "origin/other", parameters = list(nmin = 0)),
+    runner$submit_task_report("example", ref = "origin/other",
+                              parameters = list(nmin = 0)),
     "Reference switching is disallowed in this runner")
 
   runner <- withr::with_envvar(
     c("ORDERLY_API_SERVER_IDENTITY" = "other"),
     orderly_runner(path_local))
   expect_true(runner$allow_ref)
-  r <- runner$queue("example", ref = "origin/other",
-                    parameters = list(nmin = 0))
-  expect_equal(nrow(runner$queue_status()$queue), 1L)
+  r <- runner$submit_task_report("example", ref = "origin/other",
+                                 parameters = list(nmin = 0))
 
   runner <- withr::with_envvar(
     c("ORDERLY_API_SERVER_IDENTITY" = NA_character_),
     orderly_runner(path_local))
   expect_true(runner$allow_ref)
-  r <- runner$queue("example", ref = "origin/other",
+  r <- runner$submit_task_report("example", ref = "origin/other",
                     parameters = list(nmin = 0))
-  expect_equal(nrow(runner$queue_status()$queue), 1L)
 })
 
 
@@ -467,152 +524,181 @@ test_that("allow ref logic", {
 })
 
 
-test_that("backup", {
-  testthat::skip_on_cran()
-  path <- orderly_prepare_orderly_example("minimal")
-  id <- orderly::orderly_run("example", root = path, echo = FALSE)
-  orderly::orderly_commit(id, root = path)
-
-  db_orig <- file.path(path, "orderly.sqlite")
-  dat_orig <- with_sqlite(db_orig, function(con)
-    DBI::dbReadTable(con, "report_version"))
-
-  runner <- orderly_runner(path, backup_period = 1)
-
-  Sys.sleep(1.2)
-  runner$poll()
-
-  db_backup <- orderly_path_db_backup(path, "orderly.sqlite")
-  expect_true(file.exists(db_backup))
-
-  dat_backup <- with_sqlite(db_backup, function(con)
-    DBI::dbReadTable(con, "report_version"))
-
-  expect_equal(dat_orig, dat_backup)
-})
-
 test_that("runner can set instance", {
   testthat::skip_on_cran()
   skip_on_windows()
+  skip_if_no_redis()
+
   path <- orderly_prepare_orderly_example("demo")
+  config <- file.path(path, "orderly_config.yml")
+  p <- yaml::read_yaml(config)
+  p$database$source$instances <- list(
+    default = list(
+      dbname = "source.sqlite"
+    ),
+    alternative = list(
+      dbname = "alternative.sqlite"
+    )
+  )
+  yaml::write_yaml(p, config)
 
-  mock_process <- mockery::mock(TRUE, cycle = TRUE)
+  file.copy(file.path(path, "source.sqlite"),
+            file.path(path, "alternative.sqlite"))
 
-  ## procesx::process$new() calls internal function process_initialize
-  with_mock("processx:::process_initialize" = mock_process, {
-    runner <- orderly_runner(path)
-    key <- runner$queue("minimal", instance = "test")
-    runner$poll()
-  })
+  con <- orderly::orderly_db("source", root = path, instance = "alternative")
+  DBI::dbExecute(con$source, "DELETE from thing where id > 10")
+  DBI::dbDisconnect(con$source)
 
-  mockery::expect_called(mock_process, 1)
-  ## args are passed to process_initialize in 4th position
-  process_args <- mockery::mock_args(mock_process)[[1]][[4]]
-  instance_arg <- process_args == "--instance"
-  expect_equal(sum(instance_arg), 1)
-  expect_equal(process_args[which(instance_arg) + 1], "test")
-
-  ## Instance arg not passed when instance = NULL
-  with_mock("processx:::process_initialize" = mock_process, {
-    runner <- orderly_runner(path)
-    key <- runner$queue("minimal")
-    runner$poll()
-  })
-
-  mockery::expect_called(mock_process, 2)
-  ## args are passed to process_initialize in 4th position
-  process_args <- mockery::mock_args(mock_process)[[2]][[4]]
-  expect_false("--instance" %in% process_args)
-})
-
-test_that("can get git branch info from runner", {
-    testthat::skip_on_cran()
-    path <- orderly_prepare_orderly_git_example()
-    runner <- orderly_runner(path[["local"]])
-
-    branches <- runner$git_branches_no_merged()
-    expect_equal(nrow(branches), 1)
-    expect_equal(branches$name, "other")
-    expect_equal(colnames(branches),
-                 c("name", "last_commit", "last_commit_age"))
-    expect_match(branches$last_commit,
-                 "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$")
-    expect_type(branches$last_commit_age, "integer")
-
-    branches <- runner$git_branches_no_merged(include_master = TRUE)
-    expect_equal(nrow(branches), 2)
-    expect_equal(branches$name, c("master", "other"))
-    expect_equal(colnames(branches),
-                 c("name", "last_commit", "last_commit_age"))
-})
-
-test_that("can get git commit info from runner", {
-  testthat::skip_on_cran()
-  path <- orderly_prepare_orderly_git_example()
-  runner <- orderly_runner(path[["local"]])
-
-  commits <- runner$git_commits("master")
-  expect_equal(nrow(commits), 1)
-  expect_equal(colnames(commits), c("id", "date_time", "age"))
-  expect_type(commits$id, "character")
-  expect_match(commits$date_time,
-               "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$")
-  expect_type(commits$age, "integer")
-
-  other_commits <- runner$git_commits("other")
-  expect_equal(nrow(other_commits), 1)
-  expect_equal(colnames(other_commits), c("id", "date_time", "age"))
-  expect_type(other_commits$id, "character")
-  expect_match(other_commits$date_time,
-               "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$")
-  ## Commit from master branch is not returned
-  expect_true(commits$id != other_commits$id)
-})
-
-test_that("can get report list from runner", {
-  testthat::skip_on_cran()
-  path <- orderly_prepare_orderly_git_example()
-  runner <- orderly_runner(path[["local"]])
-
-  commits <- runner$git_commits("master")
-  expect_equal(nrow(commits), 1)
-  reports <- runner$get_reports("master", commits$id)
-  expect_equal(reports, c("global", "minimal"))
-
-  other_commits <- git_commits("other", path[["local"]])
-  expect_equal(nrow(other_commits), 1)
-  other_reports <- get_reports("other", other_commits$id, path[["local"]])
-  expect_equal(other_reports, "other")
-})
-
-test_that("can get parameters list from runner", {
-  testthat::skip_on_cran()
-  path <- orderly_prepare_orderly_git_example()
-  runner <- orderly_runner(path[["local"]])
-
-  commits <- runner$git_commits("master")
-  expect_equal(nrow(commits), 1)
-  params <- runner$get_report_parameters("minimal", commits$id)
-  expect_equal(params, NULL)
-
-  other_commits <- git_commits("other", path[["local"]])
-  expect_equal(nrow(other_commits), 1)
-  params <- runner$get_report_parameters("other", other_commits$id)
-  expect_equal(params, list(nmin = NULL))
-})
-
-
-test_that("Can create and run bundles from runner", {
-  testthat::skip_on_cran()
-  skip_on_windows()
-  path <- orderly_prepare_orderly_example("demo")
   runner <- orderly_runner(path)
-  pars <- '{"nmin":0.5}'
-  path_pack <- runner$bundle_pack("other", parameters = list(nmin = 0.5))
-  expect_true(file.exists(path_pack))
-  res <- orderly::orderly_bundle_run(path_pack, echo = FALSE)
-  runner$bundle_import(res$path)
-  expect_equal(
-    orderly::orderly_list_archive(path),
-    data.frame(name = "other", id = res$id, stringsAsFactors = FALSE))
+  key <- runner$submit_task_report("minimal", instance = "alternative")
+  task_id <- get_task_id_key(runner, key)
+
+  result <- runner$queue$task_wait(task_id)
+  report_id <- result$report_id
+  expect_match(result$report_id, "^\\d{8}-\\d{6}-\\w{8}")
+  status <- runner$status(key, output = TRUE)
+  expect_equal(status$key, key)
+  expect_equal(status$status, "success")
+  expect_equal(status$version, report_id)
+  ## Data in alternative db extracts only 10 rows
+  expect_match(status$output, "\\[ data +\\]  source => dat: 10 x 2",
+               all = FALSE)
+  expect_equal(status$queue, list())
+
+
+  key_default <- runner$submit_task_report("minimal")
+  task_id_default <- get_task_id_key(runner, key_default)
+
+  result_default <- runner$queue$task_wait(task_id_default)
+  report_id_default <- result_default$report_id
+  expect_match(result_default$report_id, "^\\d{8}-\\d{6}-\\w{8}")
+  status_default <- runner$status(key_default, output = TRUE)
+  expect_equal(status_default$key, key_default)
+  expect_equal(status_default$status, "success")
+  expect_equal(status_default$version, report_id_default)
+  ## Data in default db extracts 20 rows
+  expect_match(status_default$output, "\\[ data +\\]  source => dat: 20 x 2",
+               all = FALSE)
+  expect_equal(status_default$queue, list())
+})
+
+test_that("status: clears task_timeout from redis", {
+  testthat::skip_on_cran()
+  skip_on_appveyor()
+  skip_on_windows()
+  skip_if_no_redis()
+  path <- orderly_prepare_orderly_example("demo")
+  expect_false(file.exists(file.path(path, "orderly.sqlite")))
+  runner <- orderly_runner(path)
+  expect_true(file.exists(file.path(path, "orderly.sqlite")))
+
+  ## Run a report slow enough to reliably report back a "running" status
+  key <- runner$submit_task_report("slow1", timeout = 10)
+  task_id <- runner$con$HGET(runner$keys$key_task_id, key)
+  testthat::try_again(5, {
+    Sys.sleep(0.5)
+    status <- runner$status(key)
+    expect_equal(status$key, key)
+    expect_equal(status$status, "running")
+    ## timeout stored in redis
+    task_id <- get_task_id_key(runner, key)
+    expect_equal(runner$con$HGET(runner$keys$task_timeout, task_id), "10")
+  })
+
+  result <- runner$queue$task_wait(task_id)
+  status <- runner$status(key, output = TRUE)
+  expect_equal(status$key, key)
+  expect_equal(status$status, "success")
+  ## timeout has been removed from redis
+  expect_null(runner$con$HGET(runner$keys$task_timeout, task_id))
+})
+
+test_that("runner run passes git args to orderly CLI", {
+  skip_if_no_redis()
+  mock_processx <- mockery::mock(list(
+    is_alive = function() FALSE,
+    get_exit_status = function() 0L), cycle = TRUE)
+  mockery::stub(runner_run, "processx::process$new", mock_processx)
+  run <- runner_run("key_report_id", "key", ".", "test", NULL, NULL,
+                    ref = NULL, has_git = TRUE)
+  mockery::expect_called(mock_processx, 1)
+  args <- mockery::mock_args(mock_processx)[[1]][[2]]
+  expect_equal(args, c("--root", ".", "run", "test", "--print-log",
+                       "--id-file", "./runner/id/key.id_file",
+                       "--pull"))
+
+  mockery::stub(runner_run, "processx::process$new", mock_processx)
+  run <- runner_run("key_report_id", "key", ".", "test", NULL, NULL,
+                    ref = "123", has_git = TRUE)
+  mockery::expect_called(mock_processx, 2)
+  args <- mockery::mock_args(mock_processx)[[2]][[2]]
+  expect_equal(args, c("--root", ".", "run", "test", "--print-log",
+                       "--id-file", "./runner/id/key.id_file",
+                       "--fetch", "--ref", "123"))
+
+  mockery::stub(runner_run, "processx::process$new", mock_processx)
+  run <- runner_run("key_report_id", "key", ".", "test", NULL, NULL,
+                    ref = NULL, has_git = FALSE)
+  mockery::expect_called(mock_processx, 3)
+  args <- mockery::mock_args(mock_processx)[[3]][[2]]
+  expect_equal(args, c("--root", ".", "run", "test", "--print-log",
+                       "--id-file", "./runner/id/key.id_file"))
+})
+
+test_that("status: lists queued tasks", {
+  testthat::skip_on_cran()
+  skip_on_appveyor()
+  skip_on_windows()
+  skip_if_no_redis()
+  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
+  runner <- orderly_runner(path)
+
+  key1 <- runner$submit_task_report("interactive")
+  key2 <- runner$submit_task_report("interactive")
+  key3 <- runner$submit_task_report("interactive")
+  key4 <- runner$submit_task_report("interactive")
+  testthat::try_again(5, {
+    Sys.sleep(0.5)
+    key4_status <- runner$status(key4)
+    expect_equal(key4_status$key, key4)
+    expect_equal(key4_status$status, "queued")
+  })
+  ## Key1 is running, key 2, 3 & 4 are queued
+  expect_equal(runner$status(key1)$status, "running")
+  key2_status <- runner$status(key2)
+  expect_equal(key2_status$status, "queued")
+  expect_equal(key2_status$queue, list(
+    list(
+      key = key1,
+      status = "running",
+      name = "interactive"
+    )
+  ))
+  key3_status <- runner$status(key3)
+  expect_equal(key3_status$status, "queued")
+  expect_equal(key3_status$queue, list(
+    list(
+      key = key1,
+      status = "running",
+      name = "interactive"
+    ),
+    list(
+      key = key2,
+      status = "queued",
+      name = "interactive")))
+  expect_equal(key4_status$queue, list(
+    list(
+      key = key1,
+      status = "running",
+      name = "interactive"
+    ),
+    list(
+      key = key2,
+      status = "queued",
+      name = "interactive"
+    ),
+    list(
+      key = key3,
+      status = "queued",
+      name = "interactive")))
 })

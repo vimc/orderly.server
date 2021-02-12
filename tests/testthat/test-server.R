@@ -37,18 +37,19 @@ test_that("Wait for a go signal if provided", {
 
 
 test_that("run server", {
-  api <- list(run = mockery::mock())
-  runner <- mock_runner()
-
-  mock_wait_for_go_signal <- mockery::mock()
-  mock_orderly_runner <- mockery::mock(runner)
-  mock_build_api <- mockery::mock(api)
-
   path <- tempfile()
   port <- 1234
   host <- "127.0.0.1"
   allow_ref <- FALSE
   go_signal <- "go"
+
+  api <- list(run = mockery::mock())
+  runner <- mock_runner(root = path)
+
+  mock_wait_for_go_signal <- mockery::mock()
+  mock_orderly_runner <- mockery::mock(runner)
+  mock_build_api <- mockery::mock(api)
+
 
   msg <- capture_messages(
     with_mock(
@@ -68,12 +69,12 @@ test_that("run server", {
   mockery::expect_called(mock_orderly_runner, 1)
   expect_equal(
     mockery::mock_args(mock_orderly_runner)[[1]],
-    list(path, allow_ref))
+    list(path, allow_ref, queue_id = NULL, workers = 1))
 
   mockery::expect_called(mock_build_api, 1)
   expect_equal(
     mockery::mock_args(mock_build_api)[[1]],
-    list(runner))
+    list(runner, path, 600, rate_limit = 120))
 
   mockery::expect_called(api$run, 1)
   expect_equal(

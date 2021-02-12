@@ -12,18 +12,6 @@ test_that("root", {
 })
 
 
-test_that("rebuild", {
-  server <- start_test_server()
-  on.exit(server$stop())
-
-  r <- httr::POST(server$api_url("/v1/reports/rebuild/"))
-  dat <- content(r)
-  expect_equal(dat$status, "success")
-  expect_null(dat$data)
-  expect_equal(dat$errors, NULL)
-})
-
-
 test_that("error handling: invalid method", {
   server <- start_test_server()
   on.exit(server$stop())
@@ -86,15 +74,15 @@ test_that("run", {
   st <- content(r)
   expect_equal(st$status, "success")
   cmp <- list(key = dat$data$key, status = "success",
-              version = id, output = NULL)
+              version = id, output = NULL, queue = list())
   expect_equal(st$data, cmp)
 
   r <- httr::GET(server$api_url(dat$data$path), query = list(output = TRUE))
   expect_equal(httr::status_code(r), 200)
   st <- content(r)
   expect_equal(st$status, "success")
-  expect_is(st$data$output$stderr, "character")
-  expect_equal(length(st$data$output$stdout), 0)
+  expect_match(st$data$output, paste0("\\[ id +\\]  ", id),
+               all = FALSE)
 })
 
 
@@ -108,37 +96,35 @@ test_that("git", {
   r <- content(httr::GET(server$api_url("/v1/reports/git/status/")))
   expect_equal(r$data$hash, sha[["local"]])
 
-  r <- httr::POST(server$api_url("/v1/reports/minimal/run/?update=false"))
-  dat <- content(r)
-  wait_for_finished(dat$data$key, server)
-  expect_equal(git_ref_to_sha("HEAD", path[["local"]]),
+  expect_equal(git_ref_to_sha("HEAD", root = path[["local"]]),
                sha[["local"]])
+  expect_false(git_ref_exists(sha[["origin"]], path[["local"]]))
 
+  ## When ref is specified git is fetched but HEAD not advanced
   r <- httr::POST(server$api_url("/v1/reports/minimal/run/"),
-                  query = list(update = "false", ref = sha[["origin"]]))
+                  query = list(ref = sha[["origin"]]))
   dat <- content(r)
   wait_for_finished(dat$data$key, server)
 
   r <- httr::GET(server$api_url(dat$data$path))
   st <- content(r)
   expect_equal(httr::status_code(r), 200)
-  expect_equal(st$data$status, "error")
+  expect_equal(st$data$status, "success")
 
   expect_equal(git_ref_to_sha("HEAD", root = path[["local"]]),
                sha[["local"]])
-  expect_false(git_ref_exists(sha[["origin"]], path[["local"]]))
+  expect_true(git_ref_exists(sha[["origin"]], path[["local"]]))
 
-  r <- httr::POST(server$api_url("/v1/reports/minimal/run/"),
-                  query = list(ref = sha[["origin"]]))
+  ## When ref is NULL HEAD is advanced
+  r <- httr::POST(server$api_url("/v1/reports/minimal/run/"))
   dat <- content(r)
   wait_for_finished(dat$data$key, server)
 
   res <- content(httr::GET(server$api_url(content(r)$data$path),
                            query = list(output = TRUE)))
-  expect_match(res$data$output$stderr, sha[["origin"]], all = FALSE)
 
   expect_equal(git_ref_to_sha("HEAD", root = path[["local"]]),
-               sha[["local"]])
+               sha[["origin"]])
   expect_true(git_ref_exists(sha[["origin"]], path[["local"]]))
 })
 
@@ -151,8 +137,15 @@ test_that("git error returns valid json", {
   git_run(c("remote", "remove", "origin"), root = path[["local"]])
 
   r <- content(httr::GET(server$api_url("/v1/reports/git/status/")))
-  res <- httr::POST(server$api_url("/v1/reports/git/fetch/"))
+  res <- httr::POST(server$api_url("/v1/reports/git/pull/"))
   json <- httr::content(res, "text", encoding = "UTF-8")
+  content <- httr::content(res)
+
+  expect_equal(content$status, "failure")
+  expect_length(content$errors, 1)
+  expect_valid_json(json, system.file("schema/response-failure.schema.json",
+                                      package = "pkgapi",
+                                      mustWork = TRUE))
 })
 
 
@@ -161,8 +154,7 @@ test_that("run report honours timeout", {
   on.exit(server$stop())
 
   p <- file.path(server$path, "src", "count", "parameters.json")
-  writeLines(jsonlite::toJSON(list(time = 2, poll = 0.1), auto_unbox = TRUE),
-             p)
+  writeLines(jsonlite::toJSON(list(time = 3, poll = 0.1), auto_unbox = TRUE), p)
 
   r <- httr::POST(server$api_url("/v1/reports/count/run/"),
                   query = list(timeout = 1))
@@ -172,7 +164,7 @@ test_that("run report honours timeout", {
   r <- httr::GET(server$api_url(dat$data$path))
   expect_equal(httr::status_code(r), 200)
   st <- content(r)
-  expect_equal(st$data$status, "killed")
+  expect_equal(st$data$status, "interrupted")
 
   r <- httr::POST(server$api_url("/v1/reports/count/run/"),
                   query = list(timeout = 60))
@@ -187,7 +179,8 @@ test_that("run report honours timeout", {
 
 
 test_that("pass parameters", {
-  server <- start_test_server()
+  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
+  server <- start_test_server(path)
   on.exit(server$stop())
 
   r <- httr::POST(server$api_url("/v1/reports/count_param/run/"),
@@ -212,9 +205,9 @@ test_that("pass parameters", {
   st <- content(r)
   expect_equal(st$status, "success")
   expect_is(st$data, "list")
-  id <- st$data$version
+  version <- st$data$version
 
-  dest <- file.path(server$path, "archive", "count_param", id)
+  dest <- file.path(server$path, "archive", "count_param", version)
   wait_for_path(dest)
   wait_for_finished(dat$data$key, server)
 
@@ -223,19 +216,19 @@ test_that("pass parameters", {
   st <- content(r)
   expect_equal(st$status, "success")
   cmp <- list(key = dat$data$key, status = "success",
-              version = id, output = NULL)
+              version = version, output = NULL, queue = list())
   expect_equal(st$data, cmp)
 
   r <- httr::GET(server$api_url(dat$data$path), query = list(output = TRUE))
   expect_equal(httr::status_code(r), 200)
   st <- content(r)
   expect_equal(st$status, "success")
-  expect_is(st$data$output$stderr, "character")
-  expect_equal(length(st$data$output$stdout), 0)
+  expect_match(st$data$output, paste0("\\[ id +\\]  ", version),
+               all = FALSE)
 
   ## parameters make it across
-  expect_match(st$data$output$stderr, "time: 1", fixed = TRUE, all = FALSE)
-  expect_match(st$data$output$stderr, "poll: 0.1", fixed = TRUE, all = FALSE)
+  expect_match(st$data$output, "time: 1", fixed = TRUE, all = FALSE)
+  expect_match(st$data$output, "poll: 0.1", fixed = TRUE, all = FALSE)
 })
 
 test_that("run-metadata", {

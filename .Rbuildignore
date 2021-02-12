@@ -14,3 +14,4 @@
 ^\.lintr$
 ^\.hadolint\.yaml$
 ^\.github$
+^scripts$

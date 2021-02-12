@@ -99,14 +99,6 @@ first_dirname <- function(paths) {
   vcapply(paths, first_dir, USE.NAMES = FALSE)
 }
 
-path_runner_log <- function(path) {
-  file.path(path, "runner", "log")
-}
-
-path_runner_id <- function(path) {
-  file.path(path, "runner", "id")
-}
-
 path_draft <- function(root) {
   file.path(root, "draft")
 }
@@ -129,4 +121,21 @@ file_copy <- function(..., overwrite = TRUE) {
     stop("Error copying files")
   }
   ok
+}
+
+dir_create <- function(path) {
+  dir.create(path, FALSE, TRUE)
+}
+
+# Run a command with a rate limiter - this is used to throttle the
+# timeout check.
+throttle <- function(f, every) {
+  last <- Sys.time() - every
+  function() {
+    now <- Sys.time()
+    if (now - every > last) {
+      last <<- now
+      f()
+    }
+  }
 }

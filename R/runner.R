@@ -14,62 +14,134 @@
 ##'   \code{ORDERLY_API_SERVER_IDENTITY} environment variable and the
 ##'   \code{master_only} setting of the relevant server block.
 ##'
-##' @param backup_period Period (in seconds) between DB backups.  This
-##'   is a guide only as backups cannot happen while a task is running
-##'   - if more than this many seconds have elapsed when the runner is
-##'   in its idle loop a backup of the db will be performed.  This
-##'   creates a copy of orderly's destination database in
-##'   \code{backup/db} with the same filename as the destination
-##'   database, even if that database typically lives outside of the
-##'   orderly tree.  In case of corruption of the database, this
-##'   backup can be manually moved into place.  This is only needed if
-##'   you are storing information alongside the core orderly tables
-##'   (as done by OrderlyWeb).
+##' @param queue_id ID of an existing queue to connect to, creates a new one
+##'   if NULL
+##'
+##' @param workers Number of workers to spawn
 ##'
 ##' @export
 ##' @return A runner object, with methods designed for internal use only.
 ##' @examples
-##'
-##' path <- orderly::orderly_example("demo")
-##' runner <- orderly.server::orderly_runner(path)
-orderly_runner <- function(path, allow_ref = NULL, backup_period = 600) {
-  orderly_runner_$new(path, allow_ref, backup_period)
+##' available <- redux::redis_available()
+##' if (available) {
+##'   path <- orderly::orderly_example("demo")
+##'   runner <- orderly.server::orderly_runner(path, workers = 0)
+##' }
+orderly_runner <- function(path, allow_ref = NULL, queue_id = NULL,
+                           workers = 1) {
+  orderly_runner_$new(path, allow_ref, queue_id, workers)
 }
 
-## nolint start
-RUNNER_QUEUED  <- "queued"
-RUNNER_RUNNING <- "running"
-RUNNER_SUCCESS <- "success"
-RUNNER_ERROR   <- "error"
-RUNNER_KILLED  <- "killed"
-RUNNER_UNKNOWN <- "unknown"
-## nolint end
+runner_run <- function(key_report_id, key, root, name, parameters, instance,
+                       ref, has_git, poll = 0.1) {
+  con <- redux::hiredis()
+  bin <- tempfile()
+  dir.create(bin)
+  orderly_bin <- write_script(
+    bin,
+    readLines(system.file("script", package = "orderly", mustWork = TRUE)),
+    versioned = TRUE)
+  id_file <- path_id_file(root, key)
+  if (!is.null(parameters)) {
+    parameters <- sprintf("%s=%s", names(parameters),
+                          vcapply(parameters, format))
+  }
+  git_args <- NULL
+  if (has_git) {
+    if (is.null(ref)) {
+      git_args <- "--pull"
+    } else {
+      git_args <- c("--fetch", "--ref", ref)
+    }
+  }
+  args <- c("--root", root,
+            "run", name, "--print-log", "--id-file", id_file,
+            git_args,
+            if (!is.null(instance)) c("--instance", instance),
+            parameters)
+  log_err <- path_stderr(root, key)
+  ## We don't need to capture stdout as orderly CLI interleaves stdout
+  ## stderr for us
+  px <- processx::process$new(orderly_bin, args,
+                              stdout = NULL, stderr = log_err)
+  ## Might be worth killing px on function exit
+  id <- NA_character_
+  while (px$is_alive()) {
+    if (is.na(id)) {
+      if (file.exists(id_file)) {
+        id <- readlines_if_exists(id_file, NA_character_)
+        con$HSET(key_report_id, key, id)
+      }
+    }
+    Sys.sleep(poll)
+  }
 
-## TODO: through here we need to wrap some calls up in success/fail so
-## that I can get that pushed back through the API.
+  ok <- px$get_exit_status() == 0L
+  base <- if (ok) path_archive else path_draft
+  p <- file.path(base(root), name, id)
+  if (file.exists(p)) {
+    file_copy(log_err, file.path(p, "orderly.log"))
+  }
+
+  if (!ok) {
+    stop(paste(readLines(log_err), collapse = "\n"))
+  }
+
+  list(
+    report_name = name,
+    report_id = id
+  )
+}
+
+#' Object for managing running jobs on the redis queue
+#'
+#' @keywords internal
 orderly_runner_ <- R6::R6Class(
   "orderly_runner",
   cloneable = FALSE,
   public = list(
-    path = NULL,
+    #' @field root Orderly root
+    root = NULL,
+    #' @field config Orderly config
     config = NULL,
+    #' @field allow_ref Allow git to change branch/ref for run
     allow_ref = FALSE,
-
-    orderly_bin = NULL,
-    process = NULL,
-
-    path_log = NULL,
-    path_id = NULL,
-
-    data = NULL,
+    #' @field has_git Is git available on the runner
     has_git = NULL,
 
-    backup = NULL,
+    #' @field con Redis connection
+    con = NULL,
+    #' @field cleanup_on_exit If TRUE workers are killed on exit
+    cleanup_on_exit = NULL,
+    #' @field queue The redis queue
+    queue = NULL,
+    #' @field queue_id Redis queue ID
+    queue_id = NULL,
+    #' @field keys Set of redis keys for mapping between key, report_id
+    #' and task_id
+    keys = NULL,
 
-    initialize = function(path, allow_ref, backup_period) {
-      self$path <- path
-      self$config <- orderly::orderly_config(path)
-      self$has_git <- runner_has_git(path)
+    #' @description
+    #' Create object, read configuration and setup redis connection.
+    #'
+    #' @param root Orderly root.
+    #' @param allow_ref Allow git to change branches/ref for run.  If not
+    #'   given, then we will look to see if the orderly configuration
+    #'   disallows branch changes (based on the
+    #'   \code{ORDERLY_API_SERVER_IDENTITY} environment variable and the
+    #'   \code{master_only} setting of the relevant server block.
+    #' @param queue_id ID of an existing queue to connect to, creates a new one
+    #'   if NULL.
+    #' @param workers Number of workers to spawn.
+    #' @param cleanup_on_exit If TRUE workers are killed on exit.
+    #' @param worker_timeout How long worker should live for before it is
+    #' killed. Expect this is only finite during local testing.
+    initialize = function(root, allow_ref = NULL, queue_id,
+                          workers, cleanup_on_exit = workers > 0,
+                          worker_timeout = Inf) {
+      self$config <- orderly::orderly_config(root)
+      self$root <- self$config$root
+      self$has_git <- runner_has_git(self$root)
       if (!self$has_git) {
         message("Not enabling git features as this is not version controlled")
       }
@@ -79,373 +151,267 @@ orderly_runner_ <- R6::R6Class(
         message("Disallowing reference switching in runner")
       }
 
-      do_backup <- protect(function() orderly:::orderly_backup(self$config)) # nolint
-      self$backup <- periodic(do_backup, backup_period)
-
-      bin <- tempfile()
-      dir.create(bin)
-      self$orderly_bin <- write_script(
-        bin,
-        readLines(system.file("script", package = "orderly", mustWork = TRUE)),
-        versioned = TRUE)
-
       ## This ensures that the index will be present, which will be
       ## useful if something else wants to access the database!
       DBI::dbDisconnect(orderly::orderly_db("destination", self$config, FALSE))
 
-      self$data <- runner_queue$new()
+      ## Create directories for storing logs and id files
+      dir_create(dirname(path_stderr(self$root, "ignore")))
+      dir_create(dirname(path_id_file(self$root, "ignore")))
 
-      self$path_log <- path_runner_log(path)
-      self$path_id <- path_runner_id(path)
-      dir.create(self$path_log, FALSE, TRUE)
-      dir.create(self$path_id, FALSE, TRUE)
+      ## Create queue
+      self$cleanup_on_exit <- cleanup_on_exit
+      message(sprintf("Connecting to redis at %s", redux::redis_config()$url))
+      self$con <- redux::hiredis()
+      message("Starting queue")
+      self$queue_id <- orderly_queue_id(queue_id)
+      self$queue <- rrq::rrq_controller(self$queue_id, self$con)
+      self$queue$worker_config_save("localhost", heartbeat_period = 3)
+      self$start_workers(workers, worker_timeout)
+      self$keys <- orderly_key(self$queue$queue_id)
     },
 
-    queue = function(name, parameters = NULL, ref = NULL, instance = NULL,
-                     update = FALSE, timeout = 600) {
+    #' @description
+    #' Start n workers for this queue and optionally set a timeout.
+    #'
+    #' @param workers Number of workers to spawn.
+    #' @param timeout How long worker should live for before it is
+    #' killed. Expect this is only finite during local testing.
+    #'
+    #' @return TRUE, called for side effects.
+    start_workers = function(workers, timeout) {
+      if (workers > 0L) {
+        ids <- rrq::worker_spawn(self$queue, workers)
+        if (is.finite(timeout) && timeout > 0) {
+          self$queue$message_send_and_wait("TIMEOUT_SET", timeout, ids)
+        }
+      }
+      invisible(TRUE)
+    },
+
+    #' @description
+    #' Queue a job to run an orderly report.
+    #'
+    #' @param name Name of report to be queued.
+    #' @param parameters List of parameters to pass to report.
+    #' @param ref The git sha to run the report.
+    #' @param instance The db instance for the report to pull data from.
+    #' @param poll How frequently to poll for the report ID being available.
+    #' @param timeout Timeout for the report run default 3 hours.
+    #'
+    #' @return The key for the job, note this is not the task id. The task id
+    #' can be retrieved from redis using the key.
+    submit_task_report = function(name, parameters = NULL, ref = NULL,
+                                  instance = NULL, poll = 0.1,
+                                  timeout = 60 * 60 * 3) {
       if (!self$allow_ref && !is.null(ref)) {
         stop("Reference switching is disallowed in this runner",
              call. = FALSE)
       }
-      if (update && self$has_git) {
-        if (is.null(ref)) {
-          self$git_pull()
-        } else {
-          self$git_fetch()
-        }
-      }
-      if (!is.null(ref)) {
-        ## Lock down the reference at this point in time (so that
-        ## subsequent builds will not affect where we find the source).
-        ref <- git_ref_to_sha(ref, self$path, TRUE)
-      }
-      assert_scalar_numeric(timeout)
-      key <- self$data$insert(name, parameters, ref, instance, timeout)
-      orderly::orderly_log("queue", sprintf("%s (%s)", key, name))
+
+      root <- self$root
+      key <- ids::adjective_animal()
+      key_report_id <- self$keys$key_report_id
+      has_git <- self$has_git
+      task_id <- self$submit(quote(
+        orderly.server:::runner_run(key_report_id, key, root, name,   # nolint
+                                    parameters, instance, ref, has_git,
+                                    poll = poll)))
+      self$con$HSET(self$keys$key_task_id, key, task_id)
+      self$con$HSET(self$keys$task_id_key, task_id, key)
+      self$con$HSET(self$keys$task_timeout, task_id, timeout)
       key
     },
 
+    #' @description
+    #' Submit an arbitrary job on the queue
+    #'
+    #' @param job A quoted R expression.
+    #' @param environment Environment to run the expression in.
+    #'
+    #' @return Task id
+    submit = function(job, environment = parent.frame()) {
+       self$queue$enqueue_(job, environment)
+    },
+
+    #' @description
+    #' Get the status of a job
+    #'
+    #' @param key The job key.
+    #' @param output If TRUE include the output from job running.
+    #'
+    #' @return List containing the key, status, report_id (if available),
+    #' output and the position of the job in the queue.
     status = function(key, output = FALSE) {
-      out <- NULL
-      if (identical(key, self$process$key)) {
-        state <- RUNNER_RUNNING
-        id <- readlines_if_exists(self$process$id_file, NA_character_)
+      task_id <- self$con$HGET(self$keys$key_task_id, key)
+      if (is.null(task_id)) {
+        return(list(
+          key = key,
+          status = "missing",
+          version = NULL,
+          output = NULL,
+          queue = list()
+        ))
+      }
+      out_status <- private$task_status(task_id)
+      if (out_status == "queued") {
+        queued <- self$get_preceeding_tasks(key)
       } else {
-        d <- self$data$status(key)
-        state <- d$state
-        id <- d$id
+        queued <- list()
       }
-      ## TODO: This should move into a separate field but that
-      ## requires getting changes through the reporting api.  We'll do
-      ## that in a second pass and move the data from here to that
-      ## field.
-      if (state == "queued") {
-        queue <- self$data$get()
-        i <- (queue[, "state"] %in% c(RUNNER_QUEUED, RUNNER_RUNNING)) &
-          seq_len(nrow(queue)) < which(queue[, "key"] == key)
-        stdout <- paste(queue[i, "state"], queue[i, "key"], queue[i, "name"],
-                        sep = ":")
-        out <- list(stdout = stdout, stderr = NULL)
-      } else if (output) {
-        out <- self$.read_logs(key)
-      }
-      list(key = key, status = state, id = id, output = out)
-    },
-
-    queue_status = function(output = FALSE, limit = 50) {
-      queue <- tail(self$data$get_df(), limit)
-      if (is.null(self$process)) {
-        status <-  "idle"
-        current <- NULL
+      report_id <- self$con$HGET(self$keys$key_report_id, key)
+      if (output) {
+        out <- readlines_if_exists(path_stderr(self$root, key), NULL)
       } else {
-        status <- "running"
-
-        current <- self$process[c("key", "name", "start_at", "kill_at")]
-        now <- Sys.time()
-        current$elapsed <- as.numeric(now - current$start_at, "secs")
-        current$remaining <- as.numeric(current$kill_at - now, "secs")
-        if (output) {
-          current$output <- self$.read_logs(current$key)
-        }
+        out <- NULL
       }
-      list(status = status, queue = queue, current = current)
+
+      ## Clear up task_timeout key if task has completed i.e. if the task is
+      ## not queued or running
+      running_status <- c("queued", "running")
+      if (!(out_status %in% running_status)) {
+        self$con$HDEL(self$keys$task_timeout, task_id)
+      }
+
+      list(
+        key = key,
+        status = out_status,
+        version = report_id,
+        output = out,
+        queue = queued
+      )
     },
 
-    rebuild = function() {
-      orderly::orderly_rebuild(self$config, FALSE, FALSE)
+    #' @description
+    #' Get the running and queued tasks in front of key in the queue
+    #'
+    #' @param key The job key.
+    #'
+    #' @return List containing the key, status and report name of any
+    #' running tasks and any queued tasks in front of key in the queue.
+    get_preceeding_tasks = function(key) {
+      get_task_details <- function(task_id) {
+        key <- self$con$HGET(self$keys$task_id_key, task_id)
+        task_data <- self$queue$task_data(task_id)
+        list(
+          key = key,
+          status = private$task_status(task_id),
+          name = task_data$objects$name
+        )
+      }
+      task_id <- self$con$HGET(self$keys$key_task_id, key)
+      running <- self$queue$worker_task_id()
+      running_details <- lapply(unname(running), get_task_details)
+      queued_tasks <- self$queue$task_preceeding(task_id)
+      queued_details <- lapply(queued_tasks, get_task_details)
+      c(running_details, queued_details)
     },
 
+    #' @description
+    #' Check if any running tasks have passed their timeouts. This is run
+    #' by the API on a preroute - we check for timeouts everytime someone
+    #' interacts with the API. Not intended to be run directly.
+    #'
+    #' @return List of killed reports.
+    check_timeout = function() {
+      logs <- self$queue$worker_log_tail()
+      ## Incomplete tasks are those where latest log is a START message
+      incomplete <- logs[logs$command == "TASK_START", ]
+      if (nrow(incomplete) == 0) {
+        return(invisible(NULL))
+      }
+      incomplete$timeout <- redux::from_redis_hash(
+        self$con, self$keys$task_timeout, incomplete$message, f = as.numeric)
+      now <- as.numeric(Sys.time())
+      to_kill <- incomplete[incomplete$time + incomplete$timeout < now, ]
+
+      kill_task <- function(task_id, timeout) {
+        tryCatch({
+          self$queue$task_cancel(task_id)
+          message(sprintf("Successfully killed '%s', exceeded timeout of %s",
+                          task_id, timeout))
+          task_id
+        }, error = function(e) {
+          message(sprintf("Failed to kill '%s'\n  %s", task_id, e$message))
+          NA_character_
+        })
+      }
+
+      ## log message contains the task_id
+      killed <- Map(kill_task, to_kill$message, to_kill$timeout)
+      invisible(unname(unlist(killed[!is.na(killed)])))
+    },
+
+    #' @description
+    #' Kill a job
+    #'
+    #' @param key The job key.
     kill = function(key) {
-      current <- self$process$key
-      if (identical(key, current)) {
-        self$.kill_current()
-      } else if (is.null(current)) {
-        stop(sprintf("Can't kill '%s' - not currently running a report", key))
-      } else {
-        stop(sprintf("Can't kill '%s' - currently running '%s'", key, current))
+      task_id <- self$con$HGET(self$keys$key_task_id, key)
+      if (is.null(task_id)) {
+        pkgapi::pkgapi_stop(
+          sprintf("Failed to kill '%s' task doesn't exist", key))
       }
-    },
-
-    git_status = function() {
-      ret <- git_status(self$path)
-      ret$branch <- git_branch_name(self$path)
-      ret$hash <- git_ref_to_sha("HEAD", self$path)
-      ret
-    },
-
-    git_fetch = function() {
-      res <- git_fetch(self$path)
-      if (length(res$output) > 0L) {
-        orderly::orderly_log("fetch", res$output)
-      }
-      invisible(res)
-    },
-
-    git_pull = function() {
-      res <- git_pull(self$path)
-      if (length(res$output) > 0L) {
-        orderly::orderly_log("pull", res$output)
-      }
-      invisible(res)
-    },
-
-    git_branches_no_merged = function(include_master = FALSE) {
-      git_branches_no_merged(self$path, include_master)
-    },
-
-    git_commits = function(branch) {
-      git_commits(branch, self$path)
-    },
-
-    get_reports = function(branch, commit) {
-      get_reports(branch, commit, self$path)
-    },
-
-    get_report_parameters = function(report, commit) {
-      get_report_parameters(report, commit, self$path)
-    },
-
-    cleanup = function(name = NULL, draft = TRUE, data = TRUE,
-                       failed_only = FALSE) {
-      orderly::orderly_cleanup(name = name, root = self$config, draft = draft,
-                               data = data, failed_only = failed_only)
-    },
-
-    bundle_pack = function(name, parameters = NULL, instance = NULL) {
-      res <- orderly::orderly_bundle_pack(tempfile(), name, parameters,
-                                          root = self$config,
-                                          instance = instance)
-      res$path
-    },
-
-    bundle_import = function(path) {
-      orderly::orderly_bundle_import(path, root = self$config)
-    },
-
-    poll = function() {
-      key <- self$process$key
-      if (!is.null(self$process)) {
-        if (self$process$px$is_alive()) {
-          if (Sys.time() > self$process$kill_at) {
-            self$.kill_current()
-            ret <- "timeout"
-          } else {
-            ret <- "running"
-          }
-        } else {
-          self$.cleanup()
-          ret <- "finish"
+      tryCatch(
+        self$queue$task_cancel(task_id),
+        error = function(e) {
+          pkgapi::pkgapi_stop(
+            sprintf("Failed to kill '%s'\n  %s", key, e$message))
         }
-      } else if (self$.run_next()) {
-        ret <- "create"
-        key <- self$process$key
-      } else {
-        ret <- "idle"
-      }
-      self$backup()
-      attr(ret, "key") <- key
-      ret
+      )
+      invisible(TRUE)
     },
 
-    .cleanup = function(state = NULL) {
-      ok <- self$process$px$get_exit_status() == 0L
-      key <- self$process$key
-      if (is.null(state)) {
-        state <- if (ok) RUNNER_SUCCESS else RUNNER_ERROR
-      }
-      ## First, ensure that things are going to be sensibly set even
-      ## if we fail:
-      process <- self$process
-      self$process <- NULL
-      process$px <- NULL
+    #' @description
+    #' Destroy the queue. Not expected to be called directly, used in tests.
+    destroy = function() {
+      self$queue$destroy(delete = TRUE)
+    },
 
-      ## Force cleanup of the process so that the I/O completes
-      gc()
-
-      orderly::orderly_log(state, sprintf("%s (%s)", process$key, process$name))
-
-      if (file.exists(process$id_file)) {
-        id <- readLines(process$id_file)
-        base <- if (state == RUNNER_SUCCESS) path_archive else path_draft
-        p <- file.path(base(self$path), process$name, id)
-        if (file.exists(p)) {
-          file_copy(process$stderr, file.path(p, "orderly.log"))
-          ## This should be empty if the redirection works as expected:
-          file_copy(process$stdout, file.path(p, "orderly.log.stdout"))
-          if (file.size(process$stdout) == 0L) {
-            file.remove(file.path(p, "orderly.log.stdout"))
-          }
+    #' @description
+    #' Cleanup workers and destroy the queue. Not expected to be called
+    #' directly, gets registered as finaliser of the object.
+    cleanup = function() {
+      if (self$cleanup_on_exit && !is.null(self$con)) {
+        if (interactive()) {
+          message("Stopping workers") # nocov
         }
+        self$queue$worker_stop(type = "kill")
+        self$destroy()
       }
-
-      self$data$set_state(key, state, id)
-    },
-
-    .kill_current = function() {
-      p <- self$process
-      orderly::orderly_log("kill", p$key)
-      ret <- p$px$kill()
-      self$.cleanup(RUNNER_KILLED)
-      ret
-    },
-
-    .read_logs = function(key) {
-      list(stderr = readlines_if_exists(path_stderr(self$path_log, key)),
-           stdout = readlines_if_exists(path_stdout(self$path_log, key)))
-    },
-
-    .run_next = function() {
-      dat <- self$data$next_queued()
-      if (is.null(dat)) {
-        return(FALSE)
-      }
-      key <- dat$key
-      orderly::orderly_log("run", sprintf("%s (%s)", key, dat$name))
-      self$data$set_state(key, RUNNER_RUNNING)
-      id_file <- file.path(self$path_id, key)
-      if (is.na(dat$parameters)) {
-        parameters <- NULL
-      } else {
-        ## In the current system, these come through as json, but we
-        ## might want to tweak this.  I need to follow this back
-        ## through orderly.server next
-        p <- jsonlite::fromJSON(dat$parameters, FALSE)
-        parameters <- sprintf("%s=%s", names(p), vcapply(p, format))
-      }
-      args <- c("--root", self$path,
-                "run", dat$name, "--print-log", "--id-file", id_file,
-                if (!is.na(dat$ref)) c("--ref", dat$ref),
-                if (!is.na(dat$instance)) c("--instance", dat$instance),
-                parameters)
-
-      log_out <- path_stdout(self$path_log, key)
-      log_err <- path_stderr(self$path_log, key)
-      px <- processx::process$new(self$orderly_bin, args,
-                                  stdout = log_out, stderr = log_err)
-      start_at <- Sys.time()
-      self$process <- list(px = px,
-                           key = key,
-                           name = dat$name,
-                           start_at = start_at,
-                           kill_at = start_at + dat$timeout,
-                           id_file = id_file,
-                           stdout = log_out,
-                           stderr = log_err)
-      TRUE
     }
-  ))
-
-path_stderr <- function(path, key) {
-  file.path(path, paste0(key, ".stderr"))
-}
-path_stdout <- function(path, key) {
-  file.path(path, paste0(key, ".stdout"))
-}
-
-
-runner_queue <- R6::R6Class(
-  "runner_queue",
-  private = list(
-    data = NULL
   ),
-  public = list(
-    initialize = function() {
-      cols <- c("key", "state", "name", "parameters", "ref", "instance", "id",
-                "timeout")
-      private$data <-
-        matrix(character(0), 0, length(cols), dimnames = list(NULL, cols))
+
+  private = list(
+    finalize = function() {
+      self$cleanup()
     },
 
-    get = function() {
-      private$data
-    },
-
-    get_df = function() {
-      ret <- as.data.frame(private$data, stringsAsFactors = FALSE)
-      ret$timeout <- as.numeric(ret$timeout)
-      ret
-    },
-
-    length = function() {
-      sum(private$data[, "state"] == RUNNER_QUEUED)
-    },
-
-    insert = function(name, parameters = NULL, ref = NULL, instance = NULL,
-                      timeout = 600) {
-      existing <- private$data[, "key"]
-      repeat {
-        key <- ids::adjective_animal()
-        if (!(key %in% existing)) {
-          break
-        }
-      }
-      new <- private$data[NA_integer_, , drop = TRUE]
-      new[["key"]] <- key
-      new[["name"]] <- name
-      new[["state"]] <- RUNNER_QUEUED
-      new[["parameters"]] <- parameters %||% NA_character_
-      new[["ref"]] <- ref %||% NA_character_
-      new[["instance"]] <- instance %||% NA_character_
-      new[["timeout"]] <- timeout
-      private$data <- rbind(private$data, new, deparse.level = 0)
-      key
-    },
-
-    next_queued = function() {
-      i <- private$data[, "state"] == RUNNER_QUEUED
-      if (any(i)) {
-        i <- which(i)[[1L]]
-        ret <- as.list(private$data[i, ])
-        ret$timeout <- as.numeric(ret$timeout)
-        ret
-      } else {
-        NULL
-      }
-    },
-
-    status = function(key) {
-      d <- private$data[private$data[, "key"] == key, , drop = FALSE]
-      if (nrow(d) == 0L) {
-        list(state = RUNNER_UNKNOWN, id = NA_character_)
-      } else {
-        d <- d[1L, ]
-        list(state = d[["state"]], id = d[["id"]])
-      }
-    },
-
-    set_state = function(key, state, id = NULL) {
-      i <- private$data[, "key"] == key
-      if (any(i)) {
-        private$data[i, "state"] <- state
-        if (!is.null(id)) {
-          private$data[i, "id"] <- id
-        }
-        TRUE
-      } else {
-        FALSE
-      }
+    task_status = function(task_id) {
+      status <- unname(self$queue$task_status(task_id))
+      switch(status,
+             "PENDING" = "queued",
+             "COMPLETE" = "success",
+             tolower(status)
+      )
     }
-  ))
+  )
+)
+
+
+orderly_queue_id <- function(queue_id, worker = FALSE) {
+  if (!is.null(queue_id)) {
+    return(queue_id)
+  }
+  id <- Sys.getenv("ORDERLY_SERVER_QUEUE_ID", "")
+  if (!nzchar(id)) {
+    if (worker) {
+      stop("Environment variable 'ORDERLY_SERVER_QUEUE_ID' is not set")
+    }
+    id <- sprintf("orderly.server:%s", ids::random_id())
+  }
+  id
+}
 
 
 runner_allow_ref <- function(has_git, allow_ref, config) {
@@ -465,4 +431,22 @@ runner_allow_ref <- function(has_git, allow_ref, config) {
 
 runner_has_git <- function(path) {
   nzchar(Sys.which("git")) && file.exists(file.path(path, ".git"))
+}
+
+
+path_stderr <- function(root, key) {
+  file.path(root, "runner/log", paste0(key, ".stderr"))
+}
+
+
+path_id_file <- function(root, key) {
+  file.path(root, "runner/id", paste0(key, ".id_file"))
+}
+
+
+orderly_key <- function(base) {
+  list(key_task_id = sprintf("%s:orderly.server:key_task_id", base),
+       task_id_key = sprintf("%s:orderly.server:task_id_key", base),
+       task_timeout = sprintf("%s:orderly.server:task_timeout", base),
+       key_report_id = sprintf("%s:orderly.server:key_report_id", base))
 }
