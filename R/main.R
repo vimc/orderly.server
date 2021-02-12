@@ -37,7 +37,7 @@ main_worker_args <- function(args = commandArgs(TRUE)) {
 orderly_worker [options] [<queue_id>]
 
 Options:
-  --go-signal=PATH  Absolute path for go signal"
+  --go-signal=PATH  Path for go signal"
   dat <- docopt_parse(usage, args)
   list(queue_id = dat[["queue_id"]],
        go_signal = dat[["go_signal"]])
