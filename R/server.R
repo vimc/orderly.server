@@ -51,7 +51,7 @@ wait_for_go_signal <- function(path, go_signal) {
   if (is.null(go_signal)) {
     return(invisible())
   }
-  if (!grepl("^(/|[A-Z][a-z]:)", go_signal)) {
+  if (!grepl("^(/|[A-Z][a-z]:)", go_signal) && !is.null(path)) {
     go_signal <- file.path(path, go_signal)
   }
   message(sprintf("Waiting for go signal at '%s'", go_signal))

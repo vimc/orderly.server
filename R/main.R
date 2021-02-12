@@ -34,15 +34,19 @@ Options:
 
 main_worker_args <- function(args = commandArgs(TRUE)) {
   usage <- "Usage:
-orderly_worker [<queue_id>]"
+orderly_worker [options] [<queue_id>]
+
+Options:
+  --go-signal=PATH  Absolute path for go signal"
   dat <- docopt_parse(usage, args)
-  list(queue_id = dat$queue_id)
+  list(queue_id = dat[["queue_id"]],
+       go_signal = dat[["go_signal"]])
 }
 
 main_worker <- function(args = commandArgs(TRUE)) {
   # nocov start
   args <- main_worker_args(args)
-  ## Go signal wait here
+  wait_for_go_signal(path, args$go_signal)
   rrq::rrq_worker(orderly_queue_id(args$queue_id, TRUE),
                   heartbeat_period = 10)
   # nocov end
