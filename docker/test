@@ -38,7 +38,8 @@ docker run --rm -d --network=$NAME_NETWORK \
 docker run --rm -d --network=$NAME_NETWORK \
     -e REDIS_URL=redis://redis:6379 \
     --mount type=bind,src=$PACKAGE_ROOT/orderly-demo,dst=/demo \
-    --name $NAME_WORKER $TAG_WORKER_SHA
+    --entrypoint /usr/local/bin/orderly_worker \
+    --name $NAME_WORKER $TAG_SHA
 
 ## Sleep first here as otherwise receive an error
 ## curl: (56) Recv failure: Connection reset by peer
