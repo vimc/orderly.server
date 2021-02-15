@@ -92,3 +92,22 @@ test_that("copy failure", {
                "Error copying files")
   expect_equal(readLines(path2), "b")
 })
+
+test_that("readlines_if_exists", {
+  t <- tempfile()
+  writeLines("sample text", t)
+  expect_equal(readlines_if_exists(t), "sample text")
+  test <- readlines_if_exists("missing/file", "it is missing")
+  expect_equal(test, "it is missing")
+})
+
+test_that("throttle does not call functions very often", {
+  f <- mockery::mock(1, 2)
+  g <- throttle(f, 0.5)
+  expect_equal(g(), 1)
+  expect_null(g())
+  mockery::expect_called(f, 1)
+  Sys.sleep(0.6)
+  expect_equal(g(), 2)
+  mockery::expect_called(f, 2)
+})

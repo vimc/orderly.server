@@ -20,8 +20,3 @@ assert_scalar_character <- function(x, name = deparse(substitute(x))) {
   assert_scalar(x, name)
   assert_character(x, name)
 }
-
-assert_scalar_numeric <- function(x, name = deparse(substitute(x))) {
-  assert_scalar(x, name)
-  assert_numeric(x, name)
-}

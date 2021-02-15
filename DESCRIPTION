@@ -1,27 +1,32 @@
 Package: orderly.server
 Title: Serve Orderly
-Version: 0.2.8
+Version: 0.3.1
 Description: Run orderly reports as a server.
 License: MIT + file LICENSE
 Author: Rich FitzJohn
 Maintainer: Rich FitzJohn <rich.fitzjohn@gmail.com>
+Additional_repositories: https://mrc-ide.github.io/drat
 Imports:
-    R6,
-    jsonlite,
     DBI,
+    R6,
     docopt (>= 0.7.1),
+    heartbeatr,
+    ids,
+    jsonlite,
     orderly (>= 1.2.18),
     pkgapi (>= 0.0.7),
     processx,
+    redux,
+    rrq (>= 0.2.12),
     webutils,
     yaml,
     zip
 Suggests:
+    callr,
     httr,
     jsonvalidate (>= 1.2.2),
     mockery,
     RSQLite,
-    sys,
     testthat,
     withr
 RoxygenNote: 7.1.1

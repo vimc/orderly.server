@@ -4,7 +4,17 @@
 \alias{server}
 \title{Run orderly server}
 \usage{
-server(path, port, host = "0.0.0.0", allow_ref = TRUE, go_signal = NULL)
+server(
+  path,
+  port,
+  host = "0.0.0.0",
+  allow_ref = TRUE,
+  go_signal = NULL,
+  queue_id = NULL,
+  workers = 1,
+  backup_period = 600,
+  timeout_rate_limit = 2 * 60
+)
 }
 \arguments{
 \item{path}{Path to serve}
@@ -23,6 +33,17 @@ ready at the same time as the process container (and indeed
 won't be if the container is used to provision the volume).
 During this period the server will not respond to any http
 requests.}
+
+\item{queue_id}{ID of an existing queue to connect to, creates a new one
+if NULL}
+
+\item{workers}{Number of workers to spawn}
+
+\item{backup_period}{How frequently should backup be run, if NULL backup
+is skipped}
+
+\item{timeout_rate_limit}{How frequently should the API check for timeouts
+default 2 mins.}
 }
 \description{
 Run orderly server

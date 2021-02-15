@@ -3,7 +3,7 @@ linters: with_defaults(
     object_usage_linter = NULL,
     todo_comment_linter = NULL,
     cyclocomp_linter = NULL,
-    # NOTE: We still use quite a few internal orderly things
-    default_undesirable_operators = NULL
+    default_undesirable_operators = NULL,
+    undesirable_function_linter = NULL
     )
 exclusions: list("tests/testthat.R")
