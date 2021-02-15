@@ -46,8 +46,8 @@ api_log_end <- function(data, req, res, value) {
       identical(res$headers[["Content-Type"]], "application/json")) {
     dat <- jsonlite::parse_json(res$body)
     for (e in dat$errors) {
-      if (!is.null(e$key)) {
-        api_log(sprintf("error-key: %s", e$key))
+      if(!is.null(e$error)) {
+        api_log(sprintf("error: %s", e$error))
         api_log(sprintf("error-detail: %s", e$detail))
         if (!is.null(e$trace)) {
           trace <- sub("\n", " ", vcapply(e$trace, identity))

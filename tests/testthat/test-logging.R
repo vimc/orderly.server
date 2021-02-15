@@ -33,3 +33,21 @@ test_that("log end includes code and response size for binary data", {
     "\\[.+\\] `--> 200 \\(256 bytes\\)")
   expect_identical(res, value)
 })
+
+test_that("log end handles errors", {
+  input_res <- list(status = 400, body = '{"errors":[
+                                            {"error": "RUN_FAILED",
+                                            "detail": "Failed to run report",
+                                            "trace": ["the", "trace"]}
+                                           ]}',
+              headers = list("Content-Type" = "application/json"))
+  value <- "something"
+  messages <- testthat::capture_messages(
+    res <- api_log_end(NULL, NULL, input_res, value))
+  expect_identical(res, value)
+  expect_match(messages[[1]], "\\[.+\\] error: RUN_FAILED")
+  expect_match(messages[[2]], "\\[.+\\] error-detail: Failed to run report")
+  expect_match(messages[[3]],
+               "\\[.+\\] error-trace: the\\n\\[.+\\] error-trace: trace")
+  expect_match(messages[[4]], "\\[.+\\] `--> 400 \\(274 bytes\\)")
+})
