@@ -14,6 +14,7 @@ build_api <- function(runner, path, backup_period = NULL, rate_limit = 2 * 60) {
   api$handle(endpoint_run(runner))
   api$handle(endpoint_status(runner))
   api$handle(endpoint_kill(runner))
+  api$handle(endpoint_graph(runner))
   api$handle(endpoint_run_metadata(runner))
   api$setDocs(FALSE)
   backup <- orderly_backup(runner$config, backup_period)
@@ -314,6 +315,29 @@ endpoint_kill <- function(runner) {
     pkgapi::pkgapi_state(runner = runner),
     returning = returning_json("Kill.schema"))
 }
+
+target_graph <- function(runner, name, id = NULL, root = NULL,
+                       locate = NULL, direction = NULL, propagate = NULL,
+                       max_depth = NULL, show_all = NULL, use = NULL) {
+  res <- runner$graph(name, id, root, locate, direction, propagate, max_depth, show_all, use)
+  res
+}
+
+endpoint_graph <- function(runner) {
+  pkgapi::pkgapi_endpoint$new(
+    "GET", "/v1/reports/<name>/graph/", target_graph,
+    pkgapi::pkgapi_input_query(id= "string",
+                               root = "string",
+                               locate = "boolean",
+                               direction = "string",
+                               propagate = "boolean",
+                               max_depth = "integer",
+                               show_all = "boolean",
+                               user = "string"),
+    pkgapi::pkgapi_state(runner = runner),
+    returning = returning_json("Graph.schema"))
+}
+
 
 target_run_metadata <- function(runner) {
   changelog <- runner$config$changelog$id[runner$config$changelog$public]
