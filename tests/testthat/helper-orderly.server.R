@@ -122,6 +122,7 @@ orderly_prepare_orderly_example <- orderly:::prepare_orderly_example
 orderly_unzip_git_demo <- orderly:::unzip_git_demo
 orderly_path_db_backup <- orderly:::path_db_backup
 orderly_path_orderly_run_rds <- orderly:::path_orderly_run_rds
+orderly_git_checkout_branch <- orderly:::git_checkout_branch
 ## nolint end
 
 version_info <- function() {

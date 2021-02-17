@@ -310,6 +310,16 @@ test_that("can get available reports", {
   expect_equal(other_reports$data, "other")
 })
 
+test_that("can get available reports without parameters", {
+  path <- orderly_prepare_orderly_git_example()
+  server <- start_test_server(path[["local"]])
+  on.exit(server$stop())
+
+  reports <- content(httr::GET(server$api_url("/reports/source")))
+  expect_equal(reports$status, "success")
+  expect_equal(reports$data, c("global", "minimal"))
+})
+
 test_that("can get report parameters", {
   path <- orderly_prepare_orderly_git_example()
   server <- start_test_server(path[["local"]])
@@ -331,6 +341,21 @@ test_that("can get report parameters", {
   other_params <- content(httr::GET(server$api_url(url)))
   expect_equal(other_params$status, "success")
   expect_equal(other_params$data, list(
+    list(name = "nmin",
+         value = NULL)
+  ))
+})
+
+test_that("can get report parameters with no commit ID", {
+  path <- orderly_prepare_orderly_git_example()
+  ## Checkout a branch with a report with parameters
+  orderly_git_checkout_branch("other", root = path[["local"]])
+  server <- start_test_server(path[["local"]])
+  on.exit(server$stop())
+
+  params <- content(httr::GET(server$api_url("/reports/other/parameters")))
+  expect_equal(params$status, "success")
+  expect_equal(params$data, list(
     list(name = "nmin",
          value = NULL)
   ))

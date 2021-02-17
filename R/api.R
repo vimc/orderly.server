@@ -176,7 +176,7 @@ endpoint_available_reports <- function(path) {
   )
 }
 
-target_report_parameters <- function(path, report_id, commit) {
+target_report_parameters <- function(path, report_id, commit = NULL) {
   tryCatch(
     parameters <- get_report_parameters(report_id, commit, path),
     error = function(e) {
@@ -186,7 +186,7 @@ target_report_parameters <- function(path, report_id, commit) {
   if (!is.null(parameters) && is.null(names(parameters))) {
     pkgapi::pkgapi_stop(
       sprintf("Failed to parse parameters for report '%s' and commit '%s'",
-              report_id, commit),
+              report_id, commit %||% "none"),
       "INVALID_FORMAT")
   }
   lapply(names(parameters), function(param) {
@@ -265,7 +265,7 @@ target_run <- function(runner, name, parameters = NULL, ref = NULL,
        path = scalar(sprintf("/v1/reports/%s/status/", key)))
 }
 
-target_available_reports <- function(path, branch, commit) {
+target_available_reports <- function(path, branch = NULL, commit = NULL) {
   get_reports(branch, commit, path)
 }
 
