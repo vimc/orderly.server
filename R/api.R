@@ -14,7 +14,7 @@ build_api <- function(runner, path, backup_period = NULL, rate_limit = 2 * 60) {
   api$handle(endpoint_run(runner))
   api$handle(endpoint_status(runner))
   api$handle(endpoint_kill(runner))
-  api$handle(endpoint_graph(runner))
+  api$handle(endpoint_dependencies(path))
   api$handle(endpoint_run_metadata(runner))
   api$setDocs(FALSE)
   backup <- orderly_backup(runner$config, backup_period)
@@ -69,7 +69,6 @@ api_log <- function(msg) {
 schema_root <- function() {
   system.file("schema", package = "orderly.server", mustWork = TRUE)
 }
-
 
 returning_json <- function(schema) {
   pkgapi::pkgapi_returning_json(schema, schema_root())
@@ -316,26 +315,22 @@ endpoint_kill <- function(runner) {
     returning = returning_json("Kill.schema"))
 }
 
-target_graph <- function(runner, name, id = NULL, root = NULL,
-                       locate = NULL, direction = NULL, propagate = NULL,
-                       max_depth = NULL, show_all = NULL, use = NULL) {
-  res <- runner$graph(name, id, root, locate, direction, propagate, max_depth, show_all, use)
-  res
+target_dependencies <- function(path, name, id = NULL, direction = NULL, propagate = NULL,
+                       max_depth = 100, show_all = NULL, use = NULL) {
+  get_dependencies(path, name, id, direction, propagate, max_depth, show_all, use)
 }
 
-endpoint_graph <- function(runner) {
+endpoint_dependencies <- function(path) {
   pkgapi::pkgapi_endpoint$new(
-    "GET", "/v1/reports/<name>/graph/", target_graph,
+    "GET", "/v1/reports/<name>/dependencies/", target_dependencies,
     pkgapi::pkgapi_input_query(id= "string",
-                               root = "string",
-                               locate = "boolean",
                                direction = "string",
-                               propagate = "boolean",
+                               propagate = "logical",
                                max_depth = "integer",
-                               show_all = "boolean",
-                               user = "string"),
-    pkgapi::pkgapi_state(runner = runner),
-    returning = returning_json("Graph.schema"))
+                               show_all = "logical",
+                               use = "string"),
+    pkgapi::pkgapi_state(path = path),
+    returning = returning_json("Dependencies.schema"))
 }
 
 
