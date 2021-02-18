@@ -1,0 +1,18 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "RunRequest",
+    "type": "object",
+    "properties": {
+        "params": { "$ref": "Parameters.schema.json" },
+        "changelog": {
+            "type": "object",
+            "properties": {
+                "message": { "type": "string" },
+                "type": { "type": "string" }
+            },
+            "required": [ "message", "type" ],
+            "additionalProperties": false
+        }
+    },
+    "additionalProperties": false
+}

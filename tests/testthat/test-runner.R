@@ -105,7 +105,8 @@ test_that("runner can run a report", {
   dir_create(dirname(path_id_file(path, "ignore")))
 
   out <- runner_run("key_id", "test_key", path, "minimal", parameters = NULL,
-                    instance = NULL, ref = NULL, has_git = FALSE)
+                    instance = NULL, ref = NULL, has_git = FALSE,
+                    changelog = NULL)
   expect_equal(out$report_name, "minimal")
   expect_match(out$report_id, "^\\d{8}-\\d{6}-\\w{8}")
 
@@ -131,7 +132,7 @@ test_that("runner can run a report with parameters", {
 
   out <- runner_run("key_id", "test_key", path, "other",
                     parameters = list(nmin = 0.5), instance = NULL, ref = NULL,
-                    has_git = FALSE)
+                    has_git = FALSE, changelog = NULL)
   expect_equal(out$report_name, "other")
   expect_match(out$report_id, "^\\d{8}-\\d{6}-\\w{8}")
 
@@ -162,7 +163,7 @@ test_that("runner can return errors", {
 
   err <- expect_error(runner_run("key_report_id", "test_key", path, "example",
                     parameters = NULL, instance = NULL, ref = NULL,
-                    has_git = FALSE))
+                    has_git = FALSE, changelog = NULL))
 
   ## Report ID still can be retrieved
   con <- redux::hiredis()
@@ -620,7 +621,7 @@ test_that("runner run passes git args to orderly CLI", {
     get_exit_status = function() 0L), cycle = TRUE)
   mockery::stub(runner_run, "processx::process$new", mock_processx)
   run <- runner_run("key_report_id", "key", ".", "test", NULL, NULL,
-                    ref = NULL, has_git = TRUE)
+                    ref = NULL, has_git = TRUE, changelog = FALSE)
   mockery::expect_called(mock_processx, 1)
   args <- mockery::mock_args(mock_processx)[[1]][[2]]
   expect_equal(args, c("--root", ".", "run", "test", "--print-log",
@@ -644,6 +645,23 @@ test_that("runner run passes git args to orderly CLI", {
   expect_equal(args, c("--root", ".", "run", "test", "--print-log",
                        "--id-file", "./runner/id/key.id_file"))
 })
+
+
+test_that("runner run passes changelog to orderly CLI", {
+  skip_if_no_redis()
+  mock_processx <- mockery::mock(list(
+    is_alive = function() FALSE,
+    get_exit_status = function() 0L), cycle = TRUE)
+  mockery::stub(runner_run, "processx::process$new", mock_processx)
+  run <- runner_run("key_report_id", "key", ".", "test", NULL, NULL,
+                    ref = NULL, has_git = TRUE, changelog = "[tst] message")
+  mockery::expect_called(mock_processx, 1)
+  args <- mockery::mock_args(mock_processx)[[1]][[2]]
+  expect_equal(args, c("--root", ".", "run", "test", "--print-log",
+                       "--id-file", "./runner/id/key.id_file",
+                       "--pull", "--message", "[tst] message"))
+})
+
 
 test_that("status: lists queued tasks", {
   testthat::skip_on_cran()
@@ -701,4 +719,36 @@ test_that("status: lists queued tasks", {
       key = key3,
       status = "queued",
       name = "interactive")))
+})
+
+test_that("run: changelog", {
+  testthat::skip_on_cran()
+  skip_on_appveyor()
+  skip_on_windows()
+  skip_if_no_redis()
+  path <- orderly_prepare_orderly_example("demo")
+  runner <- orderly_runner(path)
+
+  ## Run a report slow enough to reliably report back a "running" status
+  key <- runner$submit_task_report("minimal", changelog = "[internal] test")
+
+  task_id <- get_task_id_key(runner, key)
+  expect_match(task_id, "^[[:xdigit:]]{32}$")
+  result <- runner$queue$task_wait(task_id)
+  report_id <- result$report_id
+  status <- runner$status(key, output = TRUE)
+  expect_equal(status$key, key)
+  expect_equal(status$status, "success")
+  expect_equal(status$version, report_id)
+
+  ## Report is in archive
+  d <- orderly::orderly_list_archive(path)
+  expect_equal(d$name, "minimal")
+  expect_equal(d$id, report_id)
+
+  d <- readRDS(orderly_path_orderly_run_rds(
+    file.path(path, "archive", "minimal", report_id)))
+  expect_true(!is.null(d$meta$changelog))
+  expect_equal(d$meta$changelog$label, "internal")
+  expect_equal(d$meta$changelog$value, "test")
 })
