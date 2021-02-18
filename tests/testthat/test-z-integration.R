@@ -232,10 +232,11 @@ test_that("run: pass parameters", {
 })
 
 test_that("run: changelog", {
-  server <- start_test_server()
+  path <- orderly_prepare_orderly_example("demo")
+  server <- start_test_server(path)
   on.exit(server$stop())
 
-  r <- httr::POST(server$api_url("/v1/reports/example/run/"),
+  r <- httr::POST(server$api_url("/v1/reports/minimal/run/"),
                   query = list(timeout = 60),
                   body = list(changelog = list(type = "internal",
                                                message = "test")),
@@ -247,7 +248,7 @@ test_that("run: changelog", {
   expect_is(dat$data, "list")
 
   expect_true(setequal(names(dat$data), c("name", "key", "path")))
-  expect_equal(dat$data$name, "example")
+  expect_equal(dat$data$name, "minimal")
 
   ## Then we ask about status
   wait_for_version(dat$data$key, server)
@@ -258,12 +259,12 @@ test_that("run: changelog", {
   expect_is(st$data, "list")
   version <- st$data$version
 
-  dest <- file.path(server$path, "archive", "example", version)
+  dest <- file.path(server$path, "archive", "minimal", version)
   wait_for_path(dest)
   wait_for_finished(dat$data$key, server)
 
   d <- readRDS(orderly_path_orderly_run_rds(
-    file.path(server$path, "archive", "example", version)))
+    file.path(server$path, "archive", "minimal", version)))
   expect_true(!is.null(d$meta$changelog))
   expect_equal(d$meta$changelog$label, "internal")
   expect_equal(d$meta$changelog$value, "test")

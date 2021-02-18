@@ -81,3 +81,4 @@ test_that("run server", {
     mockery::mock_args(api$run)[[1]],
     list(host, port))
 })
+

@@ -621,7 +621,7 @@ test_that("runner run passes git args to orderly CLI", {
     get_exit_status = function() 0L), cycle = TRUE)
   mockery::stub(runner_run, "processx::process$new", mock_processx)
   run <- runner_run("key_report_id", "key", ".", "test", NULL, NULL,
-                    ref = NULL, has_git = TRUE, changelog = FALSE)
+                    ref = NULL, has_git = TRUE, changelog = NULL)
   mockery::expect_called(mock_processx, 1)
   args <- mockery::mock_args(mock_processx)[[1]][[2]]
   expect_equal(args, c("--root", ".", "run", "test", "--print-log",
@@ -630,7 +630,7 @@ test_that("runner run passes git args to orderly CLI", {
 
   mockery::stub(runner_run, "processx::process$new", mock_processx)
   run <- runner_run("key_report_id", "key", ".", "test", NULL, NULL,
-                    ref = "123", has_git = TRUE)
+                    ref = "123", has_git = TRUE, changelog = NULL)
   mockery::expect_called(mock_processx, 2)
   args <- mockery::mock_args(mock_processx)[[2]][[2]]
   expect_equal(args, c("--root", ".", "run", "test", "--print-log",
@@ -639,7 +639,7 @@ test_that("runner run passes git args to orderly CLI", {
 
   mockery::stub(runner_run, "processx::process$new", mock_processx)
   run <- runner_run("key_report_id", "key", ".", "test", NULL, NULL,
-                    ref = NULL, has_git = FALSE)
+                    ref = NULL, has_git = FALSE, changelog = NULL)
   mockery::expect_called(mock_processx, 3)
   args <- mockery::mock_args(mock_processx)[[3]][[2]]
   expect_equal(args, c("--root", ".", "run", "test", "--print-log",
