@@ -387,3 +387,17 @@ test_that("Can create a report with parameters", {
     readRDS(file.path(tmp, id, "meta", "info.rds"))$parameters,
     list(time = 10, poll = 1))
 })
+
+test_that("Can get dependencies", {
+  server <- start_test_server()
+  on.exit(server$stop())
+  
+  r <- httr::GET(server$api_url("/v1/reports/count/dependencies/"),
+                  query = list(direction="upstream"))
+  expect_equal(httr::status_code(r), 200)
+  dat <- content(r)
+  print("DAT")
+  print(dat)
+  
+  expect_equal(dat$data$direction, "upstream")
+})
