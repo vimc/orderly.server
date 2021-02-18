@@ -7,7 +7,7 @@ This API is built on top of [`pkgapi`](https://reside-ic.github.io/pkgapi) (itse
 
 Try and run a report `:name`
 
-Accepts as `POST` body json containing parameters and changelog that will be passed through to the report.  This is required when the report requires parameters and is not allowed for reports that do not allow parameters. e.g.
+Accepts as `POST` body json containing `params` and `changelog` that will be passed through to the report.  This is required when the report requires parameters and is not allowed for reports that do not allow parameters. e.g.
 
 ```
 {
