@@ -416,8 +416,7 @@ test_that("Can pack, run and import a bundle", {
   ans <- orderly::orderly_bundle_run(zip_in, echo = FALSE)
   expect_equal(filename, paste0(ans$id, ".zip"))
 
-  res_up <- httr::POST(
-    "http://localhost:8321/v1/bundle/import",
+  res_up <- httr::POST(server$api_url("/v1/bundle/import"),
     body = httr::upload_file(ans$path, "application/octet-stream"))
   expect_equal(httr::status_code(res), 200L)
   dat <- content(res_up)
