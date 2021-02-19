@@ -138,7 +138,7 @@ orderly_git_example <- function(name, path = tempfile(), testing = FALSE) {
   gert::git_init(upstream)
   writeLines("upstream", file.path(upstream, ".gitignore"))
   gert::git_add(".", repo = upstream)
-  gert::git_commit("Init repo", repo = upstream)
+  gert::git_commit("Init repo", repo = upstream, author = "test.user")
 
   gert::git_remote_add(upstream, "origin", repo = path)
   gert::git_fetch(remote = "origin", repo = path)
