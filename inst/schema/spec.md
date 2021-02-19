@@ -3,6 +3,10 @@
 This API is built on top of [`pkgapi`](https://reside-ic.github.io/pkgapi) (itself influenced by [`hintr`](https://github.com/mrc-ide/hintr) and [montagu api](https://github.com/vimc/montagu-api/blob/master/spec/spec.md)).
 
 
+## GET /
+
+Index of available endpoints, for compatibility only and is not updated.
+
 ## POST /reports/:name/run/
 
 Try and run a report `:name`
@@ -96,7 +100,7 @@ Schema: [`Status.schema.json`](Status.schema.json)
 }
 ```
 
-## DELETE /reports/:name/:version/kill/
+## DELETE /reports/:key/kill/
 
 Kill a running report.  If the report was running then `true` will be returned.  Otherwise an error will be thrown.
 
