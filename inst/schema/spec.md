@@ -11,7 +11,19 @@ Index of available endpoints, for compatibility only and is not updated.
 
 Try and run a report `:name`
 
-Accepts as `POST` body json that will be passed directly through to the report.  This is required when the report requires parameters and is not allowed for reports that do not allow parameters.
+Accepts as `POST` body json containing `params` and `changelog` that will be passed through to the report.  This is required when the report requires parameters and is not allowed for reports that do not allow parameters. e.g.
+
+```
+{
+  "params": {
+    "nmin": 0.5
+  },
+  "changelog": {
+    "type": "internal",
+    "message": "Added new output plot"
+  }
+}
+```
 
 Accepts the query parameter `ref`, to try running the report against a particular git reference (e.g., a branch or a commit).
 
