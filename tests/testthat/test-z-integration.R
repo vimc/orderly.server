@@ -179,8 +179,7 @@ test_that("run report honours timeout", {
 
 
 test_that("pass parameters", {
-  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
-  server <- start_test_server(path)
+  server <- start_test_server()
   on.exit(server$stop())
 
   r <- httr::POST(server$api_url("/v1/reports/count_param/run/"),
