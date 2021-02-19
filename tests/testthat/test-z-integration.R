@@ -394,10 +394,11 @@ test_that("Can get dependencies", {
   
   r <- httr::GET(server$api_url("/v1/reports/count/dependencies/"),
                   query = list(direction="upstream"))
-  expect_equal(httr::status_code(r), 200)
   dat <- content(r)
   print("DAT")
   print(dat)
+  expect_equal(httr::status_code(r), 200)
+  
   
   expect_equal(dat$data$direction, "upstream")
 })

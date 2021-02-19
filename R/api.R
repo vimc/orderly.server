@@ -323,7 +323,7 @@ target_dependencies <- function(path, name, id = NULL, direction = NULL, propaga
 endpoint_dependencies <- function(path) {
   pkgapi::pkgapi_endpoint$new(
     "GET", "/v1/reports/<name>/dependencies/", target_dependencies,
-    pkgapi::pkgapi_input_query(id= "string",
+    pkgapi::pkgapi_input_query(id = "string",
                                direction = "string",
                                propagate = "logical",
                                max_depth = "integer",
