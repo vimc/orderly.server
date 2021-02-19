@@ -185,7 +185,6 @@ test_that("runner can return errors", {
 
 test_that("run: success", {
   testthat::skip_on_cran()
-  skip_on_appveyor()
   skip_on_windows()
   skip_if_no_redis()
   path <- orderly_prepare_orderly_example("demo")
@@ -230,7 +229,6 @@ test_that("run: success", {
 
 test_that("run: error", {
   testthat::skip_on_cran()
-  skip_on_appveyor()
   skip_on_windows()
   skip_if_no_redis()
 
@@ -278,7 +276,6 @@ test_that("run report with parameters", {
 
 test_that("run in branch (local)", {
   testthat::skip_on_cran()
-  skip_on_appveyor()
   skip_on_windows()
   skip_if_no_redis()
   path <- orderly_unzip_git_demo()
@@ -306,7 +303,6 @@ test_that("prevent ref change", {
 
 test_that("status missing ID", {
   testthat::skip_on_cran()
-  skip_on_appveyor()
   skip_on_windows()
   skip_if_no_redis()
   path <- orderly_prepare_orderly_example("demo")
@@ -323,7 +319,6 @@ test_that("status missing ID", {
 
 test_that("check_timeout kills timed out reports", {
   testthat::skip_on_cran()
-  skip_on_appveyor()
   skip_on_windows()
   skip_if_no_redis()
   path <- orderly_prepare_orderly_example("demo")
@@ -342,7 +337,6 @@ test_that("check_timeout kills timed out reports", {
 
 test_that("check_timeout doesn't kill reports with long timeout", {
   testthat::skip_on_cran()
-  skip_on_appveyor()
   skip_on_windows()
   skip_if_no_redis()
   path <- orderly_prepare_orderly_example("demo")
@@ -357,7 +351,6 @@ test_that("check_timeout doesn't kill reports with long timeout", {
 
 test_that("check_timeout returns NULL if no reports being run", {
   testthat::skip_on_cran()
-  skip_on_appveyor()
   skip_on_windows()
   skip_if_no_redis()
   path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
@@ -369,7 +362,6 @@ test_that("check_timeout returns NULL if no reports being run", {
 
 test_that("check_timeout prints message if fails to kill a report", {
   testthat::skip_on_cran()
-  skip_on_appveyor()
   skip_on_windows()
   skip_if_no_redis()
   path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
@@ -585,7 +577,6 @@ test_that("runner can set instance", {
 
 test_that("status: clears task_timeout from redis", {
   testthat::skip_on_cran()
-  skip_on_appveyor()
   skip_on_windows()
   skip_if_no_redis()
   path <- orderly_prepare_orderly_example("demo")
@@ -665,7 +656,6 @@ test_that("runner run passes changelog to orderly CLI", {
 
 test_that("status: lists queued tasks", {
   testthat::skip_on_cran()
-  skip_on_appveyor()
   skip_on_windows()
   skip_if_no_redis()
   path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
@@ -723,7 +713,6 @@ test_that("status: lists queued tasks", {
 
 test_that("run: changelog", {
   testthat::skip_on_cran()
-  skip_on_appveyor()
   skip_on_windows()
   skip_if_no_redis()
   path <- orderly_prepare_orderly_example("demo")
