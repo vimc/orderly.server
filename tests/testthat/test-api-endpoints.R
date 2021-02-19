@@ -225,7 +225,7 @@ test_that("run", {
 
   ## endpoint
   endpoint <- endpoint_run(runner)
-  ## RESIDE-166: running endpoint$run() is 500 not 40x error (pkgapi bug)
+  ## RESIDE-166: running endpoint$run() is 500 not 40x error (porcelain bug)
   res_endpoint <- endpoint$run("example", timeout = 600)
   expect_equal(res_endpoint$status_code, 200)
   expect_equal(res_endpoint$data, res)
@@ -452,7 +452,7 @@ test_that("kill - failure", {
   msg <- "Failed to kill 'key-1' task doesn't exist"
   runner$kill <- mockery::mock(stop(msg), cycle = TRUE)
 
-  res <- expect_error(target_kill(runner, key), class = "pkgapi_error")
+  res <- expect_error(target_kill(runner, key), class = "porcelain_error")
   res$trace <- NULL
   expect_equal(mockery::mock_args(runner$kill)[[1]], list(key))
   expect_equal(res$data[[1]]$error, jsonlite::unbox("ERROR"))

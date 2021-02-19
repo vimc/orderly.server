@@ -14,7 +14,7 @@ Imports:
     ids,
     jsonlite,
     orderly (>= 1.2.18),
-    pkgapi (>= 0.0.7),
+    porcelain (>= 0.1.0),
     processx,
     redux,
     rrq (>= 0.2.12),
@@ -32,6 +32,6 @@ Suggests:
 RoxygenNote: 7.1.1
 Encoding: UTF-8
 Remotes:
-    reside-ic/porcelain@22eef9b,
+    reside-ic/porcelain,
     ropensci/jsonvalidate,
     vimc/orderly

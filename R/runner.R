@@ -349,13 +349,13 @@ orderly_runner_ <- R6::R6Class(
     kill = function(key) {
       task_id <- self$con$HGET(self$keys$key_task_id, key)
       if (is.null(task_id)) {
-        pkgapi::pkgapi_stop(
+        porcelain::porcelain_stop(
           sprintf("Failed to kill '%s' task doesn't exist", key))
       }
       tryCatch(
         self$queue$task_cancel(task_id),
         error = function(e) {
-          pkgapi::pkgapi_stop(
+          porcelain::porcelain_stop(
             sprintf("Failed to kill '%s'\n  %s", key, e$message))
         }
       )

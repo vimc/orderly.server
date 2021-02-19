@@ -1,4 +1,4 @@
-Sys.setenv(PKGAPI_VALIDATE = "true") # nolint
+Sys.setenv(PORCELAIN_VALIDATE = "true") # nolint
 
 content <- function(r) {
   txt <- httr::content(r, "text", encoding = "UTF-8")

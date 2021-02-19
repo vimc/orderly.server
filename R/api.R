@@ -1,6 +1,6 @@
 build_api <- function(runner, path, backup_period = NULL, rate_limit = 2 * 60) {
   force(runner)
-  api <- pkgapi::pkgapi$new()
+  api <- porcelain::porcelain$new()
   api$handle(endpoint_index())
   api$handle(endpoint_git_status(path))
   api$handle(endpoint_git_fetch(path))
@@ -71,7 +71,7 @@ schema_root <- function() {
 
 
 returning_json <- function(schema) {
-  pkgapi::pkgapi_returning_json(schema, schema_root())
+  porcelain::porcelain_returning_json(schema, schema_root())
 }
 
 ## For compatibility only
@@ -90,7 +90,7 @@ target_index <- function() {
 }
 
 endpoint_index <- function() {
-  pkgapi::pkgapi_endpoint$new(
+  porcelain::porcelain_endpoint$new(
     "GET", "/", target_index,
     returning = returning_json("Index.schema"))
 }
@@ -107,9 +107,9 @@ target_git_status <- function(path) {
 }
 
 endpoint_git_status <- function(path) {
-  endpoint_git_status <- pkgapi::pkgapi_endpoint$new(
+  endpoint_git_status <- porcelain::porcelain_endpoint$new(
     "GET", "/v1/reports/git/status/", target_git_status,
-    pkgapi::pkgapi_state(path = path),
+    porcelain::porcelain_state(path = path),
     returning = returning_json("GitStatus.schema"))
 }
 
@@ -122,9 +122,9 @@ target_git_fetch <- function(path) {
 }
 
 endpoint_git_fetch <- function(path) {
-  pkgapi::pkgapi_endpoint$new(
+  porcelain::porcelain_endpoint$new(
     "POST", "/v1/reports/git/fetch/", target_git_fetch,
-    pkgapi::pkgapi_state(path = path),
+    porcelain::porcelain_state(path = path),
     returning = returning_json("GitFetch.schema"))
 }
 
@@ -137,9 +137,9 @@ target_git_pull <- function(path) {
 }
 
 endpoint_git_pull <- function(path) {
-  pkgapi::pkgapi_endpoint$new(
+  porcelain::porcelain_endpoint$new(
     "POST", "/v1/reports/git/pull/", target_git_pull,
-    pkgapi::pkgapi_state(path = path),
+    porcelain::porcelain_state(path = path),
     returning = returning_json("GitPull.schema"))
 }
 
@@ -148,9 +148,9 @@ target_git_branches <- function(path) {
 }
 
 endpoint_git_branches <- function(path) {
-  pkgapi::pkgapi_endpoint$new(
+  porcelain::porcelain_endpoint$new(
     "GET", "/git/branches", target_git_branches,
-    pkgapi::pkgapi_state(path = path),
+    porcelain::porcelain_state(path = path),
     returning = returning_json("GitBranches.schema"))
 }
 
@@ -159,19 +159,19 @@ target_git_commits <- function(path, branch) {
 }
 
 endpoint_git_commits <- function(path) {
-  pkgapi::pkgapi_endpoint$new(
+  porcelain::porcelain_endpoint$new(
     "GET", "/git/commits", target_git_commits,
-    pkgapi::pkgapi_input_query(branch = "string"),
-    pkgapi::pkgapi_state(path = path),
+    porcelain::porcelain_input_query(branch = "string"),
+    porcelain::porcelain_state(path = path),
     returning = returning_json("GitCommits.schema"))
 }
 
 endpoint_available_reports <- function(path) {
-  pkgapi::pkgapi_endpoint$new(
+  porcelain::porcelain_endpoint$new(
     "GET", "/reports/source", target_available_reports,
-    pkgapi::pkgapi_input_query(branch = "string"),
-    pkgapi::pkgapi_input_query(commit = "string"),
-    pkgapi::pkgapi_state(path = path),
+    porcelain::porcelain_input_query(branch = "string"),
+    porcelain::porcelain_input_query(commit = "string"),
+    porcelain::porcelain_state(path = path),
     returning = returning_json("AvailableReports.schema")
   )
 }
@@ -180,11 +180,11 @@ target_report_parameters <- function(path, report_id, commit = NULL) {
   tryCatch(
     parameters <- get_report_parameters(report_id, commit, path),
     error = function(e) {
-      pkgapi::pkgapi_stop(e$message, "FAILED_RETRIEVE_PARAMS")
+      porcelain::porcelain_stop(e$message, "FAILED_RETRIEVE_PARAMS")
     }
   )
   if (!is.null(parameters) && is.null(names(parameters))) {
-    pkgapi::pkgapi_stop(
+    porcelain::porcelain_stop(
       sprintf("Failed to parse parameters for report '%s' and commit '%s'",
               report_id, commit %||% "none"),
       "INVALID_FORMAT")
@@ -202,10 +202,10 @@ target_report_parameters <- function(path, report_id, commit = NULL) {
 }
 
 endpoint_report_parameters <- function(path) {
-  pkgapi::pkgapi_endpoint$new(
+  porcelain::porcelain_endpoint$new(
     "GET", "/reports/<report_id>/parameters", target_report_parameters,
-    pkgapi::pkgapi_input_query(commit = "string"),
-    pkgapi::pkgapi_state(path = path),
+    porcelain::porcelain_input_query(commit = "string"),
+    porcelain::porcelain_state(path = path),
     returning = returning_json("ReportParameters.schema")
   )
 }
@@ -219,19 +219,19 @@ target_bundle_pack <- function(path, name, parameters = NULL,
                                       instance = instance)
   on.exit(unlink(res$path))
   bytes <- readBin(res$path, "raw", n = file.size(res$path))
-  bytes <- pkgapi::pkgapi_add_headers(
+  bytes <- porcelain::porcelain_add_headers(
     bytes, list("Content-Disposition" = basename(res$path)))
   bytes
 }
 
 endpoint_bundle_pack <- function(path) {
-  pkgapi::pkgapi_endpoint$new(
+  porcelain::porcelain_endpoint$new(
     "POST", "/v1/bundle/pack/<name>", target_bundle_pack,
-    pkgapi::pkgapi_input_query(instance = "string"),
-    pkgapi::pkgapi_input_body_json("parameters", "Parameters.schema",
+    porcelain::porcelain_input_query(instance = "string"),
+    porcelain::porcelain_input_body_json("parameters", "Parameters.schema",
                                    schema_root()),
-    pkgapi::pkgapi_state(path = path),
-    returning = pkgapi::pkgapi_returning_binary())
+    porcelain::porcelain_state(path = path),
+    returning = porcelain::porcelain_returning_binary())
 }
 
 target_bundle_import <- function(path, data) {
@@ -243,13 +243,13 @@ target_bundle_import <- function(path, data) {
 }
 
 endpoint_bundle_import <- function(path, data) {
-  pkgapi::pkgapi_endpoint$new(
+  porcelain::porcelain_endpoint$new(
     "POST", "/v1/bundle/import", target_bundle_import,
     ## NOTE: This is not ideal because it requires
     ## application/octet-stream - see RESIDE-208 for details, can be
     ## updated once we move to porcelain >= 0.1.1
-    pkgapi::pkgapi_input_body_binary("data"),
-    pkgapi::pkgapi_state(path = path),
+    porcelain::porcelain_input_body_binary("data"),
+    porcelain::porcelain_state(path = path),
     returning = returning_json("BundleImport.schema"))
 }
 
@@ -270,14 +270,14 @@ target_available_reports <- function(path, branch = NULL, commit = NULL) {
 }
 
 endpoint_run <- function(runner) {
-  pkgapi::pkgapi_endpoint$new(
+  porcelain::porcelain_endpoint$new(
     "POST", "/v1/reports/<name>/run/", target_run,
-    pkgapi::pkgapi_input_query(ref = "string",
+    porcelain::porcelain_input_query(ref = "string",
                                instance = "string",
                                timeout = "integer"),
-    pkgapi::pkgapi_input_body_json("parameters", "Parameters.schema",
+    porcelain::porcelain_input_body_json("parameters", "Parameters.schema",
                                    schema_root()),
-    pkgapi::pkgapi_state(runner = runner),
+    porcelain::porcelain_state(runner = runner),
     returning = returning_json("Run.schema"))
 }
 
@@ -295,23 +295,23 @@ target_status <- function(runner, key, output = FALSE) {
 }
 
 endpoint_status <- function(runner) {
-  pkgapi::pkgapi_endpoint$new(
+  porcelain::porcelain_endpoint$new(
     "GET", "/v1/reports/<key>/status/", target_status,
-    pkgapi::pkgapi_input_query(output = "logical"),
-    pkgapi::pkgapi_state(runner = runner),
+    porcelain::porcelain_input_query(output = "logical"),
+    porcelain::porcelain_state(runner = runner),
     returning = returning_json("Status.schema"))
 }
 
 target_kill <- function(runner, key) {
   tryCatch(
     jsonlite::unbox(runner$kill(key)),
-    error = function(e) pkgapi::pkgapi_stop(e$message))
+    error = function(e) porcelain::porcelain_stop(e$message))
 }
 
 endpoint_kill <- function(runner) {
-  pkgapi::pkgapi_endpoint$new(
+  porcelain::porcelain_endpoint$new(
     "DELETE", "/v1/reports/<key>/kill/", target_kill,
-    pkgapi::pkgapi_state(runner = runner),
+    porcelain::porcelain_state(runner = runner),
     returning = returning_json("Kill.schema"))
 }
 
@@ -348,9 +348,9 @@ target_run_metadata <- function(runner) {
 }
 
 endpoint_run_metadata <- function(runner) {
- pkgapi::pkgapi_endpoint$new(
+ porcelain::porcelain_endpoint$new(
    "GET", "/run-metadata", target_run_metadata,
-   pkgapi::pkgapi_state(runner = runner),
+   porcelain::porcelain_state(runner = runner),
    returning = returning_json("RunMetadata.schema")
  )
 }
