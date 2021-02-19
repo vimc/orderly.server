@@ -111,3 +111,11 @@ test_that("throttle does not call functions very often", {
   expect_equal(g(), 2)
   mockery::expect_called(f, 2)
 })
+
+test_that("format_changelog", {
+  expect_equal(format_changelog(list(type = "tst", message = "test")),
+               "[tst] test")
+  expect_error(format_changelog(list(type = "tst")),
+               "'changelog$message' must be a scalar", fixed = TRUE)
+  expect_null(format_changelog(NULL))
+})
