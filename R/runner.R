@@ -24,8 +24,8 @@
 ##' @examples
 ##' available <- redux::redis_available()
 ##' if (available) {
-##'   path <- orderly::orderly_example("demo")
-##'   runner <- orderly.server::orderly_runner(path, workers = 0)
+##'   path <- orderly:::prepare_orderly_git_example()
+##'   runner <- orderly.server::orderly_runner(path[["local"]], workers = 0)
 ##' }
 orderly_runner <- function(path, allow_ref = NULL, queue_id = NULL,
                            workers = 1) {
