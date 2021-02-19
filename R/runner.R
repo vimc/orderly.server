@@ -33,7 +33,7 @@ orderly_runner <- function(path, allow_ref = NULL, queue_id = NULL,
 }
 
 runner_run <- function(key_report_id, key, root, name, parameters, instance,
-                       ref, has_git, poll = 0.1) {
+                       ref, poll = 0.1) {
   con <- redux::hiredis()
   bin <- tempfile()
   dir.create(bin)
@@ -47,12 +47,10 @@ runner_run <- function(key_report_id, key, root, name, parameters, instance,
                           vcapply(parameters, format))
   }
   git_args <- NULL
-  if (has_git) {
-    if (is.null(ref)) {
-      git_args <- "--pull"
-    } else {
-      git_args <- c("--fetch", "--ref", ref)
-    }
+  if (is.null(ref)) {
+    git_args <- "--pull"
+  } else {
+    git_args <- c("--fetch", "--ref", ref)
   }
   args <- c("--root", root,
             "run", name, "--print-log", "--id-file", id_file,
@@ -106,8 +104,6 @@ orderly_runner_ <- R6::R6Class(
     config = NULL,
     #' @field allow_ref Allow git to change branch/ref for run
     allow_ref = FALSE,
-    #' @field has_git Is git available on the runner
-    has_git = NULL,
 
     #' @field con Redis connection
     con = NULL,
@@ -141,13 +137,12 @@ orderly_runner_ <- R6::R6Class(
                           worker_timeout = Inf) {
       self$config <- orderly::orderly_config(root)
       self$root <- self$config$root
-      self$has_git <- runner_has_git(self$root)
-      if (!self$has_git) {
-        message("Not enabling git features as this is not version controlled")
+      if (!runner_has_git(self$root)) {
+        stop("Not starting server as orderly root is not version controlled")
       }
 
-      self$allow_ref <- runner_allow_ref(self$has_git, allow_ref, self$config)
-      if (self$has_git && !self$allow_ref) {
+      self$allow_ref <- runner_allow_ref(allow_ref, self$config)
+      if (!self$allow_ref) {
         message("Disallowing reference switching in runner")
       }
 
@@ -212,11 +207,9 @@ orderly_runner_ <- R6::R6Class(
       root <- self$root
       key <- ids::adjective_animal()
       key_report_id <- self$keys$key_report_id
-      has_git <- self$has_git
       task_id <- self$submit(quote(
         orderly.server:::runner_run(key_report_id, key, root, name,   # nolint
-                                    parameters, instance, ref, has_git,
-                                    poll = poll)))
+                                    parameters, instance, ref, poll = poll)))
       self$con$HSET(self$keys$key_task_id, key, task_id)
       self$con$HSET(self$keys$task_id_key, task_id, key)
       self$con$HSET(self$keys$task_timeout, task_id, timeout)
@@ -414,10 +407,7 @@ orderly_queue_id <- function(queue_id, worker = FALSE) {
 }
 
 
-runner_allow_ref <- function(has_git, allow_ref, config) {
-  if (!has_git) {
-    allow_ref <- FALSE
-  }
+runner_allow_ref <- function(allow_ref, config) {
   if (is.null(allow_ref)) {
     allow_ref <- !(config$server_options()$master_only %||% FALSE)
   }

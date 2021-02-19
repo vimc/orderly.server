@@ -105,7 +105,7 @@ test_that("runner can run a report", {
   dir_create(dirname(path_id_file(path, "ignore")))
 
   out <- runner_run("key_id", "test_key", path, "minimal", parameters = NULL,
-                    instance = NULL, ref = NULL, has_git = FALSE)
+                    instance = NULL, ref = NULL)
   expect_equal(out$report_name, "minimal")
   expect_match(out$report_id, "^\\d{8}-\\d{6}-\\w{8}")
 
@@ -130,8 +130,7 @@ test_that("runner can run a report with parameters", {
   dir_create(dirname(path_id_file(path, "ignore")))
 
   out <- runner_run("key_id", "test_key", path, "other",
-                    parameters = list(nmin = 0.5), instance = NULL, ref = NULL,
-                    has_git = FALSE)
+                    parameters = list(nmin = 0.5), instance = NULL, ref = NULL)
   expect_equal(out$report_name, "other")
   expect_match(out$report_id, "^\\d{8}-\\d{6}-\\w{8}")
 
@@ -161,8 +160,7 @@ test_that("runner can return errors", {
   dir_create(dirname(path_id_file(path, "ignore")))
 
   err <- expect_error(runner_run("key_report_id", "test_key", path, "example",
-                    parameters = NULL, instance = NULL, ref = NULL,
-                    has_git = FALSE))
+                    parameters = NULL, instance = NULL, ref = NULL))
 
   ## Report ID still can be retrieved
   con <- redux::hiredis()
@@ -620,7 +618,7 @@ test_that("runner run passes git args to orderly CLI", {
     get_exit_status = function() 0L), cycle = TRUE)
   mockery::stub(runner_run, "processx::process$new", mock_processx)
   run <- runner_run("key_report_id", "key", ".", "test", NULL, NULL,
-                    ref = NULL, has_git = TRUE)
+                    ref = NULL)
   mockery::expect_called(mock_processx, 1)
   args <- mockery::mock_args(mock_processx)[[1]][[2]]
   expect_equal(args, c("--root", ".", "run", "test", "--print-log",
@@ -629,7 +627,7 @@ test_that("runner run passes git args to orderly CLI", {
 
   mockery::stub(runner_run, "processx::process$new", mock_processx)
   run <- runner_run("key_report_id", "key", ".", "test", NULL, NULL,
-                    ref = "123", has_git = TRUE)
+                    ref = "123")
   mockery::expect_called(mock_processx, 2)
   args <- mockery::mock_args(mock_processx)[[2]][[2]]
   expect_equal(args, c("--root", ".", "run", "test", "--print-log",
@@ -638,7 +636,7 @@ test_that("runner run passes git args to orderly CLI", {
 
   mockery::stub(runner_run, "processx::process$new", mock_processx)
   run <- runner_run("key_report_id", "key", ".", "test", NULL, NULL,
-                    ref = NULL, has_git = FALSE)
+                    ref = NULL)
   mockery::expect_called(mock_processx, 3)
   args <- mockery::mock_args(mock_processx)[[3]][[2]]
   expect_equal(args, c("--root", ".", "run", "test", "--print-log",
