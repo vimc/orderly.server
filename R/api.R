@@ -253,12 +253,14 @@ endpoint_bundle_import <- function(path, data) {
     returning = returning_json("BundleImport.schema"))
 }
 
-target_run <- function(runner, name, parameters = NULL, ref = NULL,
+target_run <- function(runner, name, body = NULL, ref = NULL,
                        instance = NULL, timeout = 60 * 60 * 3) {
-  if (!is.null(parameters)) {
-    parameters <- jsonlite::fromJSON(parameters)
+  if (!is.null(body)) {
+    body <- jsonlite::fromJSON(body)
   }
-  key <- runner$submit_task_report(name, parameters, ref, instance,
+  changelog <- format_changelog(body$changelog)
+  key <- runner$submit_task_report(name, body$params, ref, instance,
+                                   changelog = changelog,
                                    timeout = timeout)
   list(name = scalar(name),
        key = scalar(key),
@@ -275,7 +277,7 @@ endpoint_run <- function(runner) {
     porcelain::porcelain_input_query(ref = "string",
                                instance = "string",
                                timeout = "integer"),
-    porcelain::porcelain_input_body_json("parameters", "Parameters.schema",
+    porcelain::pkgapi_input_body_json("body", "RunRequest.schema",
                                    schema_root()),
     porcelain::porcelain_state(runner = runner),
     returning = returning_json("Run.schema"))
