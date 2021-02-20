@@ -897,11 +897,10 @@ test_that("api runs backup on preroute", {
 
 test_that("can get dependencies", {
   path <- orderly_prepare_orderly_example("demo")
-  
   dependencies <- endpoint_dependencies(path)
-  res <- dependencies$run(name="use_dependency", 
-                          id = NULL, 
-                          direction = "upstream", 
+  res <- dependencies$run(name = "use_dependency", 
+                          id = NULL,
+                          direction = "upstream",
                           use = "src")
   # Check data
   data <- res$data
