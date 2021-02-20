@@ -3,35 +3,35 @@ get_dependencies <- function(path, name, id=NULL, direction=NULL, propagate=NULL
   
   
   if (length(name) != 1) {
-    stop(sprintf("DEBUG name must be a scalar:  %s", name), call. = FALSE)
+    stop("DEBUG name must be a scalar:  %s", name)
   }
   
   if (length(path) != 1) {
-    stop(sprintf("DEBUG path  must be a scalar: %s", path), call. = FALSE)
+    stop("DEBUG path  must be a scalar: %s", path)
   }
   
   if (length(id) != 1) {
-    stop(sprintf("DEBUG id must be a scalar: %s", id), call. = FALSE)
+    stop("DEBUG id must be a scalar: %s", id)
   }
   
   if (length(direction) != 1) {
-    stop(sprintf("DEBUG direction must be a scalar: %s", direction), call. = FALSE)
+    stop("DEBUG direction must be a scalar: %s", direction)
   }
   
   if (length(propagate) != 1) {
-    stop(sprintf("DEBUG propagate must be a scalar: %s", propagate), call. = FALSE)
+    stop("DEBUG propagate must be a scalar: %s", propagate)
   }
   
   if (length(max_depth) != 1) {
-    stop(sprintf("DEBUG max_depth must be a scalar: %s", max_depth), call. = FALSE)
+    stop("DEBUG max_depth must be a scalar: %s", max_depth)
   }
   
   if (length(show_all) != 1) {
-    stop(sprintf("DEBUG show_all must be a scalar: %s", show_all), call. = FALSE)
+    stop("DEBUG show_all must be a scalar: %s", show_all)
   }
   
   if (length(use) != 1) {
-    stop(sprintf("DEBUG use must be a scalar: %s", use), call. = FALSE)
+    stop("DEBUG use must be a scalar: %s", use)
   }
   
   report_tree <- orderly::orderly_graph(name=name, id=id, 
