@@ -1,4 +1,4 @@
-get_dependencies <- function(path, name, id=NULL, direction=NULL, propagate=NULL, max_depth=100, show_all=NULL, use=NULL) {
+get_dependencies <- function(path, name, id, direction, propagate, max_depth, show_all, use) {
   print(paste("Getting from orderly", name))
   
   
