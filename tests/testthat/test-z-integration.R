@@ -392,13 +392,13 @@ test_that("Can get dependencies", {
   server <- start_test_server()
   on.exit(server$stop())
   
-  test <- content(httr::GET(server$api_url("/git/commits?branch=master")))
-  testdat <- content(test)
-  print("REPORTS")
-  print(testdat)
+  #test <- content(httr::GET(server$api_url("/git/commits?branch=master")))
+  #testdat <- content(test)
+  #print("REPORTS")
+  #print(testdat)
   
   r <- httr::GET(server$api_url("/v1/reports/count/dependencies/"),
-                  query = list(direction="upstream"))
+                  query = list(direction="upstream", use="src"))
   dat <- content(r)
   print("DAT")
   print(dat)
