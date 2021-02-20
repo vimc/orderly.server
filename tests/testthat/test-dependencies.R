@@ -1,6 +1,6 @@
 context("dependencies")
 
-test_that("get_dependencies", {
+test_that("can get_dependencies", {
   mock_get_direction <- function () {
     "downstream"
   }
@@ -38,10 +38,20 @@ test_that("get_dependencies", {
   
   with_mock("orderly::orderly_graph" = mock_graph, {
     res <- get_dependencies(path = "test_path", name = "test_name", id="test_id", direction = "test_direction", 
-                            propagate=FALSE, max_depth = 10, show_all = FALSE< use = "src")
+                            propagate=FALSE, max_depth = 10, show_all = FALSE, use = "test_use")
   })
   
   mockery::expect_called(mock_graph, 1)
+  mockery::expect_args(mock_graph, 1, 
+                       name = "test_name", 
+                       id = "test_id",
+                       root = "test_path",
+                       locate = FALSE,
+                       direction = "test_direction",
+                       propagage = FALSE,
+                       max_depth = 10,
+                       show_all = FALSE,
+                       use = "test_use")
   
   expect_equal(res$direction, scalar("downstream"))
   
