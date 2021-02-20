@@ -392,11 +392,6 @@ test_that("Can get dependencies", {
   server <- start_test_server()
   on.exit(server$stop())
   
-  #test <- content(httr::GET(server$api_url("/git/commits?branch=master")))
-  #testdat <- content(test)
-  #print("REPORTS")
-  #print(testdat)
-  
   r <- httr::GET(server$api_url("/v1/reports/count/dependencies/"),
                   query = list(direction="upstream", use="src"))
   dat <- content(r)
@@ -404,5 +399,10 @@ test_that("Can get dependencies", {
   print(dat)
   expect_equal(httr::status_code(r), 200)
   
-  expect_equal(dat$data$direction, "upstreams")
+  expect_equal(dat$data$direction, "upstream")
+  dep_tree <- dat$data$dependency_tree
+  expect_equal(dep_tree$name, "count")
+  expect_equal(dep_tree$name, "latest")
+  expect_equal(dep_tree$out_of_data, FALSE)
+  expect_equal(dep_tree$dependencies, listOf())
 })
