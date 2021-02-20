@@ -317,7 +317,7 @@ endpoint_kill <- function(runner) {
 
 target_dependencies <- function(path, name, id = NULL, direction = NULL, propagate = NULL,
                        max_depth = 100, show_all = NULL, use = NULL) {
-  get_dependencies(path, name, id, direction, propagate, max_depth, show_all, use)
+  get_dependencies(scalar(path), scalar(name), scalar(id), scalar(direction), scalar(propagate), scalar(max_depth), scalar(show_all), scalar(use))
 }
 
 endpoint_dependencies <- function(path) {

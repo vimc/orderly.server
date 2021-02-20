@@ -399,6 +399,5 @@ test_that("Can get dependencies", {
   print(dat)
   expect_equal(httr::status_code(r), 200)
   
-  
-  expect_equal(dat$data$direction, "upstream")
+  expect_equal(dat$data$direction, "upstreams")
 })
