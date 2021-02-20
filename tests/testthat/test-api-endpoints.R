@@ -898,7 +898,7 @@ test_that("api runs backup on preroute", {
 test_that("can get dependencies", {
   path <- orderly_prepare_orderly_example("demo")
   dependencies <- endpoint_dependencies(path)
-  res <- dependencies$run(name = "use_dependency", 
+  res <- dependencies$run(name = "use_dependency",
                           id = NULL,
                           direction = "upstream",
                           use = "src")
@@ -918,9 +918,9 @@ test_that("can get dependencies", {
   expected_json <- paste(sep = "",
                         "{\"status\":\"success\",\"errors\":null,\"data\":",
                           "{\"direction\":\"upstream\",\"dependency_tree\":",
-                            "{\"name\":\"use_dependency\",\"id\":\"latest\"",
+                            "{\"name\":\"use_dependency\",\"id\":\"latest\",",
                                "\"out_of_date\":false,\"dependencies\":[",
-                                 "{\"name\":\"other\",\"id\":\"latest\"",
+                                 "{\"name\":\"other\",\"id\":\"latest\",",
                                     "\"out_of_date\":false,\"dependencies\":[]",
                                 "}]}}}")
   expect_equal(res$body, expected_json)

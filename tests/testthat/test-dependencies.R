@@ -46,7 +46,7 @@ test_that("can get_dependencies", {
   })
   mockery::expect_called(mock_graph, 1)
   mockery::expect_args(mock_graph, 1,
-                       name = "test_name", 
+                       name = "test_name",
                        id = "test_id",
                        root = "test_path",
                        locate = FALSE,
