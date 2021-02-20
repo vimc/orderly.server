@@ -1,9 +1,12 @@
-get_dependencies <- function(path, name, id=NULL, direction=NULL, propagate=NULL, max_depth=NULL, show_all=NULL, use=NULL) {
+get_dependencies <- function(path, name, id=NULL, direction=NULL, propagate=NULL, max_depth=100, show_all=NULL, use=NULL) {
+  print("Getting from orderly")
   report_tree <- orderly::orderly_graph(name=name, id=id, 
                                        root=path, locate=FALSE, 
                                        direction=direction, propagate=propagate, 
                                        max_depth=max_depth, show_all=show_all, 
                                        use=use)
+  print("Got from orderly")
+  
   root <- report_tree$root
   dep <- vertex_to_dep(root)
   
