@@ -317,14 +317,6 @@ endpoint_kill <- function(runner) {
 
 target_dependencies <- function(path, name, id ="latest", direction = "downstream", propagate = TRUE,
                                 max_depth = 100, show_all = FALSE, use = "archive") {
-  #get_dependencies(path=scalar(path), 
-  #                 name=scalar(name), 
-  #                 id=scalar(id), 
-  #                 direction=scalar(direction), 
-  #                 propagate=scalar(propagate), 
-  #                 max_depth=scalar(max_depth), 
-  #                 show_all=scalar(show_all), 
-  #                 use=scalar(use))
   get_dependencies(path=path, 
                    name=name, 
                    id=id, 
