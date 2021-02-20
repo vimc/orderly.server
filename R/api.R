@@ -315,16 +315,21 @@ endpoint_kill <- function(runner) {
     returning = returning_json("Kill.schema"))
 }
 
-target_dependencies <- function(path, name, id ="latest", direction = "downstream", propagate = TRUE,
-                                max_depth = 100, show_all = FALSE, use = "archive") {
-  get_dependencies(path=path, 
-                   name=name, 
-                   id=id, 
-                   direction=direction, 
-                   propagate=propagate, 
-                   max_depth=max_depth, 
-                   show_all=show_all, 
-                   use=use)
+target_dependencies <- function(path, name, 
+                                id ="latest", 
+                                direction = "downstream", 
+                                propagate = TRUE,
+                                max_depth = 100, 
+                                show_all = FALSE, 
+                                use = "archive") {
+  get_dependencies(path = path,
+                   name = name,
+                   id = id,
+                   direction = direction,
+                   propagate = propagate,
+                   max_depth = max_depth,
+                   show_all = show_all,
+                   use = use)
 }
 
 endpoint_dependencies <- function(path) {

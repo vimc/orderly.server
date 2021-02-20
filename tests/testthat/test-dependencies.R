@@ -1,11 +1,10 @@
 context("dependencies")
 
 test_that("can get_dependencies", {
-  mock_get_direction <- function () {
+  mock_get_direction <- function() {
     "downstream"
   }
-  
-  mock_graph<- mockery::mock(list(
+  mock_graph <- mockery::mock(list(
       get_direction = mock_get_direction,
       root = list(
         name = "r1",
@@ -37,12 +36,18 @@ test_that("can get_dependencies", {
   )
   
   with_mock("orderly::orderly_graph" = mock_graph, {
-    res <- get_dependencies(path = "test_path", name = "test_name", id="test_id", direction = "test_direction", 
-                            propagate=FALSE, max_depth = 10, show_all = FALSE, use = "test_use")
+    res <- get_dependencies(path = "test_path",
+                            name = "test_name",
+                            id = "test_id",
+                            direction = "test_direction",
+                            propagate = FALSE,
+                            max_depth = 10,
+                            show_all = FALSE,
+                            use = "test_use")
   })
   
   mockery::expect_called(mock_graph, 1)
-  mockery::expect_args(mock_graph, 1, 
+  mockery::expect_args(mock_graph, 1,
                        name = "test_name", 
                        id = "test_id",
                        root = "test_path",
@@ -79,4 +84,3 @@ test_that("can get_dependencies", {
   expect_equal(r4$out_of_date, scalar(TRUE))
   expect_equal(length(r4$dependencies), 0)
 })
-

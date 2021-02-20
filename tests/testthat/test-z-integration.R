@@ -402,7 +402,7 @@ test_that("Can get dependencies", {
   expect_equal(dat$data$direction, "upstream")
   dep_tree <- dat$data$dependency_tree
   expect_equal(dep_tree$name, "count")
-  expect_equal(dep_tree$name, "latest")
+  expect_equal(dep_tree$id, "latest")
   expect_equal(dep_tree$out_of_data, FALSE)
-  expect_equal(dep_tree$dependencies, listOf())
+  expect_equal(dep_tree$dependencies, list())
 })

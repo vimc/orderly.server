@@ -899,27 +899,30 @@ test_that("can get dependencies", {
   path <- orderly_prepare_orderly_example("demo")
   
   dependencies <- endpoint_dependencies(path)
-  res <- dependencies$run(name="use_dependency", id=NULL, direction="upstream", use="src")
- 
+  res <- dependencies$run(name="use_dependency", 
+                          id = NULL, 
+                          direction = "upstream", 
+                          use = "src")
   # Check data
   data <- res$data
   expect_equal(data$direction, scalar("upstream"))
-  
   dep_tree <- data$dependency_tree
   expect_equal(dep_tree$name, scalar("use_dependency"))
   expect_equal(dep_tree$id, scalar("latest"))
-  
   dependencies <- dep_tree$dependencies
   expect_equal(length(dependencies), 1)
   expect_equal(dependencies[[1]]$name, scalar("other"))
   expect_equal(dependencies[[1]]$id, scalar("latest"))
   expect_equal(length(dependencies[[1]]$dependencies), 0)
-  
   # Check response
   expect_equal(res$status_code, 200)
-  expected_json = paste(sep="", 
+  expected_json <- paste(sep = "",
                         "{\"status\":\"success\",\"errors\":null,\"data\":",
-                             "{\"direction\":\"upstream\",\"dependency_tree\":{\"name\":\"use_dependency\",\"id\":\"latest\",\"out_of_date\":false,\"dependencies\":[",
-                                 "{\"name\":\"other\",\"id\":\"latest\",\"out_of_date\":false,\"dependencies\":[]}]}}}")
+                          "{\"direction\":\"upstream\",\"dependency_tree\":",
+                            "{\"name\":\"use_dependency\",\"id\":\"latest\"",
+                               "\"out_of_date\":false,\"dependencies\":[",
+                                 "{\"name\":\"other\",\"id\":\"latest\"",
+                                    "\"out_of_date\":false,\"dependencies\":[]",
+                                "}]}}}")
   expect_equal(res$body, expected_json)
 })
