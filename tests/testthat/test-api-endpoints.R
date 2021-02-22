@@ -552,7 +552,7 @@ test_that("run-metadata", {
   expect_equal(res$git_supported, scalar(TRUE))
   expect_equal(res$instances,
                list(source = c(scalar("production"), scalar("staging"))))
-  expect_equal(res$changelog_types, c(scalar("public")))
+  expect_equal(res$changelog_types, c(scalar("internal"), scalar("public")))
 
   ## test through API
   api <- build_api(runner, "path")
@@ -609,7 +609,7 @@ test_that("run-metadata pulls information from runner", {
     instances = list(
       "source" = c(scalar("production"), scalar("staging"))
     ),
-    changelog_types = c(scalar("external"))
+    changelog_types = c(scalar("internal"), scalar("external"))
   ))
 })
 
