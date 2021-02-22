@@ -3,6 +3,10 @@
 This API is built on top of [`porcelain`](https://reside-ic.github.io/porcelain) (itself influenced by [`hintr`](https://github.com/mrc-ide/hintr) and [montagu api](https://github.com/vimc/montagu-api/blob/master/spec/spec.md)).
 
 
+## GET /
+
+Return package name and version
+
 ## POST /reports/:name/run/
 
 Try and run a report `:name`
@@ -108,7 +112,7 @@ Schema: [`Status.schema.json`](Status.schema.json)
 }
 ```
 
-## DELETE /reports/:name/:version/kill/
+## DELETE /reports/:key/kill/
 
 Kill a running report.  If the report was running then `true` will be returned.  Otherwise an error will be thrown.
 

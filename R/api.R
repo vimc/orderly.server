@@ -1,7 +1,7 @@
 build_api <- function(runner, path, backup_period = NULL, rate_limit = 2 * 60) {
   force(runner)
   api <- porcelain::porcelain$new()
-  api$handle(endpoint_index())
+  api$handle(endpoint_root())
   api$handle(endpoint_git_status(path))
   api$handle(endpoint_git_fetch(path))
   api$handle(endpoint_git_pull(path))
@@ -74,25 +74,15 @@ returning_json <- function(schema) {
   porcelain::porcelain_returning_json(schema, schema_root())
 }
 
-## For compatibility only
-target_index <- function() {
+target_root <- function() {
   list(name = scalar("orderly.server"),
-       version = scalar(as.character(utils::packageVersion("orderly.server"))),
-       endpoints = c(
-         "/",
-         "/v1/reports/:key/kill/",
-         "/v1/reports/:key/status/",
-         "/v1/reports/:name/run/",
-         "/v1/reports/git/fetch/",
-         "/v1/reports/git/pull/",
-         "/v1/reports/git/status/"
-       ))
+       version = scalar(as.character(utils::packageVersion("orderly.server"))))
 }
 
-endpoint_index <- function() {
+endpoint_root <- function() {
   porcelain::porcelain_endpoint$new(
-    "GET", "/", target_index,
-    returning = returning_json("Index.schema"))
+    "GET", "/", target_root,
+    returning = returning_json("Root.schema"))
 }
 
 target_git_status <- function(path) {
