@@ -308,7 +308,7 @@ endpoint_kill <- function(runner) {
 }
 
 target_run_metadata <- function(runner) {
-  changelog <- runner$config$changelog$id[runner$config$changelog$public]
+  changelog <- runner$config$changelog$id
   if (length(changelog) > 0) {
     changelog <- vcapply(changelog, scalar, USE.NAMES = FALSE)
   }

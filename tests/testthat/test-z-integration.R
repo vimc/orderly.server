@@ -283,7 +283,7 @@ test_that("run-metadata", {
   expect_false(r$data$instances_supported)
   expect_true(r$data$git_supported)
   expect_equal(r$data$instances, list(source = list()))
-  expect_equal(r$data$changelog_types, c(scalar("public")))
+  expect_equal(r$data$changelog_types, c(scalar("internal"), scalar("public")))
 })
 
 test_that("git/branches", {
