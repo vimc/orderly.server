@@ -143,7 +143,7 @@ test_that("git error returns valid json", {
   expect_equal(content$status, "failure")
   expect_length(content$errors, 1)
   expect_valid_json(json, system.file("schema/response-failure.schema.json",
-                                      package = "pkgapi",
+                                      package = "porcelain",
                                       mustWork = TRUE))
 })
 
