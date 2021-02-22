@@ -338,7 +338,7 @@ target_run_metadata <- function(runner) {
     instances_supported <- any(lengths(instances) > 0)
   }
 
-  git_supported <- !isTRUE(server_options$master_only) && isTRUE(runner$has_git)
+  git_supported <- !isTRUE(server_options$master_only)
 
   list(
     name = scalar(runner$config$server_options()$name),

@@ -3,7 +3,7 @@ context("orderly_runner")
 test_that("queue works as intended", {
   skip_if_no_redis()
 
-  path <- orderly_prepare_orderly_example("demo")
+  path <- orderly_git_example("demo")
   runner <- orderly_runner_$new(path, NULL, queue_id = NULL, workers = 1,
                                 worker_timeout = 300)
   expect_equal(runner$queue$worker_len(), 1)
@@ -76,7 +76,7 @@ test_that("queue_id is returned if supplied", {
 
 test_that("test runner can start workers with timeout", {
   skip_if_no_redis()
-  path <- orderly_prepare_orderly_example("demo")
+  path <- orderly_git_example("demo")
   runner <- orderly_runner_$new(path, NULL, queue_id = NULL, workers = 2,
                                 worker_timeout = 300)
   timeout <- runner$queue$message_send_and_wait("TIMEOUT_GET",
@@ -88,7 +88,7 @@ test_that("test runner can start workers with timeout", {
 
 test_that("queue starts up normally without a timeout", {
   skip_if_no_redis()
-  path <- orderly_prepare_orderly_example("demo")
+  path <- orderly_git_example("demo")
   runner <- orderly_runner_$new(path, NULL, queue_id = NULL, workers = 1)
   timeout <- runner$queue$message_send_and_wait("TIMEOUT_GET",
                                                runner$queue$worker_list(),
@@ -100,13 +100,12 @@ test_that("queue starts up normally without a timeout", {
 test_that("runner can run a report", {
   ## Setup dir for testing
   skip_if_no_redis()
-  path <- orderly_prepare_orderly_example("demo")
+  path <- orderly_git_example("demo")
   dir_create(dirname(path_stderr(path, "ignore")))
   dir_create(dirname(path_id_file(path, "ignore")))
 
   out <- runner_run("key_id", "test_key", path, "minimal", parameters = NULL,
-                    instance = NULL, ref = NULL, has_git = FALSE,
-                    changelog = NULL)
+                    instance = NULL, ref = NULL, changelog = NULL)
   expect_equal(out$report_name, "minimal")
   expect_match(out$report_id, "^\\d{8}-\\d{6}-\\w{8}")
 
@@ -126,13 +125,13 @@ test_that("runner can run a report", {
 test_that("runner can run a report with parameters", {
   ## Setup dir for testing
   skip_if_no_redis()
-  path <- orderly_prepare_orderly_example("demo")
+  path <- orderly_git_example("demo")
   dir_create(dirname(path_stderr(path, "ignore")))
   dir_create(dirname(path_id_file(path, "ignore")))
 
   out <- runner_run("key_id", "test_key", path, "other",
                     parameters = list(nmin = 0.5), instance = NULL, ref = NULL,
-                    has_git = FALSE, changelog = NULL)
+                    changelog = NULL)
   expect_equal(out$report_name, "other")
   expect_match(out$report_id, "^\\d{8}-\\d{6}-\\w{8}")
 
@@ -156,14 +155,14 @@ test_that("runner can run a report with parameters", {
 test_that("runner can return errors", {
   ## Setup dir for testing
   skip_if_no_redis()
-  path <- orderly_prepare_orderly_example("minimal")
+  path <- orderly_git_example("minimal")
   writeLines("1 + 1", file.path(path, "src/example/script.R"))
   dir_create(dirname(path_stderr(path, "ignore")))
   dir_create(dirname(path_id_file(path, "ignore")))
 
   err <- expect_error(runner_run("key_report_id", "test_key", path, "example",
                     parameters = NULL, instance = NULL, ref = NULL,
-                    has_git = FALSE, changelog = NULL))
+                    changelog = NULL))
 
   ## Report ID still can be retrieved
   con <- redux::hiredis()
@@ -187,7 +186,7 @@ test_that("run: success", {
   testthat::skip_on_cran()
   skip_on_windows()
   skip_if_no_redis()
-  path <- orderly_prepare_orderly_example("demo")
+  path <- orderly_git_example("demo")
   expect_false(file.exists(file.path(path, "orderly.sqlite")))
   runner <- orderly_runner(path)
   expect_true(file.exists(file.path(path, "orderly.sqlite")))
@@ -233,7 +232,7 @@ test_that("run: error", {
   skip_if_no_redis()
 
   ## Setup report which will error
-  path <- orderly_prepare_orderly_example("minimal")
+  path <- orderly_git_example("minimal")
   writeLines("1 + 1", file.path(path, "src/example/script.R"))
 
   runner <- orderly_runner(path)
@@ -259,7 +258,7 @@ test_that("run report with parameters", {
   testthat::skip_on_cran()
   skip_on_windows()
   skip_if_no_redis()
-  path <- orderly_prepare_orderly_example("demo")
+  path <- orderly_git_example("demo")
   runner <- orderly_runner(path)
   key <- runner$submit_task_report("other", parameters = list(nmin = 0.5))
   task_id <- get_task_id_key(runner, key)
@@ -305,7 +304,7 @@ test_that("status missing ID", {
   testthat::skip_on_cran()
   skip_on_windows()
   skip_if_no_redis()
-  path <- orderly_prepare_orderly_example("demo")
+  path <- orderly_git_example("demo")
   runner <- orderly_runner(path, workers = 0)
   status <- runner$status("missing_key")
   expect_equal(status, list(
@@ -321,7 +320,7 @@ test_that("check_timeout kills timed out reports", {
   testthat::skip_on_cran()
   skip_on_windows()
   skip_if_no_redis()
-  path <- orderly_prepare_orderly_example("demo")
+  path <- orderly_git_example("demo")
   runner <- orderly_runner(path, workers = 2)
 
   key1 <- runner$submit_task_report("minimal", timeout = 0)
@@ -339,7 +338,7 @@ test_that("check_timeout doesn't kill reports with long timeout", {
   testthat::skip_on_cran()
   skip_on_windows()
   skip_if_no_redis()
-  path <- orderly_prepare_orderly_example("demo")
+  path <- orderly_git_example("demo")
   runner <- orderly_runner(path, workers = 1)
 
   key <- runner$submit_task_report("slow10", timeout = 20)
@@ -353,7 +352,7 @@ test_that("check_timeout returns NULL if no reports being run", {
   testthat::skip_on_cran()
   skip_on_windows()
   skip_if_no_redis()
-  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
+  path <- orderly_git_example("interactive", testing = TRUE)
   runner <- orderly_runner(path)
   msg <- capture_messages(killed <- runner$check_timeout())
   expect_null(killed)
@@ -364,7 +363,7 @@ test_that("check_timeout prints message if fails to kill a report", {
   testthat::skip_on_cran()
   skip_on_windows()
   skip_if_no_redis()
-  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
+  path <- orderly_git_example("interactive", testing = TRUE)
   runner <- orderly_runner(path)
 
   ## Here I want to test the case where in between getting the logs which
@@ -394,20 +393,11 @@ test_that("check_timeout prints message if fails to kill a report", {
                sprintf("Failed to kill '%s'\n  Failed to cancel\n", task_id))
 })
 
-test_that("Can't git change", {
-  testthat::skip_on_cran()
-  skip_if_no_redis()
-  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
-  runner <- orderly_runner(path)
-  expect_error(runner$submit_task_report("other", ref = "other"),
-               "Reference switching is disallowed in this runner")
-})
-
 test_that("kill - when running", {
   testthat::skip_on_cran()
   skip_if_no_redis()
   skip_on_windows()
-  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
+  path <- orderly_git_example("interactive", testing = TRUE)
   runner <- orderly_runner(path)
   name <- "interactive"
   key <- runner$submit_task_report(name)
@@ -421,7 +411,7 @@ test_that("kill - whist queued", {
   testthat::skip_on_cran()
   skip_if_no_redis()
   skip_on_windows()
-  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
+  path <- orderly_git_example("interactive", testing = TRUE)
   runner <- orderly_runner(path)
   name <- "interactive"
   key <- runner$submit_task_report(name)
@@ -434,7 +424,7 @@ test_that("kill - whist queued", {
 test_that("kill - no process", {
   testthat::skip_on_cran()
   skip_if_no_redis()
-  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
+  path <- orderly_git_example("interactive", testing = TRUE)
   runner <- orderly_runner(path)
   key <- "virtual_plant"
   expect_error(runner$kill(key),
@@ -497,32 +487,29 @@ test_that("allow ref logic", {
   config <- list(server_options = function() list(master_only = FALSE),
                  root = path)
 
-  expect_false(runner_allow_ref(FALSE, TRUE, config))
-
-  expect_false(runner_allow_ref(TRUE, FALSE, config))
-  expect_true(runner_allow_ref(TRUE, TRUE, config))
-  expect_true(runner_allow_ref(TRUE, NULL, config))
+  expect_false(runner_allow_ref(FALSE, config))
+  expect_true(runner_allow_ref(TRUE, config))
+  expect_true(runner_allow_ref(NULL, config))
 
   config <- list(server_options = function() list(master_only = TRUE),
                  root = path)
-  expect_false(runner_allow_ref(TRUE, FALSE, config))
-  expect_true(runner_allow_ref(TRUE, TRUE, config))
-  expect_false(runner_allow_ref(TRUE, NULL, config))
+  expect_false(runner_allow_ref(FALSE, config))
+  expect_true(runner_allow_ref(TRUE, config))
+  expect_false(runner_allow_ref(NULL, config))
 
   config <- list(server_options = function() list(master_only = FALSE),
                  root = tempfile())
-  expect_false(runner_allow_ref(TRUE, FALSE, config))
-  expect_false(runner_allow_ref(TRUE, TRUE, config))
-  expect_false(runner_allow_ref(TRUE, NULL, config))
+  expect_false(runner_allow_ref(FALSE, config))
+  expect_false(runner_allow_ref(TRUE, config))
+  expect_false(runner_allow_ref(NULL, config))
 })
-
 
 test_that("runner can set instance", {
   testthat::skip_on_cran()
   skip_on_windows()
   skip_if_no_redis()
 
-  path <- orderly_prepare_orderly_example("demo")
+  path <- orderly_git_example("demo")
   config <- file.path(path, "orderly_config.yml")
   p <- yaml::read_yaml(config)
   p$database$source$instances <- list(
@@ -579,7 +566,7 @@ test_that("status: clears task_timeout from redis", {
   testthat::skip_on_cran()
   skip_on_windows()
   skip_if_no_redis()
-  path <- orderly_prepare_orderly_example("demo")
+  path <- orderly_git_example("demo")
   expect_false(file.exists(file.path(path, "orderly.sqlite")))
   runner <- orderly_runner(path)
   expect_true(file.exists(file.path(path, "orderly.sqlite")))
@@ -612,7 +599,7 @@ test_that("runner run passes git args to orderly CLI", {
     get_exit_status = function() 0L), cycle = TRUE)
   mockery::stub(runner_run, "processx::process$new", mock_processx)
   run <- runner_run("key_report_id", "key", ".", "test", NULL, NULL,
-                    ref = NULL, has_git = TRUE, changelog = NULL)
+                    ref = NULL, changelog = NULL)
   mockery::expect_called(mock_processx, 1)
   args <- mockery::mock_args(mock_processx)[[1]][[2]]
   expect_equal(args, c("--root", ".", "run", "test", "--print-log",
@@ -621,7 +608,7 @@ test_that("runner run passes git args to orderly CLI", {
 
   mockery::stub(runner_run, "processx::process$new", mock_processx)
   run <- runner_run("key_report_id", "key", ".", "test", NULL, NULL,
-                    ref = "123", has_git = TRUE, changelog = NULL)
+                    ref = "123", changelog = NULL)
   mockery::expect_called(mock_processx, 2)
   args <- mockery::mock_args(mock_processx)[[2]][[2]]
   expect_equal(args, c("--root", ".", "run", "test", "--print-log",
@@ -630,11 +617,11 @@ test_that("runner run passes git args to orderly CLI", {
 
   mockery::stub(runner_run, "processx::process$new", mock_processx)
   run <- runner_run("key_report_id", "key", ".", "test", NULL, NULL,
-                    ref = NULL, has_git = FALSE, changelog = NULL)
+                    ref = NULL, changelog = NULL)
   mockery::expect_called(mock_processx, 3)
   args <- mockery::mock_args(mock_processx)[[3]][[2]]
   expect_equal(args, c("--root", ".", "run", "test", "--print-log",
-                       "--id-file", "./runner/id/key.id_file"))
+                       "--id-file", "./runner/id/key.id_file", "--pull"))
 })
 
 
@@ -645,7 +632,7 @@ test_that("runner run passes changelog to orderly CLI", {
     get_exit_status = function() 0L), cycle = TRUE)
   mockery::stub(runner_run, "processx::process$new", mock_processx)
   run <- runner_run("key_report_id", "key", ".", "test", NULL, NULL,
-                    ref = NULL, has_git = TRUE, changelog = "[tst] message")
+                    ref = NULL, changelog = "[tst] message")
   mockery::expect_called(mock_processx, 1)
   args <- mockery::mock_args(mock_processx)[[1]][[2]]
   expect_equal(args, c("--root", ".", "run", "test", "--print-log",
@@ -658,7 +645,7 @@ test_that("status: lists queued tasks", {
   testthat::skip_on_cran()
   skip_on_windows()
   skip_if_no_redis()
-  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
+  path <- orderly_git_example("interactive", testing = TRUE)
   runner <- orderly_runner(path)
 
   key1 <- runner$submit_task_report("interactive")
@@ -711,11 +698,17 @@ test_that("status: lists queued tasks", {
       name = "interactive")))
 })
 
+test_that("orderly runner won't start if root not under version control", {
+  path <- orderly_prepare_orderly_example("minimal")
+  expect_error(orderly_runner(path),
+               "Not starting server as orderly root is not version controlled")
+})
+
 test_that("run: changelog", {
   testthat::skip_on_cran()
   skip_on_windows()
   skip_if_no_redis()
-  path <- orderly_prepare_orderly_example("demo")
+  path <- orderly_git_example("demo")
   runner <- orderly_runner(path)
 
   ## Run a report slow enough to reliably report back a "running" status

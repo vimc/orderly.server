@@ -23,6 +23,7 @@ Imports:
     zip
 Suggests:
     callr,
+    gert,
     httr,
     jsonvalidate (>= 1.2.2),
     mockery,

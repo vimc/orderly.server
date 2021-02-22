@@ -1,7 +1,6 @@
 start_test_server <- function(path = NULL, port = 8321, log = NULL) {
   skip_if_no_redis()
-  path <- path %||% orderly_prepare_orderly_example("interactive",
-                                                    testing = TRUE)
+  path <- path %||% orderly_git_example("interactive", testing = TRUE)
   get_free_port <- free_port(port)
   port <- get_free_port()
   server <- orderly_server_background$new(path, port, log)

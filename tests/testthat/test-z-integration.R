@@ -179,8 +179,7 @@ test_that("run report honours timeout", {
 
 
 test_that("run: pass parameters", {
-  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
-  server <- start_test_server(path)
+  server <- start_test_server()
   on.exit(server$stop())
 
   r <- httr::POST(server$api_url("/v1/reports/count_param/run/"),
@@ -232,8 +231,8 @@ test_that("run: pass parameters", {
 })
 
 test_that("run: changelog", {
-  path <- orderly_prepare_orderly_example("demo")
-  server <- start_test_server(path)
+  path <- orderly_prepare_orderly_git_example()
+  server <- start_test_server(path[["local"]])
   on.exit(server$stop())
 
   r <- httr::POST(server$api_url("/v1/reports/minimal/run/"),
