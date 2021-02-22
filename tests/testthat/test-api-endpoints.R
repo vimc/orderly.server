@@ -564,13 +564,13 @@ test_that("run-metadata", {
 
 test_that("run-metadata pulls information from runner", {
   skip_if_no_redis()
-  path <- orderly::orderly_example("minimal")
+  path <- orderly_git_example("minimal")
   runner <- orderly_runner(path, workers = 0)
 
   expect_equal(target_run_metadata(runner), list(
     name = NULL,
     instances_supported = scalar(FALSE),
-    git_supported = scalar(FALSE),
+    git_supported = scalar(TRUE),
     instances = list(
       "source" = character(0)
     ),
@@ -578,7 +578,7 @@ test_that("run-metadata pulls information from runner", {
   ))
 
   ## Example with all enabled
-  path <- orderly::orderly_example("minimal")
+  path <- orderly_git_example("minimal")
   yml <- c("database:",
            "  source:",
            "    driver: RSQLite::SQLite",
@@ -605,7 +605,7 @@ test_that("run-metadata pulls information from runner", {
   expect_equal(target_run_metadata(runner), list(
     name = NULL,
     instances_supported = scalar(TRUE),
-    git_supported = scalar(FALSE),
+    git_supported = scalar(TRUE),
     instances = list(
       "source" = c(scalar("production"), scalar("staging"))
     ),
@@ -615,7 +615,7 @@ test_that("run-metadata pulls information from runner", {
 
 test_that("run-metadata can get config for multiple databases", {
   skip_if_no_redis()
-  path <- orderly::orderly_example("minimal")
+  path <- orderly_git_example("minimal")
   yml <- c("database:",
            "  source:",
            "    driver: RSQLite::SQLite",
@@ -645,7 +645,7 @@ test_that("run-metadata can get config for multiple databases", {
   expect_equal(target_run_metadata(runner), list(
     name = NULL,
     instances_supported = scalar(TRUE),
-    git_supported = scalar(FALSE),
+    git_supported = scalar(TRUE),
     instances = list(
       source = c(scalar("production"), scalar("staging")),
       annex = character(0)
@@ -653,7 +653,7 @@ test_that("run-metadata can get config for multiple databases", {
     changelog_types = NULL
   ))
 
-  path <- orderly::orderly_example("minimal")
+  path <- orderly_git_example("minimal")
   yml <- c("database:",
            "  source:",
            "    driver: RSQLite::SQLite",
@@ -689,7 +689,7 @@ test_that("run-metadata can get config for multiple databases", {
   expect_equal(target_run_metadata(runner), list(
     name = NULL,
     instances_supported = scalar(TRUE),
-    git_supported = scalar(FALSE),
+    git_supported = scalar(TRUE),
     instances = list(
       source = c(scalar("production"), scalar("staging")),
       annex = c(scalar("annex1"), scalar("annex2"))
@@ -700,7 +700,7 @@ test_that("run-metadata can get config for multiple databases", {
 
 test_that("run metadata can get name from config", {
   skip_if_no_redis()
-  path <- orderly::orderly_example("minimal")
+  path <- orderly_git_example("minimal")
   yml <- c("database:",
            "  source:",
            "    driver: RSQLite::SQLite",
@@ -744,7 +744,7 @@ test_that("run metadata can get name from config", {
   expect_equal(metadata, list(
     name = scalar("production"),
     instances_supported = scalar(TRUE),
-    git_supported = scalar(FALSE),
+    git_supported = scalar(TRUE),
     instances = list(
       source = c(scalar("production"), scalar("staging"))
     ),
@@ -754,7 +754,7 @@ test_that("run metadata can get name from config", {
 
 test_that("run metadata returns git & db instances supported info", {
   skip_if_no_redis()
-  path <- orderly::orderly_example("minimal")
+  path <- orderly_git_example("minimal")
   yml <- c("database:",
            "  source:",
            "    driver: RSQLite::SQLite",
@@ -885,7 +885,7 @@ test_that("api preroute calls runner check_timeout with rate limit", {
 
 test_that("api runs backup on preroute", {
   skip_if_no_redis()
-  path <- orderly_prepare_orderly_example("minimal")
+  path <- orderly_git_example("minimal")
   runner <- orderly_runner(path)
   api <- build_api(runner, path, backup_period = 1)
   db_backup <- orderly_path_db_backup(path, "orderly.sqlite")
