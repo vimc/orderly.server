@@ -105,7 +105,7 @@ test_that("runner can run a report", {
   dir_create(dirname(path_id_file(path, "ignore")))
 
   out <- runner_run("key_id", "test_key", path, "minimal", parameters = NULL,
-                    instance = NULL, ref = NULL)
+                    instance = NULL, ref = NULL, changelog = NULL)
   expect_equal(out$report_name, "minimal")
   expect_match(out$report_id, "^\\d{8}-\\d{6}-\\w{8}")
 
@@ -130,7 +130,8 @@ test_that("runner can run a report with parameters", {
   dir_create(dirname(path_id_file(path, "ignore")))
 
   out <- runner_run("key_id", "test_key", path, "other",
-                    parameters = list(nmin = 0.5), instance = NULL, ref = NULL)
+                    parameters = list(nmin = 0.5), instance = NULL, ref = NULL,
+                    changelog = NULL)
   expect_equal(out$report_name, "other")
   expect_match(out$report_id, "^\\d{8}-\\d{6}-\\w{8}")
 
@@ -160,7 +161,8 @@ test_that("runner can return errors", {
   dir_create(dirname(path_id_file(path, "ignore")))
 
   err <- expect_error(runner_run("key_report_id", "test_key", path, "example",
-                    parameters = NULL, instance = NULL, ref = NULL))
+                    parameters = NULL, instance = NULL, ref = NULL,
+                    changelog = NULL))
 
   ## Report ID still can be retrieved
   con <- redux::hiredis()
@@ -182,7 +184,6 @@ test_that("runner can return errors", {
 
 test_that("run: success", {
   testthat::skip_on_cran()
-  skip_on_appveyor()
   skip_on_windows()
   skip_if_no_redis()
   path <- orderly_git_example("demo")
@@ -227,7 +228,6 @@ test_that("run: success", {
 
 test_that("run: error", {
   testthat::skip_on_cran()
-  skip_on_appveyor()
   skip_on_windows()
   skip_if_no_redis()
 
@@ -275,7 +275,6 @@ test_that("run report with parameters", {
 
 test_that("run in branch (local)", {
   testthat::skip_on_cran()
-  skip_on_appveyor()
   skip_on_windows()
   skip_if_no_redis()
   path <- orderly_unzip_git_demo()
@@ -303,7 +302,6 @@ test_that("prevent ref change", {
 
 test_that("status missing ID", {
   testthat::skip_on_cran()
-  skip_on_appveyor()
   skip_on_windows()
   skip_if_no_redis()
   path <- orderly_git_example("demo")
@@ -320,7 +318,6 @@ test_that("status missing ID", {
 
 test_that("check_timeout kills timed out reports", {
   testthat::skip_on_cran()
-  skip_on_appveyor()
   skip_on_windows()
   skip_if_no_redis()
   path <- orderly_git_example("demo")
@@ -339,7 +336,6 @@ test_that("check_timeout kills timed out reports", {
 
 test_that("check_timeout doesn't kill reports with long timeout", {
   testthat::skip_on_cran()
-  skip_on_appveyor()
   skip_on_windows()
   skip_if_no_redis()
   path <- orderly_git_example("demo")
@@ -354,7 +350,6 @@ test_that("check_timeout doesn't kill reports with long timeout", {
 
 test_that("check_timeout returns NULL if no reports being run", {
   testthat::skip_on_cran()
-  skip_on_appveyor()
   skip_on_windows()
   skip_if_no_redis()
   path <- orderly_git_example("interactive", testing = TRUE)
@@ -366,7 +361,6 @@ test_that("check_timeout returns NULL if no reports being run", {
 
 test_that("check_timeout prints message if fails to kill a report", {
   testthat::skip_on_cran()
-  skip_on_appveyor()
   skip_on_windows()
   skip_if_no_redis()
   path <- orderly_git_example("interactive", testing = TRUE)
@@ -570,7 +564,6 @@ test_that("runner can set instance", {
 
 test_that("status: clears task_timeout from redis", {
   testthat::skip_on_cran()
-  skip_on_appveyor()
   skip_on_windows()
   skip_if_no_redis()
   path <- orderly_git_example("demo")
@@ -606,7 +599,7 @@ test_that("runner run passes git args to orderly CLI", {
     get_exit_status = function() 0L), cycle = TRUE)
   mockery::stub(runner_run, "processx::process$new", mock_processx)
   run <- runner_run("key_report_id", "key", ".", "test", NULL, NULL,
-                    ref = NULL)
+                    ref = NULL, changelog = NULL)
   mockery::expect_called(mock_processx, 1)
   args <- mockery::mock_args(mock_processx)[[1]][[2]]
   expect_equal(args, c("--root", ".", "run", "test", "--print-log",
@@ -615,7 +608,7 @@ test_that("runner run passes git args to orderly CLI", {
 
   mockery::stub(runner_run, "processx::process$new", mock_processx)
   run <- runner_run("key_report_id", "key", ".", "test", NULL, NULL,
-                    ref = "123")
+                    ref = "123", changelog = NULL)
   mockery::expect_called(mock_processx, 2)
   args <- mockery::mock_args(mock_processx)[[2]][[2]]
   expect_equal(args, c("--root", ".", "run", "test", "--print-log",
@@ -624,16 +617,32 @@ test_that("runner run passes git args to orderly CLI", {
 
   mockery::stub(runner_run, "processx::process$new", mock_processx)
   run <- runner_run("key_report_id", "key", ".", "test", NULL, NULL,
-                    ref = NULL)
+                    ref = NULL, changelog = NULL)
   mockery::expect_called(mock_processx, 3)
   args <- mockery::mock_args(mock_processx)[[3]][[2]]
   expect_equal(args, c("--root", ".", "run", "test", "--print-log",
                        "--id-file", "./runner/id/key.id_file", "--pull"))
 })
 
+
+test_that("runner run passes changelog to orderly CLI", {
+  skip_if_no_redis()
+  mock_processx <- mockery::mock(list(
+    is_alive = function() FALSE,
+    get_exit_status = function() 0L), cycle = TRUE)
+  mockery::stub(runner_run, "processx::process$new", mock_processx)
+  run <- runner_run("key_report_id", "key", ".", "test", NULL, NULL,
+                    ref = NULL, has_git = TRUE, changelog = "[tst] message")
+  mockery::expect_called(mock_processx, 1)
+  args <- mockery::mock_args(mock_processx)[[1]][[2]]
+  expect_equal(args, c("--root", ".", "run", "test", "--print-log",
+                       "--id-file", "./runner/id/key.id_file",
+                       "--pull", "--message", "[tst] message"))
+})
+
+
 test_that("status: lists queued tasks", {
   testthat::skip_on_cran()
-  skip_on_appveyor()
   skip_on_windows()
   skip_if_no_redis()
   path <- orderly_git_example("interactive", testing = TRUE)
@@ -693,4 +702,35 @@ test_that("orderly runner won't start if root not under version control", {
   path <- orderly_prepare_orderly_example("minimal")
   expect_error(orderly_runner(path),
                "Not starting server as orderly root is not version controlled")
+})
+
+test_that("run: changelog", {
+  testthat::skip_on_cran()
+  skip_on_windows()
+  skip_if_no_redis()
+  path <- orderly_prepare_orderly_example("demo")
+  runner <- orderly_runner(path)
+
+  ## Run a report slow enough to reliably report back a "running" status
+  key <- runner$submit_task_report("minimal", changelog = "[internal] test")
+
+  task_id <- get_task_id_key(runner, key)
+  expect_match(task_id, "^[[:xdigit:]]{32}$")
+  result <- runner$queue$task_wait(task_id)
+  report_id <- result$report_id
+  status <- runner$status(key, output = TRUE)
+  expect_equal(status$key, key)
+  expect_equal(status$status, "success")
+  expect_equal(status$version, report_id)
+
+  ## Report is in archive
+  d <- orderly::orderly_list_archive(path)
+  expect_equal(d$name, "minimal")
+  expect_equal(d$id, report_id)
+
+  d <- readRDS(orderly_path_orderly_run_rds(
+    file.path(path, "archive", "minimal", report_id)))
+  expect_true(!is.null(d$meta$changelog))
+  expect_equal(d$meta$changelog$label, "internal")
+  expect_equal(d$meta$changelog$value, "test")
 })

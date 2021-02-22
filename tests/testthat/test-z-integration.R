@@ -178,13 +178,13 @@ test_that("run report honours timeout", {
 })
 
 
-test_that("pass parameters", {
+test_that("run: pass parameters", {
   server <- start_test_server()
   on.exit(server$stop())
 
   r <- httr::POST(server$api_url("/v1/reports/count_param/run/"),
                   query = list(timeout = 60),
-                  body = list(time = 1, poll = 0.1),
+                  body = list(params = list(time = 1, poll = 0.1)),
                   encode = "json")
 
   expect_equal(httr::status_code(r), 200)
@@ -228,6 +228,45 @@ test_that("pass parameters", {
   ## parameters make it across
   expect_match(st$data$output, "time: 1", fixed = TRUE, all = FALSE)
   expect_match(st$data$output, "poll: 0.1", fixed = TRUE, all = FALSE)
+})
+
+test_that("run: changelog", {
+  path <- orderly_prepare_orderly_example("demo")
+  server <- start_test_server(path)
+  on.exit(server$stop())
+
+  r <- httr::POST(server$api_url("/v1/reports/minimal/run/"),
+                  query = list(timeout = 60),
+                  body = list(changelog = list(type = "internal",
+                                               message = "test")),
+                  encode = "json")
+
+  expect_equal(httr::status_code(r), 200)
+  dat <- content(r)
+  expect_equal(dat$status, "success")
+  expect_is(dat$data, "list")
+
+  expect_true(setequal(names(dat$data), c("name", "key", "path")))
+  expect_equal(dat$data$name, "minimal")
+
+  ## Then we ask about status
+  wait_for_version(dat$data$key, server)
+  r <- httr::GET(server$api_url(dat$data$path))
+  expect_equal(httr::status_code(r), 200)
+  st <- content(r)
+  expect_equal(st$status, "success")
+  expect_is(st$data, "list")
+  version <- st$data$version
+
+  dest <- file.path(server$path, "archive", "minimal", version)
+  wait_for_path(dest)
+  wait_for_finished(dat$data$key, server)
+
+  d <- readRDS(orderly_path_orderly_run_rds(
+    file.path(server$path, "archive", "minimal", version)))
+  expect_true(!is.null(d$meta$changelog))
+  expect_equal(d$meta$changelog$label, "internal")
+  expect_equal(d$meta$changelog$value, "test")
 })
 
 test_that("run-metadata", {
@@ -376,8 +415,7 @@ test_that("Can pack, run and import a bundle", {
   ans <- orderly::orderly_bundle_run(zip_in, echo = FALSE)
   expect_equal(filename, paste0(ans$id, ".zip"))
 
-  res_up <- httr::POST(
-    "http://localhost:8321/v1/bundle/import",
+  res_up <- httr::POST(server$api_url("/v1/bundle/import"),
     body = httr::upload_file(ans$path, "application/octet-stream"))
   expect_equal(httr::status_code(res), 200L)
   dat <- content(res_up)

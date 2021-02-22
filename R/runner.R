@@ -33,7 +33,7 @@ orderly_runner <- function(path, allow_ref = NULL, queue_id = NULL,
 }
 
 runner_run <- function(key_report_id, key, root, name, parameters, instance,
-                       ref, poll = 0.1) {
+                       ref, changelog, poll = 0.1) {
   con <- redux::hiredis()
   bin <- tempfile()
   dir.create(bin)
@@ -52,9 +52,13 @@ runner_run <- function(key_report_id, key, root, name, parameters, instance,
   } else {
     git_args <- c("--fetch", "--ref", ref)
   }
+  msg_args <- NULL
+  if (!is.null(changelog)) {
+    msg_args <- c("--message", changelog)
+  }
   args <- c("--root", root,
             "run", name, "--print-log", "--id-file", id_file,
-            git_args,
+            git_args, msg_args,
             if (!is.null(instance)) c("--instance", instance),
             parameters)
   log_err <- path_stderr(root, key)
@@ -197,8 +201,8 @@ orderly_runner_ <- R6::R6Class(
     #' @return The key for the job, note this is not the task id. The task id
     #' can be retrieved from redis using the key.
     submit_task_report = function(name, parameters = NULL, ref = NULL,
-                                  instance = NULL, poll = 0.1,
-                                  timeout = 60 * 60 * 3) {
+                                  instance = NULL, changelog = NULL,
+                                  poll = 0.1, timeout = 60 * 60 * 3) {
       if (!self$allow_ref && !is.null(ref)) {
         stop("Reference switching is disallowed in this runner",
              call. = FALSE)
@@ -209,7 +213,8 @@ orderly_runner_ <- R6::R6Class(
       key_report_id <- self$keys$key_report_id
       task_id <- self$submit(quote(
         orderly.server:::runner_run(key_report_id, key, root, name,   # nolint
-                                    parameters, instance, ref, poll = poll)))
+                                    parameters, instance, ref,
+                                    changelog = changelog, poll = poll)))
       self$con$HSET(self$keys$key_task_id, key, task_id)
       self$con$HSET(self$keys$task_id_key, task_id, key)
       self$con$HSET(self$keys$task_timeout, task_id, timeout)

@@ -221,7 +221,7 @@ test_that("run", {
          path = scalar(sprintf("/v1/reports/%s/status/", key))))
   expect_equal(
     mockery::mock_args(runner$submit_task_report)[[1]],
-    list("example", NULL, NULL, NULL, timeout = 60 * 60 * 3))
+    list("example", NULL, NULL, NULL, changelog = NULL, timeout = 60 * 60 * 3))
 
   ## endpoint
   endpoint <- endpoint_run(runner)
@@ -243,7 +243,7 @@ test_that("run with parameters", {
   key <- "key-1"
   runner <- mock_runner(key = key)
 
-  res <- target_run(runner, "example", parameters = '{"a": 1}')
+  res <- target_run(runner, "example", body = '{"params": {"a": 1}}')
   expect_equal(
     res,
     list(name = scalar("example"),
@@ -251,7 +251,26 @@ test_that("run with parameters", {
          path = scalar(sprintf("/v1/reports/%s/status/", key))))
   expect_equal(
     mockery::mock_args(runner$submit_task_report)[[1]],
-    list("example", list(a = 1), NULL, NULL, timeout = 60 * 60 * 3))
+    list("example", list(a = 1), NULL, NULL, changelog = NULL,
+         timeout = 60 * 60 * 3))
+})
+
+
+test_that("run with changelog", {
+  key <- "key-1"
+  runner <- mock_runner(key = key)
+
+  res <- target_run(runner, "example",
+                    body = '{"changelog": {"type": "test", "message": "msg"}}')
+  expect_equal(
+    res,
+    list(name = scalar("example"),
+         key = scalar(key),
+         path = scalar(sprintf("/v1/reports/%s/status/", key))))
+  expect_equal(
+    mockery::mock_args(runner$submit_task_report)[[1]],
+    list("example", NULL, NULL, NULL, changelog = "[test] msg",
+         timeout = 60 * 60 * 3))
 })
 
 
@@ -491,7 +510,7 @@ test_that("run can specify instance", {
          path = scalar(sprintf("/v1/reports/%s/status/", key))))
   expect_equal(
     mockery::mock_args(runner$submit_task_report)[[1]],
-    list("example", NULL, NULL, "myinstance", timeout = 100))
+    list("example", NULL, NULL, "myinstance", changelog = NULL, timeout = 100))
 
   ## and via the api
   api <- build_api(runner, "path")
@@ -500,7 +519,7 @@ test_that("run can specify instance", {
                          list(timeout = 100, instance = "myinstance"))
   expect_equal(
     mockery::mock_args(runner$submit_task_report)[[2]],
-    list("example", NULL, NULL, "myinstance", timeout = 100))
+    list("example", NULL, NULL, "myinstance", changelog = NULL, timeout = 100))
 })
 
 test_that("run-metadata", {
