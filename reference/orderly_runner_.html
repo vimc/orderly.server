@@ -125,8 +125,6 @@ Object for managing running jobs on the redis queue" />
 
 <dt><code>allow_ref</code></dt><dd><p>Allow git to change branch/ref for run</p></dd>
 
-<dt><code>has_git</code></dt><dd><p>Is git available on the runner</p></dd>
-
 <dt><code>con</code></dt><dd><p>Redis connection</p></dd>
 
 <dt><code>cleanup_on_exit</code></dt><dd><p>If TRUE workers are killed on exit</p></dd>
@@ -150,6 +148,7 @@ and task_id</p></dd>
 <li><p><a href='#method-submit_task_report'><code>orderly_runner_$submit_task_report()</code></a></p></li>
 <li><p><a href='#method-submit'><code>orderly_runner_$submit()</code></a></p></li>
 <li><p><a href='#method-status'><code>orderly_runner_$status()</code></a></p></li>
+<li><p><a href='#method-get_preceeding_tasks'><code>orderly_runner_$get_preceeding_tasks()</code></a></p></li>
 <li><p><a href='#method-check_timeout'><code>orderly_runner_$check_timeout()</code></a></p></li>
 <li><p><a href='#method-kill'><code>orderly_runner_$kill()</code></a></p></li>
 <li><p><a href='#method-destroy'><code>orderly_runner_$destroy()</code></a></p></li>
@@ -262,6 +261,19 @@ can be retrieved from redis using the key.</p>
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>List containing the key, status, report_id (if available),
 output and the position of the job in the queue.</p>
+<p><hr>
+<a id="method-get_preceeding_tasks"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>get_preceeding_tasks()</code></h3>
+<p>Get the running and queued tasks in front of key in the queue</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>orderly_runner_</span><span class='op'>$</span><span class='fu'>get_preceeding_tasks</span><span class='op'>(</span><span class='va'>key</span><span class='op'>)</span></pre><p></div></p>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
+<dt><code>key</code></dt><dd><p>The job key.</p></dd>
+
+</dl><p></div></p>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
+<p>List containing the key, status and report name of any
+running tasks and any queued tasks in front of key in the queue.</p>
 <p><hr>
 <a id="method-check_timeout"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>check_timeout()</code></h3>
 <p>Check if any running tasks have passed their timeouts. This is run
