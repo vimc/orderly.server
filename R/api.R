@@ -277,8 +277,8 @@ endpoint_run <- function(runner) {
     porcelain::porcelain_input_query(ref = "string",
                                instance = "string",
                                timeout = "integer"),
-    porcelain::pkgapi_input_body_json("body", "RunRequest.schema",
-                                   schema_root()),
+    porcelain::porcelain_input_body_json("body", "RunRequest.schema",
+                                         schema_root()),
     porcelain::porcelain_state(runner = runner),
     returning = returning_json("Run.schema"))
 }
