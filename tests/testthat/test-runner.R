@@ -632,7 +632,7 @@ test_that("runner run passes changelog to orderly CLI", {
     get_exit_status = function() 0L), cycle = TRUE)
   mockery::stub(runner_run, "processx::process$new", mock_processx)
   run <- runner_run("key_report_id", "key", ".", "test", NULL, NULL,
-                    ref = NULL, has_git = TRUE, changelog = "[tst] message")
+                    ref = NULL, changelog = "[tst] message")
   mockery::expect_called(mock_processx, 1)
   args <- mockery::mock_args(mock_processx)[[1]][[2]]
   expect_equal(args, c("--root", ".", "run", "test", "--print-log",
@@ -708,7 +708,7 @@ test_that("run: changelog", {
   testthat::skip_on_cran()
   skip_on_windows()
   skip_if_no_redis()
-  path <- orderly_prepare_orderly_example("demo")
+  path <- orderly_git_example("demo")
   runner <- orderly_runner(path)
 
   ## Run a report slow enough to reliably report back a "running" status

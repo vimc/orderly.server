@@ -231,8 +231,8 @@ test_that("run: pass parameters", {
 })
 
 test_that("run: changelog", {
-  path <- orderly_prepare_orderly_example("demo")
-  server <- start_test_server(path)
+  path <- orderly_prepare_orderly_git_example()
+  server <- start_test_server(path[["local"]])
   on.exit(server$stop())
 
   r <- httr::POST(server$api_url("/v1/reports/minimal/run/"),
