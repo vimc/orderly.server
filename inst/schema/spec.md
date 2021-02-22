@@ -265,6 +265,51 @@ List parameters and any default values for a report on a specific commit.
 ]
 ```
 
+## GET /reports/<report_name>/dependencies
+
+Get the dependency tree for a report. The root dependency in the returned tree is always the report specified in the request.
+
+Accepts the query parameter `id`, to specify the report version (default is `latest`)
+
+Accepts the query parameter `direction`, to specify dependency type, `upstream` or `downstream` (default is `"downstream"`)
+
+Accepts the query parameter `propagate`, to indicate whether out of date results should be propagated through the tree (default is `true`)
+
+Accepts the query parameter `max_depth` to indicate the maximun number of levels which will be returned in the tree (default is `100`)
+
+Accepts the query parameter `show_all` to indicate whether all reports should be returned in the tree, not just the latest (default is `false`)
+
+Accepts the query parameter `use` to specify where to find dependencies, `src` or `archive` (default is `archive`) 
+
+## Example
+
+```json
+{
+  "direction": "upstream",
+  "dependency_tree": {
+      "name": "r1",
+      "id": "20200222-171004-c72b21",
+      "out_of_date": true,
+      "dependencies": [
+        {
+          "name": "r2",
+          "id": "20210221-091112-b172f",
+          "out_of_date": false,
+          "dependencies": []
+        },
+        {
+          "name": "r3",
+          "id": "20210221-100336-dd312",
+          "out_of_date": false,
+          "dependencies": []
+        }
+      ]
+  }
+}
+```
+
+Schema: [`Dependencies.schema.json`](Dependencies.schema.json)
+
 ## POST /bundle/pack/:name
 
 Create a "[report bundle](https://www.vaccineimpact.org/orderly/reference/orderly_bundle_pack.html)", to be run on some other machine
