@@ -1,4 +1,4 @@
-Sys.setenv(PKGAPI_VALIDATE = "true") # nolint
+Sys.setenv(PORCELAIN_VALIDATE = "true") # nolint
 
 content <- function(r) {
   txt <- httr::content(r, "text", encoding = "UTF-8")
@@ -84,7 +84,7 @@ read_json <- function(path, ...) {
 
 ## There is going to be some work here to keep these up-to-date:
 mock_runner <- function(key = NULL, status = NULL,
-                        config = NULL, has_git = TRUE, root = NULL,
+                        config = NULL, root = NULL,
                         check_timeout = NULL) {
   list(
     submit_task_report = mockery::mock(key, cycle = TRUE),
@@ -92,7 +92,6 @@ mock_runner <- function(key = NULL, status = NULL,
     check_timeout = mockery::mock(check_timeout, cycle = TRUE),
     kill = mockery::mock(TRUE, cycle = TRUE),
     config = config,
-    has_git = has_git,
     root = root
   )
 }
@@ -122,7 +121,32 @@ orderly_prepare_orderly_example <- orderly:::prepare_orderly_example
 orderly_unzip_git_demo <- orderly:::unzip_git_demo
 orderly_path_db_backup <- orderly:::path_db_backup
 orderly_path_orderly_run_rds <- orderly:::path_orderly_run_rds
+orderly_git_checkout_branch <- orderly:::git_checkout_branch
 ## nolint end
+
+orderly_git_example <- function(name, path = tempfile(), testing = FALSE) {
+  ## orderly_prepare_orderly_git_example will initialise an example
+  ## git repo with a remote configured and return 2 paths
+  ## local path and remote path, where the remote is ahead of local
+  ## This initialises an example of choice, inits git with a remote
+  ## and returns path to local - use for testing orderly.server where
+  ## features which update/pull from the remote aren't interesting
+  gert::git_init(path)
+
+  upstream <- file.path(path, "upstream")
+  orderly_prepare_orderly_example(name, path = upstream, testing = testing)
+  gert::git_init(upstream)
+  writeLines("upstream", file.path(upstream, ".gitignore"))
+  gert::git_add(".", repo = upstream)
+  gert::git_commit("Init repo", repo = upstream,
+                   author = "T User <test.user@example.com>")
+
+  gert::git_remote_add(upstream, "origin", repo = path)
+  gert::git_fetch(remote = "origin", repo = path)
+  gert::git_branch_checkout("master", repo = path)
+  gert::git_branch_set_upstream("origin/master", "master", repo = path)
+  path
+}
 
 version_info <- function() {
   scalar(as.character(utils::packageVersion("orderly.server")))

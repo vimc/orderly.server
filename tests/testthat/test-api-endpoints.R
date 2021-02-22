@@ -1,12 +1,11 @@
 context("api - endpoints")
 
-test_that("index", {
-  endpoint <- endpoint_index()
+test_that("root", {
+  endpoint <- endpoint_root()
 
   res <- endpoint$target()
   expect_equal(res$name, scalar("orderly.server"))
   expect_equal(res$version, version_info())
-  expect_true("/v1/reports/:key/status/" %in% res$endpoints)
 
   runner <- mock_runner()
   api <- build_api(runner, "path")
@@ -221,11 +220,11 @@ test_that("run", {
          path = scalar(sprintf("/v1/reports/%s/status/", key))))
   expect_equal(
     mockery::mock_args(runner$submit_task_report)[[1]],
-    list("example", NULL, NULL, NULL, timeout = 60 * 60 * 3))
+    list("example", NULL, NULL, NULL, changelog = NULL, timeout = 60 * 60 * 3))
 
   ## endpoint
   endpoint <- endpoint_run(runner)
-  ## RESIDE-166: running endpoint$run() is 500 not 40x error (pkgapi bug)
+  ## RESIDE-166: running endpoint$run() is 500 not 40x error (porcelain bug)
   res_endpoint <- endpoint$run("example", timeout = 600)
   expect_equal(res_endpoint$status_code, 200)
   expect_equal(res_endpoint$data, res)
@@ -243,7 +242,7 @@ test_that("run with parameters", {
   key <- "key-1"
   runner <- mock_runner(key = key)
 
-  res <- target_run(runner, "example", parameters = '{"a": 1}')
+  res <- target_run(runner, "example", body = '{"params": {"a": 1}}')
   expect_equal(
     res,
     list(name = scalar("example"),
@@ -251,7 +250,26 @@ test_that("run with parameters", {
          path = scalar(sprintf("/v1/reports/%s/status/", key))))
   expect_equal(
     mockery::mock_args(runner$submit_task_report)[[1]],
-    list("example", list(a = 1), NULL, NULL, timeout = 60 * 60 * 3))
+    list("example", list(a = 1), NULL, NULL, changelog = NULL,
+         timeout = 60 * 60 * 3))
+})
+
+
+test_that("run with changelog", {
+  key <- "key-1"
+  runner <- mock_runner(key = key)
+
+  res <- target_run(runner, "example",
+                    body = '{"changelog": {"type": "test", "message": "msg"}}')
+  expect_equal(
+    res,
+    list(name = scalar("example"),
+         key = scalar(key),
+         path = scalar(sprintf("/v1/reports/%s/status/", key))))
+  expect_equal(
+    mockery::mock_args(runner$submit_task_report)[[1]],
+    list("example", NULL, NULL, NULL, changelog = "[test] msg",
+         timeout = 60 * 60 * 3))
 })
 
 
@@ -452,7 +470,7 @@ test_that("kill - failure", {
   msg <- "Failed to kill 'key-1' task doesn't exist"
   runner$kill <- mockery::mock(stop(msg), cycle = TRUE)
 
-  res <- expect_error(target_kill(runner, key), class = "pkgapi_error")
+  res <- expect_error(target_kill(runner, key), class = "porcelain_error")
   res$trace <- NULL
   expect_equal(mockery::mock_args(runner$kill)[[1]], list(key))
   expect_equal(res$data[[1]]$error, jsonlite::unbox("ERROR"))
@@ -491,7 +509,7 @@ test_that("run can specify instance", {
          path = scalar(sprintf("/v1/reports/%s/status/", key))))
   expect_equal(
     mockery::mock_args(runner$submit_task_report)[[1]],
-    list("example", NULL, NULL, "myinstance", timeout = 100))
+    list("example", NULL, NULL, "myinstance", changelog = NULL, timeout = 100))
 
   ## and via the api
   api <- build_api(runner, "path")
@@ -500,7 +518,7 @@ test_that("run can specify instance", {
                          list(timeout = 100, instance = "myinstance"))
   expect_equal(
     mockery::mock_args(runner$submit_task_report)[[2]],
-    list("example", NULL, NULL, "myinstance", timeout = 100))
+    list("example", NULL, NULL, "myinstance", changelog = NULL, timeout = 100))
 })
 
 test_that("run-metadata", {
@@ -534,7 +552,7 @@ test_that("run-metadata", {
   expect_equal(res$git_supported, scalar(TRUE))
   expect_equal(res$instances,
                list(source = c(scalar("production"), scalar("staging"))))
-  expect_equal(res$changelog_types, c(scalar("public")))
+  expect_equal(res$changelog_types, c(scalar("internal"), scalar("public")))
 
   ## test through API
   api <- build_api(runner, "path")
@@ -546,13 +564,13 @@ test_that("run-metadata", {
 
 test_that("run-metadata pulls information from runner", {
   skip_if_no_redis()
-  path <- orderly::orderly_example("minimal")
+  path <- orderly_git_example("minimal")
   runner <- orderly_runner(path, workers = 0)
 
   expect_equal(target_run_metadata(runner), list(
     name = NULL,
     instances_supported = scalar(FALSE),
-    git_supported = scalar(FALSE),
+    git_supported = scalar(TRUE),
     instances = list(
       "source" = character(0)
     ),
@@ -560,7 +578,7 @@ test_that("run-metadata pulls information from runner", {
   ))
 
   ## Example with all enabled
-  path <- orderly::orderly_example("minimal")
+  path <- orderly_git_example("minimal")
   yml <- c("database:",
            "  source:",
            "    driver: RSQLite::SQLite",
@@ -587,17 +605,17 @@ test_that("run-metadata pulls information from runner", {
   expect_equal(target_run_metadata(runner), list(
     name = NULL,
     instances_supported = scalar(TRUE),
-    git_supported = scalar(FALSE),
+    git_supported = scalar(TRUE),
     instances = list(
       "source" = c(scalar("production"), scalar("staging"))
     ),
-    changelog_types = c(scalar("external"))
+    changelog_types = c(scalar("internal"), scalar("external"))
   ))
 })
 
 test_that("run-metadata can get config for multiple databases", {
   skip_if_no_redis()
-  path <- orderly::orderly_example("minimal")
+  path <- orderly_git_example("minimal")
   yml <- c("database:",
            "  source:",
            "    driver: RSQLite::SQLite",
@@ -627,7 +645,7 @@ test_that("run-metadata can get config for multiple databases", {
   expect_equal(target_run_metadata(runner), list(
     name = NULL,
     instances_supported = scalar(TRUE),
-    git_supported = scalar(FALSE),
+    git_supported = scalar(TRUE),
     instances = list(
       source = c(scalar("production"), scalar("staging")),
       annex = character(0)
@@ -635,7 +653,7 @@ test_that("run-metadata can get config for multiple databases", {
     changelog_types = NULL
   ))
 
-  path <- orderly::orderly_example("minimal")
+  path <- orderly_git_example("minimal")
   yml <- c("database:",
            "  source:",
            "    driver: RSQLite::SQLite",
@@ -671,7 +689,7 @@ test_that("run-metadata can get config for multiple databases", {
   expect_equal(target_run_metadata(runner), list(
     name = NULL,
     instances_supported = scalar(TRUE),
-    git_supported = scalar(FALSE),
+    git_supported = scalar(TRUE),
     instances = list(
       source = c(scalar("production"), scalar("staging")),
       annex = c(scalar("annex1"), scalar("annex2"))
@@ -682,7 +700,7 @@ test_that("run-metadata can get config for multiple databases", {
 
 test_that("run metadata can get name from config", {
   skip_if_no_redis()
-  path <- orderly::orderly_example("minimal")
+  path <- orderly_git_example("minimal")
   yml <- c("database:",
            "  source:",
            "    driver: RSQLite::SQLite",
@@ -726,7 +744,7 @@ test_that("run metadata can get name from config", {
   expect_equal(metadata, list(
     name = scalar("production"),
     instances_supported = scalar(TRUE),
-    git_supported = scalar(FALSE),
+    git_supported = scalar(TRUE),
     instances = list(
       source = c(scalar("production"), scalar("staging"))
     ),
@@ -736,7 +754,7 @@ test_that("run metadata can get name from config", {
 
 test_that("run metadata returns git & db instances supported info", {
   skip_if_no_redis()
-  path <- orderly::orderly_example("minimal")
+  path <- orderly_git_example("minimal")
   yml <- c("database:",
            "  source:",
            "    driver: RSQLite::SQLite",
@@ -867,7 +885,7 @@ test_that("api preroute calls runner check_timeout with rate limit", {
 
 test_that("api runs backup on preroute", {
   skip_if_no_redis()
-  path <- orderly_prepare_orderly_example("minimal")
+  path <- orderly_git_example("minimal")
   runner <- orderly_runner(path)
   api <- build_api(runner, path, backup_period = 1)
   db_backup <- orderly_path_db_backup(path, "orderly.sqlite")

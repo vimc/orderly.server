@@ -139,3 +139,12 @@ throttle <- function(f, every) {
     }
   }
 }
+
+format_changelog <- function(changelog) {
+  if (is.null(changelog)) {
+    return(changelog)
+  }
+  assert_scalar_character(changelog$type)
+  assert_scalar_character(changelog$message)
+  sprintf("[%s] %s", changelog$type, changelog$message)
+}

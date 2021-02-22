@@ -8,7 +8,6 @@ test_that("root", {
   dat <- content(r)
   expect_equal(dat$status, "success")
   expect_equal(dat$errors, NULL)
-  expect_is(dat$data$endpoints, "character")
 })
 
 
@@ -144,7 +143,7 @@ test_that("git error returns valid json", {
   expect_equal(content$status, "failure")
   expect_length(content$errors, 1)
   expect_valid_json(json, system.file("schema/response-failure.schema.json",
-                                      package = "pkgapi",
+                                      package = "porcelain",
                                       mustWork = TRUE))
 })
 
@@ -178,14 +177,13 @@ test_that("run report honours timeout", {
 })
 
 
-test_that("pass parameters", {
-  path <- orderly_prepare_orderly_example("interactive", testing = TRUE)
-  server <- start_test_server(path)
+test_that("run: pass parameters", {
+  server <- start_test_server()
   on.exit(server$stop())
 
   r <- httr::POST(server$api_url("/v1/reports/count_param/run/"),
                   query = list(timeout = 60),
-                  body = list(time = 1, poll = 0.1),
+                  body = list(params = list(time = 1, poll = 0.1)),
                   encode = "json")
 
   expect_equal(httr::status_code(r), 200)
@@ -231,6 +229,45 @@ test_that("pass parameters", {
   expect_match(st$data$output, "poll: 0.1", fixed = TRUE, all = FALSE)
 })
 
+test_that("run: changelog", {
+  path <- orderly_prepare_orderly_git_example()
+  server <- start_test_server(path[["local"]])
+  on.exit(server$stop())
+
+  r <- httr::POST(server$api_url("/v1/reports/minimal/run/"),
+                  query = list(timeout = 60),
+                  body = list(changelog = list(type = "internal",
+                                               message = "test")),
+                  encode = "json")
+
+  expect_equal(httr::status_code(r), 200)
+  dat <- content(r)
+  expect_equal(dat$status, "success")
+  expect_is(dat$data, "list")
+
+  expect_true(setequal(names(dat$data), c("name", "key", "path")))
+  expect_equal(dat$data$name, "minimal")
+
+  ## Then we ask about status
+  wait_for_version(dat$data$key, server)
+  r <- httr::GET(server$api_url(dat$data$path))
+  expect_equal(httr::status_code(r), 200)
+  st <- content(r)
+  expect_equal(st$status, "success")
+  expect_is(st$data, "list")
+  version <- st$data$version
+
+  dest <- file.path(server$path, "archive", "minimal", version)
+  wait_for_path(dest)
+  wait_for_finished(dat$data$key, server)
+
+  d <- readRDS(orderly_path_orderly_run_rds(
+    file.path(server$path, "archive", "minimal", version)))
+  expect_true(!is.null(d$meta$changelog))
+  expect_equal(d$meta$changelog$label, "internal")
+  expect_equal(d$meta$changelog$value, "test")
+})
+
 test_that("run-metadata", {
   path <- orderly_prepare_orderly_git_example()
   server <- start_test_server(path[["local"]])
@@ -246,7 +283,7 @@ test_that("run-metadata", {
   expect_false(r$data$instances_supported)
   expect_true(r$data$git_supported)
   expect_equal(r$data$instances, list(source = list()))
-  expect_equal(r$data$changelog_types, c(scalar("public")))
+  expect_equal(r$data$changelog_types, c(scalar("internal"), scalar("public")))
 })
 
 test_that("git/branches", {
@@ -310,6 +347,16 @@ test_that("can get available reports", {
   expect_equal(other_reports$data, "other")
 })
 
+test_that("can get available reports without parameters", {
+  path <- orderly_prepare_orderly_git_example()
+  server <- start_test_server(path[["local"]])
+  on.exit(server$stop())
+
+  reports <- content(httr::GET(server$api_url("/reports/source")))
+  expect_equal(reports$status, "success")
+  expect_equal(reports$data, c("global", "minimal"))
+})
+
 test_that("can get report parameters", {
   path <- orderly_prepare_orderly_git_example()
   server <- start_test_server(path[["local"]])
@@ -336,6 +383,21 @@ test_that("can get report parameters", {
   ))
 })
 
+test_that("can get report parameters with no commit ID", {
+  path <- orderly_prepare_orderly_git_example()
+  ## Checkout a branch with a report with parameters
+  orderly_git_checkout_branch("other", root = path[["local"]])
+  server <- start_test_server(path[["local"]])
+  on.exit(server$stop())
+
+  params <- content(httr::GET(server$api_url("/reports/other/parameters")))
+  expect_equal(params$status, "success")
+  expect_equal(params$data, list(
+    list(name = "nmin",
+         value = NULL)
+  ))
+})
+
 
 test_that("Can pack, run and import a bundle", {
   server <- start_test_server()
@@ -352,8 +414,7 @@ test_that("Can pack, run and import a bundle", {
   ans <- orderly::orderly_bundle_run(zip_in, echo = FALSE)
   expect_equal(filename, paste0(ans$id, ".zip"))
 
-  res_up <- httr::POST(
-    "http://localhost:8321/v1/bundle/import",
+  res_up <- httr::POST(server$api_url("/v1/bundle/import"),
     body = httr::upload_file(ans$path, "application/octet-stream"))
   expect_equal(httr::status_code(res), 200L)
   dat <- content(res_up)

@@ -4,12 +4,8 @@
     "type": "object",
     "properties": {
         "name": { "type": "string" },
-        "version": { "type": "string" },
-        "endpoints": {
-            "type": "array",
-            "items": { "type": "string" }
-        }
+        "version": { "type": "string" }
     },
     "additionalProperties": false,
-    "required": [ "name", "version", "endpoints" ]
+    "required": [ "name", "version" ]
 }

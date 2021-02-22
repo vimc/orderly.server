@@ -18,8 +18,6 @@ Object for managing running jobs on the redis queue
 
 \item{\code{allow_ref}}{Allow git to change branch/ref for run}
 
-\item{\code{has_git}}{Is git available on the runner}
-
 \item{\code{con}}{Redis connection}
 
 \item{\code{cleanup_on_exit}}{If TRUE workers are killed on exit}
@@ -41,6 +39,7 @@ and task_id}
 \item \href{#method-submit_task_report}{\code{orderly_runner_$submit_task_report()}}
 \item \href{#method-submit}{\code{orderly_runner_$submit()}}
 \item \href{#method-status}{\code{orderly_runner_$status()}}
+\item \href{#method-get_preceeding_tasks}{\code{orderly_runner_$get_preceeding_tasks()}}
 \item \href{#method-check_timeout}{\code{orderly_runner_$check_timeout()}}
 \item \href{#method-kill}{\code{orderly_runner_$kill()}}
 \item \href{#method-destroy}{\code{orderly_runner_$destroy()}}
@@ -191,6 +190,27 @@ Get the status of a job
 \subsection{Returns}{
 List containing the key, status, report_id (if available),
 output and the position of the job in the queue.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-get_preceeding_tasks"></a>}}
+\if{latex}{\out{\hypertarget{method-get_preceeding_tasks}{}}}
+\subsection{Method \code{get_preceeding_tasks()}}{
+Get the running and queued tasks in front of key in the queue
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{orderly_runner_$get_preceeding_tasks(key)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{key}}{The job key.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+List containing the key, status and report name of any
+running tasks and any queued tasks in front of key in the queue.
 }
 }
 \if{html}{\out{<hr>}}

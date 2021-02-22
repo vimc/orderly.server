@@ -24,8 +24,8 @@
 ##' @examples
 ##' available <- redux::redis_available()
 ##' if (available) {
-##'   path <- orderly::orderly_example("demo")
-##'   runner <- orderly.server::orderly_runner(path, workers = 0)
+##'   path <- orderly:::prepare_orderly_git_example()
+##'   runner <- orderly.server::orderly_runner(path[["local"]], workers = 0)
 ##' }
 orderly_runner <- function(path, allow_ref = NULL, queue_id = NULL,
                            workers = 1) {
@@ -33,7 +33,7 @@ orderly_runner <- function(path, allow_ref = NULL, queue_id = NULL,
 }
 
 runner_run <- function(key_report_id, key, root, name, parameters, instance,
-                       ref, has_git, poll = 0.1) {
+                       ref, changelog, poll = 0.1) {
   con <- redux::hiredis()
   bin <- tempfile()
   dir.create(bin)
@@ -47,16 +47,18 @@ runner_run <- function(key_report_id, key, root, name, parameters, instance,
                           vcapply(parameters, format))
   }
   git_args <- NULL
-  if (has_git) {
-    if (is.null(ref)) {
-      git_args <- "--pull"
-    } else {
-      git_args <- c("--fetch", "--ref", ref)
-    }
+  if (is.null(ref)) {
+    git_args <- "--pull"
+  } else {
+    git_args <- c("--fetch", "--ref", ref)
+  }
+  msg_args <- NULL
+  if (!is.null(changelog)) {
+    msg_args <- c("--message", changelog)
   }
   args <- c("--root", root,
             "run", name, "--print-log", "--id-file", id_file,
-            git_args,
+            git_args, msg_args,
             if (!is.null(instance)) c("--instance", instance),
             parameters)
   log_err <- path_stderr(root, key)
@@ -106,8 +108,6 @@ orderly_runner_ <- R6::R6Class(
     config = NULL,
     #' @field allow_ref Allow git to change branch/ref for run
     allow_ref = FALSE,
-    #' @field has_git Is git available on the runner
-    has_git = NULL,
 
     #' @field con Redis connection
     con = NULL,
@@ -141,13 +141,12 @@ orderly_runner_ <- R6::R6Class(
                           worker_timeout = Inf) {
       self$config <- orderly::orderly_config(root)
       self$root <- self$config$root
-      self$has_git <- runner_has_git(self$root)
-      if (!self$has_git) {
-        message("Not enabling git features as this is not version controlled")
+      if (!runner_has_git(self$root)) {
+        stop("Not starting server as orderly root is not version controlled")
       }
 
-      self$allow_ref <- runner_allow_ref(self$has_git, allow_ref, self$config)
-      if (self$has_git && !self$allow_ref) {
+      self$allow_ref <- runner_allow_ref(allow_ref, self$config)
+      if (!self$allow_ref) {
         message("Disallowing reference switching in runner")
       }
 
@@ -202,8 +201,8 @@ orderly_runner_ <- R6::R6Class(
     #' @return The key for the job, note this is not the task id. The task id
     #' can be retrieved from redis using the key.
     submit_task_report = function(name, parameters = NULL, ref = NULL,
-                                  instance = NULL, poll = 0.1,
-                                  timeout = 60 * 60 * 3) {
+                                  instance = NULL, changelog = NULL,
+                                  poll = 0.1, timeout = 60 * 60 * 3) {
       if (!self$allow_ref && !is.null(ref)) {
         stop("Reference switching is disallowed in this runner",
              call. = FALSE)
@@ -212,11 +211,10 @@ orderly_runner_ <- R6::R6Class(
       root <- self$root
       key <- ids::adjective_animal()
       key_report_id <- self$keys$key_report_id
-      has_git <- self$has_git
       task_id <- self$submit(quote(
         orderly.server:::runner_run(key_report_id, key, root, name,   # nolint
-                                    parameters, instance, ref, has_git,
-                                    poll = poll)))
+                                    parameters, instance, ref,
+                                    changelog = changelog, poll = poll)))
       self$con$HSET(self$keys$key_task_id, key, task_id)
       self$con$HSET(self$keys$task_id_key, task_id, key)
       self$con$HSET(self$keys$task_timeout, task_id, timeout)
@@ -349,13 +347,13 @@ orderly_runner_ <- R6::R6Class(
     kill = function(key) {
       task_id <- self$con$HGET(self$keys$key_task_id, key)
       if (is.null(task_id)) {
-        pkgapi::pkgapi_stop(
+        porcelain::porcelain_stop(
           sprintf("Failed to kill '%s' task doesn't exist", key))
       }
       tryCatch(
         self$queue$task_cancel(task_id),
         error = function(e) {
-          pkgapi::pkgapi_stop(
+          porcelain::porcelain_stop(
             sprintf("Failed to kill '%s'\n  %s", key, e$message))
         }
       )
@@ -414,10 +412,7 @@ orderly_queue_id <- function(queue_id, worker = FALSE) {
 }
 
 
-runner_allow_ref <- function(has_git, allow_ref, config) {
-  if (!has_git) {
-    allow_ref <- FALSE
-  }
+runner_allow_ref <- function(allow_ref, config) {
   if (is.null(allow_ref)) {
     allow_ref <- !(config$server_options()$master_only %||% FALSE)
   }
