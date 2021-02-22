@@ -1,12 +1,11 @@
 context("api - endpoints")
 
-test_that("index", {
-  endpoint <- endpoint_index()
+test_that("root", {
+  endpoint <- endpoint_root()
 
   res <- endpoint$target()
   expect_equal(res$name, scalar("orderly.server"))
   expect_equal(res$version, version_info())
-  expect_true("/v1/reports/:key/status/" %in% res$endpoints)
 
   runner <- mock_runner()
   api <- build_api(runner, "path")

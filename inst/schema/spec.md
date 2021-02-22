@@ -5,7 +5,7 @@ This API is built on top of [`pkgapi`](https://reside-ic.github.io/pkgapi) (itse
 
 ## GET /
 
-Index of available endpoints, for compatibility only and is not updated.
+Return package name and version
 
 ## POST /reports/:name/run/
 

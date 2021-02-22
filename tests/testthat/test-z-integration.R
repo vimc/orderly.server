@@ -8,7 +8,6 @@ test_that("root", {
   dat <- content(r)
   expect_equal(dat$status, "success")
   expect_equal(dat$errors, NULL)
-  expect_is(dat$data$endpoints, "character")
 })
 
 
