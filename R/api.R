@@ -308,7 +308,7 @@ endpoint_kill <- function(runner) {
 }
 
 target_dependencies <- function(path, name,
-                                id ="latest",
+                                id = "latest",
                                 direction = "downstream",
                                 propagate = TRUE,
                                 max_depth = 100,
