@@ -1,0 +1,16 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "name": {"type": "string"},
+      "id": {"type": "string"},
+      "out_of_date": {"type": "boolean"},
+      "dependencies": { 
+        "type": "array",
+        "items": { "$ref": "Dependency.schema.json" }
+        
+      }
+    },
+    "required": ["name", "id", "out_of_date", "dependencies"],
+    "additionalProperties": false
+}

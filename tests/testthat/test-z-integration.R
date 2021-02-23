@@ -448,3 +448,18 @@ test_that("Can create a report with parameters", {
     readRDS(file.path(tmp, id, "meta", "info.rds"))$parameters,
     list(time = 10, poll = 1))
 })
+
+test_that("Can get dependencies", {
+  server <- start_test_server()
+  on.exit(server$stop())
+  r <- httr::GET(server$api_url("/v1/reports/count/dependencies/"),
+                  query = list(direction = "upstream", use = "src"))
+  dat <- content(r)
+  expect_equal(httr::status_code(r), 200)
+  expect_equal(dat$data$direction, "upstream")
+  dep_tree <- dat$data$dependency_tree
+  expect_equal(dep_tree$name, "count")
+  expect_equal(dep_tree$id, "latest")
+  expect_equal(dep_tree$out_of_date, FALSE)
+  expect_equal(dep_tree$dependencies, list())
+})

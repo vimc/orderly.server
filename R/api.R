@@ -14,6 +14,7 @@ build_api <- function(runner, path, backup_period = NULL, rate_limit = 2 * 60) {
   api$handle(endpoint_run(runner))
   api$handle(endpoint_status(runner))
   api$handle(endpoint_kill(runner))
+  api$handle(endpoint_dependencies(path))
   api$handle(endpoint_run_metadata(runner))
   api$setDocs(FALSE)
   backup <- orderly_backup(runner$config, backup_period)
@@ -68,7 +69,6 @@ api_log <- function(msg) {
 schema_root <- function() {
   system.file("schema", package = "orderly.server", mustWork = TRUE)
 }
-
 
 returning_json <- function(schema) {
   porcelain::porcelain_returning_json(schema, schema_root())
@@ -306,6 +306,37 @@ endpoint_kill <- function(runner) {
     porcelain::porcelain_state(runner = runner),
     returning = returning_json("Kill.schema"))
 }
+
+target_dependencies <- function(path, name,
+                                id = "latest",
+                                direction = "downstream",
+                                propagate = TRUE,
+                                max_depth = 100,
+                                show_all = FALSE,
+                                use = "archive") {
+  get_dependencies(path = path,
+                   name = name,
+                   id = id,
+                   direction = direction,
+                   propagate = propagate,
+                   max_depth = max_depth,
+                   show_all = show_all,
+                   use = use)
+}
+
+endpoint_dependencies <- function(path) {
+  porcelain::porcelain_endpoint$new(
+    "GET", "/v1/reports/<name>/dependencies/", target_dependencies,
+    porcelain::porcelain_input_query(id = "string",
+                               direction = "string",
+                               propagate = "logical",
+                               max_depth = "integer",
+                               show_all = "logical",
+                               use = "string"),
+    porcelain::porcelain_state(path = path),
+    returning = returning_json("Dependencies.schema"))
+}
+
 
 target_run_metadata <- function(runner) {
   changelog <- runner$config$changelog$id
