@@ -325,15 +325,15 @@ target_dependencies <- function(path, name,
 }
 
 endpoint_dependencies <- function(path) {
-  pkgapi::pkgapi_endpoint$new(
+  porcelain::porcelain_endpoint$new(
     "GET", "/v1/reports/<name>/dependencies/", target_dependencies,
-    pkgapi::pkgapi_input_query(id = "string",
+    porcelain::porcelain_input_query(id = "string",
                                direction = "string",
                                propagate = "logical",
                                max_depth = "integer",
                                show_all = "logical",
                                use = "string"),
-    pkgapi::pkgapi_state(path = path),
+    porcelain::porcelain_state(path = path),
     returning = returning_json("Dependencies.schema"))
 }
 
