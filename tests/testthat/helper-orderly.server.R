@@ -125,27 +125,7 @@ orderly_git_checkout_branch <- orderly:::git_checkout_branch
 ## nolint end
 
 orderly_git_example <- function(name, path = tempfile(), testing = FALSE) {
-  ## orderly_prepare_orderly_git_example will initialise an example
-  ## git repo with a remote configured and return 2 paths
-  ## local path and remote path, where the remote is ahead of local
-  ## This initialises an example of choice, inits git with a remote
-  ## and returns path to local - use for testing orderly.server where
-  ## features which update/pull from the remote aren't interesting
-  gert::git_init(path)
-
-  upstream <- file.path(path, "upstream")
-  orderly_prepare_orderly_example(name, path = upstream, testing = testing)
-  gert::git_init(upstream)
-  writeLines("upstream", file.path(upstream, ".gitignore"))
-  gert::git_add(".", repo = upstream)
-  gert::git_commit("Init repo", repo = upstream,
-                   author = "T User <test.user@example.com>")
-
-  gert::git_remote_add(upstream, "origin", repo = path)
-  gert::git_fetch(remote = "origin", repo = path)
-  gert::git_branch_checkout("master", repo = path)
-  gert::git_branch_set_upstream("origin/master", "master", repo = path)
-  path
+  orderly_prepare_orderly_example(name, path, testing = testing, git = TRUE)
 }
 
 version_info <- function() {
