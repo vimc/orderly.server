@@ -487,6 +487,10 @@ test_that("can get report info", {
   expect_is(st$data, "list")
   version <- st$data$version
 
+  dest <- file.path(server$path, "archive", "count_param", version)
+  wait_for_path(dest)
+  wait_for_finished(dat$data$key, server)
+
   r <- httr::GET(server$api_url("/v1/report/info"),
                  query = list(name = "count_param",
                               id = version))
