@@ -1,0 +1,77 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "ReportInfo",
+    "type": "object",
+    "definitions": {
+        "git": {
+            "type": "object",
+            "properties": {
+                "branch": {
+                    "type": "string"
+                },
+                "ref": {
+                    "type": "string"
+                }
+            },
+            "required": [ "branch", "ref" ],
+            "additionalProperties": false
+        },
+        "error": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "trace": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "required": [ "message", "trace" ],
+            "additionalProperties": false
+        }
+    },
+    "properties": {
+        "id": {
+            "type": "string"
+        },
+        "name": {
+            "type": "string"
+        },
+        "success": {
+            "type": "boolean"
+        },
+        "date": {
+            "type": "string"
+        },
+        "elapsed": {
+            "type": "number"
+        },
+        "git": {
+            "oneOf": [
+                { "type": "null" },
+                { "$ref":"#/definitions/git" }
+            ]
+        },
+        "params": {
+            "oneOf": [
+                { "type": "null" },
+                { "$ref": "Parameters.schema.json" }
+            ]
+        },
+        "logfile": {
+            "type": [ "string", "null" ]
+        },
+        "error": {
+            "oneOf": [
+                { "type": "null" },
+                { "$ref":"#/definitions/error" }
+            ]
+        }
+    },
+    "required": ["id", "name", "success", "date", "elapsed", "git", "params",
+                 "logfile", "error"],
+    "additionalProperties": false
+}

@@ -463,3 +463,45 @@ test_that("Can get dependencies", {
   expect_equal(dep_tree$out_of_date, FALSE)
   expect_equal(dep_tree$dependencies, list())
 })
+
+test_that("can get report info", {
+  server <- start_test_server()
+  on.exit(server$stop())
+
+  ## Run a report first to retrieve info for
+  r <- httr::POST(server$api_url("/v1/reports/count_param/run/"),
+                  query = list(timeout = 60),
+                  body = list(params = list(time = 1, poll = 0.1)),
+                  encode = "json")
+
+  expect_equal(httr::status_code(r), 200)
+  dat <- content(r)
+  expect_equal(dat$status, "success")
+  expect_is(dat$data, "list")
+
+  wait_for_version(dat$data$key, server)
+  r <- httr::GET(server$api_url(dat$data$path))
+  expect_equal(httr::status_code(r), 200)
+  st <- content(r)
+  expect_equal(st$status, "success")
+  expect_is(st$data, "list")
+  version <- st$data$version
+
+  r <- httr::GET(server$api_url("/v1/report/info"),
+                 query = list(name = "count_param",
+                              id = version))
+  expect_equal(httr::status_code(r), 200)
+  info <- content(r)
+  expect_equal(info$status, "success")
+  expect_is(info$data, "list")
+
+  expect_equal(info$data$id, version)
+  expect_equal(info$data$name, "count_param")
+  expect_equal(info$data$success, TRUE)
+  expect_equal(info$data$git$branch, "master")
+  expect_match(info$data$git$ref, "[0-9a-f]{7}")
+  expect_null(info$data$error)
+  expect_equal(info$data$params$time, 1)
+  expect_equal(info$data$params$poll, 0.1)
+})
+
