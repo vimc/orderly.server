@@ -504,4 +504,3 @@ test_that("can get report info", {
   expect_equal(info$data$params$time, 1)
   expect_equal(info$data$params$poll, 0.1)
 })
-
