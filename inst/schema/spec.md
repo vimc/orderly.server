@@ -92,7 +92,7 @@ Schema: [`Status.schema.json`](Status.schema.json)
         "[ data      ]  dat: 20 x 2",
         "[ start     ]  2017-09-12 09:11:03",
         "",
-        "> png("mygraph.png")",
+        "> png(\"mygraph.png\")",
         "",
         "> par(mar = c(15, 4, 0.5, 0.5))",
         "",
@@ -361,7 +361,7 @@ Response schema: [`ReportInfo.schema.json`](ReportInfo.schema.json)
       "withVisible(eval(ei, envir))",
       "eval(ei, envir)",
       "eval(ei, envir)",
-      "script.R#5: stop(\\"some error\\")"
+      "script.R#5: stop(\"some error\")"
     ]
   },
   "params": {
