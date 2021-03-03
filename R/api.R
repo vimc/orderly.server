@@ -11,6 +11,7 @@ build_api <- function(runner, path, backup_period = NULL, rate_limit = 2 * 60) {
   api$handle(endpoint_report_parameters(path))
   api$handle(endpoint_bundle_pack(path))
   api$handle(endpoint_bundle_import(path))
+  api$handle(endpoint_report_info(path))
   api$handle(endpoint_run(runner))
   api$handle(endpoint_status(runner))
   api$handle(endpoint_kill(runner))
@@ -156,6 +157,10 @@ endpoint_git_commits <- function(path) {
     returning = returning_json("GitCommits.schema"))
 }
 
+target_available_reports <- function(path, branch = NULL, commit = NULL) {
+  get_reports(branch, commit, path)
+}
+
 endpoint_available_reports <- function(path) {
   porcelain::porcelain_endpoint$new(
     "GET", "/reports/source", target_available_reports,
@@ -243,6 +248,25 @@ endpoint_bundle_import <- function(path, data) {
     returning = returning_json("BundleImport.schema"))
 }
 
+target_report_info <- function(path, id, name) {
+  info <- orderly::orderly_info(id, name, root = path)
+  info <- recursive_scalar(info)
+  ## Rename parameters to params for consistency with rest of API
+  info <- append(info, list(params = info$parameters))
+  info$parameters <- NULL
+  info
+}
+
+endpoint_report_info <- function(path) {
+  porcelain::porcelain_endpoint$new(
+    "GET", "/v1/report/info", target_report_info,
+    porcelain::porcelain_input_query(id = "string"),
+    porcelain::porcelain_input_query(name = "string"),
+    porcelain::porcelain_state(path = path),
+    returning = returning_json("ReportInfo.schema")
+  )
+}
+
 target_run <- function(runner, name, body = NULL, ref = NULL,
                        instance = NULL, timeout = 60 * 60 * 3) {
   if (!is.null(body)) {
@@ -255,10 +279,6 @@ target_run <- function(runner, name, body = NULL, ref = NULL,
   list(name = scalar(name),
        key = scalar(key),
        path = scalar(sprintf("/v1/reports/%s/status/", key)))
-}
-
-target_available_reports <- function(path, branch = NULL, commit = NULL) {
-  get_reports(branch, commit, path)
 }
 
 endpoint_run <- function(runner) {

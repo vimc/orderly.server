@@ -943,3 +943,46 @@ test_that("can get dependencies", {
                                 "}]}}}")
   expect_equal(res$body, expected_json)
 })
+
+test_that("endpoint_report_info can return info from report run", {
+  path <- orderly_prepare_orderly_git_example()
+
+  ## Run a report to retrieve info for
+  append_lines('stop("some error")',
+               file.path(path[["local"]], "src", "minimal", "script.R"))
+  expect_error(orderly::orderly_run("minimal", root = path[["local"]],
+                                    echo = FALSE), "some error")
+  drafts <- orderly::orderly_list_drafts(root = path[["local"]],
+                                         include_failed = TRUE)
+
+  endpoint <- endpoint_report_info(path[["local"]])
+  info <- endpoint$run(id = drafts[["id"]], name = "minimal")
+  expect_equal(info$status_code, 200)
+  expect_equal(info$data$name, scalar("minimal"))
+  expect_equal(info$data$id, scalar(drafts$id))
+  expect_null(info$data$parameters)
+  expect_equal(info$data$git$branch, scalar("master"))
+  expect_match(info$data$git$ref, "[0-9a-f]{7}")
+  expect_null(info$data$logfile)
+  expect_equal(info$data$error$message, scalar("some error"))
+  expect_true(length(info$data$error$trace) > 5)
+  expect_match(as.character(
+    info$data$error$trace[length(info$data$error$trace)]),
+    "some error")
+})
+
+test_that("endpoint_report_info returns parameter info", {
+  path <- orderly_prepare_orderly_example("demo")
+  id <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+                             root = path, echo = FALSE)
+
+  endpoint <- endpoint_report_info(path)
+  info <- endpoint$run(id = id, name = "other")
+  expect_equal(info$status_code, 200)
+  expect_equal(info$data$name, scalar("other"))
+  expect_equal(info$data$id, scalar(id))
+  expect_equal(info$data$params, list(nmin = scalar(0.1)))
+  expect_null(info$data$git)
+  expect_null(info$data$logfile)
+  expect_null(info$data$error)
+})

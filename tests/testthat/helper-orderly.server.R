@@ -157,3 +157,8 @@ trigger_dbi_warning <- function() {
 }
 
 trigger_dbi_warning()
+
+append_lines <- function(text, filename) {
+  prev <- readLines(filename)
+  writeLines(c(prev, text), filename)
+}

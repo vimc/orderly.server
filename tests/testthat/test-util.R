@@ -119,3 +119,21 @@ test_that("format_changelog", {
                "'changelog$message' must be a scalar", fixed = TRUE)
   expect_null(format_changelog(NULL))
 })
+
+test_that("can recursively convert to scalar", {
+  expect_equal(recursive_scalar(2), list(scalar(2)))
+  expect_equal(recursive_scalar(c(1, 2)), list(scalar(1), scalar(2)))
+  expect_equal(recursive_scalar(list(x = "foo",
+                                     y = "bar")),
+               list(x = scalar("foo"),
+                    y = scalar("bar")))
+  expect_equal(recursive_scalar(list(x = "foo",
+                                     y = list(y1 = "bar1", y2 = "bar2"))),
+               list(x = scalar("foo"),
+                    y = list(y1 = scalar("bar1"), y2 = scalar("bar2"))))
+  expect_null(recursive_scalar(NULL))
+  expect_equal(recursive_scalar(list(x = "foo", y = NULL)),
+               list(x = scalar("foo"), y = NULL))
+  expect_equal(recursive_scalar(list(x = 1)),
+               list(x = scalar(1)))
+})

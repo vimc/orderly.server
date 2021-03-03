@@ -331,3 +331,41 @@ Schema: [`BundleImport.schema.json`](BundleImport.schema.json)
 ``` json
 true
 ```
+
+## GET /report/info
+
+Get info about a report run. This can either be from a successful or failed run in draft or archive.
+
+Takes parameters `id` and `name` of the report you want to retrieve info for.
+
+Response schema: [`ReportInfo.schema.json`](ReportInfo.schema.json)
+
+### Example
+
+```json
+{
+  "id": "20210303-093616-906ae61b",
+  "name": "minimal",
+  "success": false,
+  "date": "2021-03-03 09:36:16",
+  "elapsed": 0.0345,
+  "git": {
+    "branch": "master",
+    "ref": "b7c6b0c"
+  },
+  "logfile": "path/to/log",
+  "error": {
+    "message":"some error",
+    "trace": [
+      "orderly_version.R#602: source(private$recipe$script)",
+      "withVisible(eval(ei, envir))",
+      "eval(ei, envir)",
+      "eval(ei, envir)",
+      "script.R#5: stop(\"some error\")"
+    ]
+  },
+  "params": {
+    "nmin": 0.1
+  }
+}
+```

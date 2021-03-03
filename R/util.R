@@ -26,6 +26,20 @@ scalar <- function(x) {
   jsonlite::unbox(x)
 }
 
+recursive_scalar <- function(x) {
+  if (is.null(x)) {
+    return(NULL)
+  }
+  lapply(x, function(item) {
+    if (length(item) > 1 || is.list(item)) {
+      out <- recursive_scalar(item)
+    } else {
+      out <- scalar(item)
+    }
+    out
+  })
+}
+
 vcapply <- function(X, FUN, ...) { # nolint
   vapply(X, FUN, character(1), ...)
 }
