@@ -12,9 +12,12 @@
                     "status": {
                         "enum": ["queued", "running", "success", "error", "orphan", "interrupted", "redirect", "missing"]
                     },
-                    "name": {"type": "string"}
+                    "name": {"type": "string"},
+                    "version": {
+                        "type": [ "string", "null" ]
+                    }
                 },
-                "required": ["key", "status", "name"],
+                "required": ["key", "status", "name", "version"],
                 "additionalProperties": false
             }
         }

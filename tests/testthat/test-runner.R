@@ -659,14 +659,16 @@ test_that("status: lists queued tasks", {
     expect_equal(key4_status$status, "queued")
   })
   ## Key1 is running, key 2, 3 & 4 are queued
-  expect_equal(runner$status(key1)$status, "running")
+  key1_status <- runner$status(key1)
+  expect_equal(key1_status$status, "running")
   key2_status <- runner$status(key2)
   expect_equal(key2_status$status, "queued")
   expect_equal(key2_status$queue, list(
     list(
       key = key1,
       status = "running",
-      name = "interactive"
+      name = "interactive",
+      version = key1_status$version
     )
   ))
   key3_status <- runner$status(key3)
@@ -675,27 +677,32 @@ test_that("status: lists queued tasks", {
     list(
       key = key1,
       status = "running",
-      name = "interactive"
+      name = "interactive",
+      version = key1_status$version
     ),
     list(
       key = key2,
       status = "queued",
-      name = "interactive")))
+      name = "interactive",
+      version = NULL)))
   expect_equal(key4_status$queue, list(
     list(
       key = key1,
       status = "running",
-      name = "interactive"
+      name = "interactive",
+      version = key1_status$version
     ),
     list(
       key = key2,
       status = "queued",
-      name = "interactive"
+      name = "interactive",
+      version = NULL
     ),
     list(
       key = key3,
       status = "queued",
-      name = "interactive")))
+      name = "interactive",
+      version = NULL)))
 })
 
 test_that("orderly runner won't start if root not under version control", {
@@ -754,21 +761,25 @@ test_that("queue_status", {
   })
 
   ## Key1 is running, key 2, 3 are queued
+  id1 <- runner$status(key1)$version
   queue_status <- runner$queue_status()
   expect_equal(queue_status, list(
     tasks = list(
       list(
         key = key1,
         status = "running",
-        name = "interactive"
+        name = "interactive",
+        version = id1
       ),
       list(
         key = key2,
         status = "queued",
-        name = "interactive"
+        name = "interactive",
+        version = NULL
       ),
       list(
         key = key3,
         status = "queued",
-        name = "interactive"))))
+        name = "interactive",
+        version = NULL))))
 })

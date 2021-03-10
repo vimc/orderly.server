@@ -318,12 +318,14 @@ test_that("status - queued", {
       list(
         key = "key-1",
         status = "running",
-        name = "minimal"
+        name = "minimal",
+        version = "20210310-123928-fef89bc7"
       ),
       list(
         key = "key-2",
         status = "queued",
-        name = "minimal")))
+        name = "minimal",
+        version = NULL)))
 
   runner <- mock_runner(key, status)
 
@@ -338,12 +340,14 @@ test_that("status - queued", {
            list(
              key = scalar("key-1"),
              status = scalar("running"),
-             name = scalar("minimal")
+             name = scalar("minimal"),
+             version = scalar("20210310-123928-fef89bc7")
            ),
            list(
              key = scalar("key-2"),
              status = scalar("queued"),
-             name = scalar("minimal")))))
+             name = scalar("minimal"),
+             version = NULL))))
   expect_equal(mockery::mock_args(runner$status)[[1]], list(key, FALSE))
 
   ## endpoint
@@ -443,12 +447,14 @@ test_that("queue status", {
       list(
         key = "key-1",
         status = "running",
-        name = "minimal"
+        name = "minimal",
+        version = "20210310-123928-fef89bc7"
       ),
       list(
         key = "key-2",
         status = "queued",
-        name = "minimal")
+        name = "minimal",
+        version = NULL)
     )
   )
 
@@ -461,12 +467,14 @@ test_that("queue status", {
       list(
         key = scalar("key-1"),
         status = scalar("running"),
-        name = scalar("minimal")
+        name = scalar("minimal"),
+        version = scalar("20210310-123928-fef89bc7")
       ),
       list(
         key = scalar("key-2"),
         status = scalar("queued"),
-        name = scalar("minimal")))))
+        name = scalar("minimal"),
+        version = NULL))))
   mockery::expect_called(runner$queue_status, 1)
 
   ## endpoint

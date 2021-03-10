@@ -395,11 +395,17 @@ orderly_runner_ <- R6::R6Class(
 
     get_task_details = function(task_id) {
       key <- self$con$HGET(self$keys$task_id_key, task_id)
+      status <- private$task_status(task_id)
+      report_id <- NULL
+      if (identical(status, "running")) {
+        report_id <- self$con$HGET(self$keys$key_report_id, key)
+      }
       task_data <- self$queue$task_data(task_id)
       list(
         key = key,
-        status = private$task_status(task_id),
-        name = task_data$objects$name
+        status = status,
+        name = task_data$objects$name,
+        version = report_id
       )
     }
   )
