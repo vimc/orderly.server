@@ -290,7 +290,7 @@ orderly_runner_ <- R6::R6Class(
     #'
     #' @return List containing the key, status and report name of any
     #' running tasks and any queued tasks in front of key in the queue.
-    queue_status = function(key) {
+    queue_status = function(key = NULL) {
       running_tasks <- self$queue$worker_task_id()
       if (is.null(key)) {
         queued_tasks <- self$queue$queue_list()
