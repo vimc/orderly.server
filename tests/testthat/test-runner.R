@@ -734,3 +734,40 @@ test_that("run: changelog", {
   expect_equal(d$meta$changelog$label, "internal")
   expect_equal(d$meta$changelog$value, "test")
 })
+
+test_that("queue_status", {
+  testthat::skip_on_cran()
+  skip_on_windows()
+  skip_if_no_redis()
+  path <- orderly_git_example("interactive", testing = TRUE)
+  runner <- orderly_runner(path)
+
+  key1 <- runner$submit_task_report("interactive")
+  key2 <- runner$submit_task_report("interactive")
+  key3 <- runner$submit_task_report("interactive")
+  ## Ensure all tasks have been added to queue
+  testthat::try_again(5, {
+    Sys.sleep(0.5)
+    key3_status <- runner$status(key3)
+    expect_equal(key3_status$key, key3)
+    expect_equal(key3_status$status, "queued")
+  })
+
+  ## Key1 is running, key 2, 3 are queued
+  queue_status <- runner$queue_status()
+  expect_equal(queue_status, list(
+    list(
+      key = key1,
+      status = "running",
+      name = "interactive"
+    ),
+    list(
+      key = key2,
+      status = "queued",
+      name = "interactive"
+    ),
+    list(
+      key = key3,
+      status = "queued",
+      name = "interactive")))
+})

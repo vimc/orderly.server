@@ -195,6 +195,7 @@ orderly_runner_ <- R6::R6Class(
     #' @param parameters List of parameters to pass to report.
     #' @param ref The git sha to run the report.
     #' @param instance The db instance for the report to pull data from.
+    #' @param changelog Description of changes to the report.
     #' @param poll How frequently to poll for the report ID being available.
     #' @param timeout Timeout for the report run default 3 hours.
     #'
@@ -281,6 +282,19 @@ orderly_runner_ <- R6::R6Class(
     },
 
     #' @description
+    #' Get details of jobs in the queue
+    #'
+    #' @return List containing the key, status and report name of any
+    #' running tasks and any queued tasks in the queue.
+    queue_status = function() {
+      queued_tasks <- self$queue$task_list()
+      ## task_list returns in order latest queued - first queued
+      ## we want the reverse of this
+      queued_tasks <- rev(queued_tasks)
+      lapply(queued_tasks, private$get_task_details)
+    },
+
+    #' @description
     #' Get the running and queued tasks in front of key in the queue
     #'
     #' @param key The job key.
@@ -288,20 +302,11 @@ orderly_runner_ <- R6::R6Class(
     #' @return List containing the key, status and report name of any
     #' running tasks and any queued tasks in front of key in the queue.
     get_preceeding_tasks = function(key) {
-      get_task_details <- function(task_id) {
-        key <- self$con$HGET(self$keys$task_id_key, task_id)
-        task_data <- self$queue$task_data(task_id)
-        list(
-          key = key,
-          status = private$task_status(task_id),
-          name = task_data$objects$name
-        )
-      }
       task_id <- self$con$HGET(self$keys$key_task_id, key)
       running <- self$queue$worker_task_id()
-      running_details <- lapply(unname(running), get_task_details)
+      running_details <- lapply(unname(running), private$get_task_details)
       queued_tasks <- self$queue$task_preceeding(task_id)
-      queued_details <- lapply(queued_tasks, get_task_details)
+      queued_details <- lapply(queued_tasks, private$get_task_details)
       c(running_details, queued_details)
     },
 
@@ -391,6 +396,16 @@ orderly_runner_ <- R6::R6Class(
              "PENDING" = "queued",
              "COMPLETE" = "success",
              tolower(status)
+      )
+    },
+
+    get_task_details = function(task_id) {
+      key <- self$con$HGET(self$keys$task_id_key, task_id)
+      task_data <- self$queue$task_data(task_id)
+      list(
+        key = key,
+        status = private$task_status(task_id),
+        name = task_data$objects$name
       )
     }
   )

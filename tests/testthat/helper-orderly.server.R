@@ -85,14 +85,16 @@ read_json <- function(path, ...) {
 ## There is going to be some work here to keep these up-to-date:
 mock_runner <- function(key = NULL, status = NULL,
                         config = NULL, root = NULL,
-                        check_timeout = NULL) {
+                        check_timeout = NULL,
+                        queue_status = NULL) {
   list(
     submit_task_report = mockery::mock(key, cycle = TRUE),
     status = mockery::mock(status, cycle = TRUE),
     check_timeout = mockery::mock(check_timeout, cycle = TRUE),
     kill = mockery::mock(TRUE, cycle = TRUE),
     config = config,
-    root = root
+    root = root,
+    queue_status = mockery::mock(queue_status, cycle = TRUE)
   )
 }
 

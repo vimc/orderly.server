@@ -437,6 +437,53 @@ test_that("status - completed, with log", {
 })
 
 
+test_that("queue status", {
+  queue_status <- list(
+    list(
+      key = "key-1",
+      status = "running",
+      name = "minimal"
+    ),
+    list(
+      key = "key-2",
+      status = "queued",
+      name = "minimal"))
+
+  runner <- mock_runner(queue_status = queue_status)
+
+  res <- target_queue_status(runner)
+  expect_equal(
+    res,
+    list(
+      list(
+        key = scalar("key-1"),
+        status = scalar("running"),
+        name = scalar("minimal")
+      ),
+      list(
+        key = scalar("key-2"),
+        status = scalar("queued"),
+        name = scalar("minimal"))))
+  mockery::expect_called(runner$queue_status, 1)
+
+  ## endpoint
+  endpoint <- endpoint_queue_status(runner)
+  res_endpoint <- endpoint$run()
+  expect_equal(res_endpoint$status_code, 200)
+  expect_equal(res_endpoint$content_type, "application/json")
+  expect_equal(res_endpoint$data, res)
+  mockery::expect_called(runner$queue_status, 2)
+
+  ## api
+  api <- build_api(runner, "path")
+  res_api <- api$request("GET", "/v1/queue/status/")
+  expect_equal(res_api$status, 200L)
+  expect_equal(res_api$headers[["Content-Type"]], "application/json")
+  expect_equal(res_api$body, as.character(res_endpoint$body))
+  mockery::expect_called(runner$queue_status, 3)
+})
+
+
 test_that("kill - successful", {
   key <- "key-1"
   runner <- mock_runner()

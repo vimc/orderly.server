@@ -39,6 +39,7 @@ and task_id}
 \item \href{#method-submit_task_report}{\code{orderly_runner_$submit_task_report()}}
 \item \href{#method-submit}{\code{orderly_runner_$submit()}}
 \item \href{#method-status}{\code{orderly_runner_$status()}}
+\item \href{#method-queue_status}{\code{orderly_runner_$queue_status()}}
 \item \href{#method-get_preceeding_tasks}{\code{orderly_runner_$get_preceeding_tasks()}}
 \item \href{#method-check_timeout}{\code{orderly_runner_$check_timeout()}}
 \item \href{#method-kill}{\code{orderly_runner_$kill()}}
@@ -120,6 +121,7 @@ Queue a job to run an orderly report.
   parameters = NULL,
   ref = NULL,
   instance = NULL,
+  changelog = NULL,
   poll = 0.1,
   timeout = 60 * 60 * 3
 )}\if{html}{\out{</div>}}
@@ -135,6 +137,8 @@ Queue a job to run an orderly report.
 \item{\code{ref}}{The git sha to run the report.}
 
 \item{\code{instance}}{The db instance for the report to pull data from.}
+
+\item{\code{changelog}}{Description of changes to the report.}
 
 \item{\code{poll}}{How frequently to poll for the report ID being available.}
 
@@ -190,6 +194,20 @@ Get the status of a job
 \subsection{Returns}{
 List containing the key, status, report_id (if available),
 output and the position of the job in the queue.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-queue_status"></a>}}
+\if{latex}{\out{\hypertarget{method-queue_status}{}}}
+\subsection{Method \code{queue_status()}}{
+Get details of jobs in the queue
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{orderly_runner_$queue_status()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+List containing the key, status and report name of any
+running tasks and any queued tasks in the queue.
 }
 }
 \if{html}{\out{<hr>}}

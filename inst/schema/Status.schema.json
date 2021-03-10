@@ -30,21 +30,7 @@
                 }
             ]
         },
-        "queue": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "key": {"type": "string"},
-                    "status": {
-                         "enum": ["queued", "running", "success", "error", "orphan", "interrupted", "redirect", "missing"]
-                    },
-                    "name": {"type": "string"}
-                },
-                "required": ["key", "status", "name"],
-                "additionalProperties": false
-            }
-        }
+        "queue": { "$ref": "QueueStatus.schema.json" }
     },
     "required": ["key", "status", "version", "output", "queue"],
     "additionalProperties": false
