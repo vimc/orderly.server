@@ -1,19 +1,24 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
     "id": "QueueStatus",
-    "type": "array",
-    "items": {
-        "type": "object",
-        "properties": {
-            "key": {"type": "string"},
-            "status": {
-                "enum": ["queued", "running", "success", "error", "orphan", "interrupted", "redirect", "missing"]
-            },
-            "name": {"type": "string"}
-        },
-        "required": ["key", "status", "name"],
-        "additionalProperties": false
+    "type": "object",
+    "properties": {
+        "tasks": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "key": {"type": "string"},
+                    "status": {
+                        "enum": ["queued", "running", "success", "error", "orphan", "interrupted", "redirect", "missing"]
+                    },
+                    "name": {"type": "string"}
+                },
+                "required": ["key", "status", "name"],
+                "additionalProperties": false
+            }
+        }
     },
-    "required": ["key", "status", "version", "output", "queue"],
+    "required": [ "tasks" ],
     "additionalProperties": false
 }

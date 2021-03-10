@@ -254,7 +254,7 @@ orderly_runner_ <- R6::R6Class(
       }
       out_status <- private$task_status(task_id)
       if (out_status == "queued") {
-        queued <- self$queue_status(key)
+        queued <- self$queue_status(key)$tasks
       } else {
         queued <- list()
       }
@@ -299,7 +299,9 @@ orderly_runner_ <- R6::R6Class(
         queued_tasks <- self$queue$task_preceeding(task_id)
       }
       tasks <- c(running_tasks, queued_tasks)
-      lapply(unname(tasks), private$get_task_details)
+      list(
+        tasks = lapply(unname(tasks), private$get_task_details)
+      )
     },
 
     #' @description

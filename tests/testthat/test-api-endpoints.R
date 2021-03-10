@@ -439,22 +439,25 @@ test_that("status - completed, with log", {
 
 test_that("queue status", {
   queue_status <- list(
-    list(
-      key = "key-1",
-      status = "running",
-      name = "minimal"
-    ),
-    list(
-      key = "key-2",
-      status = "queued",
-      name = "minimal"))
+    tasks = list(
+      list(
+        key = "key-1",
+        status = "running",
+        name = "minimal"
+      ),
+      list(
+        key = "key-2",
+        status = "queued",
+        name = "minimal")
+    )
+  )
 
   runner <- mock_runner(queue_status = queue_status)
 
   res <- target_queue_status(runner)
   expect_equal(
     res,
-    list(
+    list(tasks = list(
       list(
         key = scalar("key-1"),
         status = scalar("running"),
@@ -463,7 +466,7 @@ test_that("queue status", {
       list(
         key = scalar("key-2"),
         status = scalar("queued"),
-        name = scalar("minimal"))))
+        name = scalar("minimal")))))
   mockery::expect_called(runner$queue_status, 1)
 
   ## endpoint

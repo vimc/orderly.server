@@ -756,18 +756,19 @@ test_that("queue_status", {
   ## Key1 is running, key 2, 3 are queued
   queue_status <- runner$queue_status()
   expect_equal(queue_status, list(
-    list(
-      key = key1,
-      status = "running",
-      name = "interactive"
-    ),
-    list(
-      key = key2,
-      status = "queued",
-      name = "interactive"
-    ),
-    list(
-      key = key3,
-      status = "queued",
-      name = "interactive")))
+    tasks = list(
+      list(
+        key = key1,
+        status = "running",
+        name = "interactive"
+      ),
+      list(
+        key = key2,
+        status = "queued",
+        name = "interactive"
+      ),
+      list(
+        key = key3,
+        status = "queued",
+        name = "interactive"))))
 })
