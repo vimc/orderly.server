@@ -254,7 +254,7 @@ orderly_runner_ <- R6::R6Class(
       }
       out_status <- private$task_status(task_id)
       if (out_status == "queued") {
-        queued <- self$get_preceeding_tasks(key)
+        queued <- self$queue_status(key)
       } else {
         queued <- list()
       }
@@ -282,32 +282,24 @@ orderly_runner_ <- R6::R6Class(
     },
 
     #' @description
-    #' Get details of jobs in the queue
+    #' Get the running and queued tasks in front of key in the queue.
     #'
-    #' @return List containing the key, status and report name of any
-    #' running tasks and any queued tasks in the queue.
-    queue_status = function() {
-      queued_tasks <- self$queue$task_list()
-      ## task_list returns in order latest queued - first queued
-      ## we want the reverse of this
-      queued_tasks <- rev(queued_tasks)
-      lapply(queued_tasks, private$get_task_details)
-    },
-
-    #' @description
-    #' Get the running and queued tasks in front of key in the queue
+    #' If \code{key} is NULL then includes all queued tasks.
     #'
-    #' @param key The job key.
+    #' @param key The job key, if NULL returns all queued tasks.
     #'
     #' @return List containing the key, status and report name of any
     #' running tasks and any queued tasks in front of key in the queue.
-    get_preceeding_tasks = function(key) {
-      task_id <- self$con$HGET(self$keys$key_task_id, key)
-      running <- self$queue$worker_task_id()
-      running_details <- lapply(unname(running), private$get_task_details)
-      queued_tasks <- self$queue$task_preceeding(task_id)
-      queued_details <- lapply(queued_tasks, private$get_task_details)
-      c(running_details, queued_details)
+    queue_status = function(key) {
+      running_tasks <- self$queue$worker_task_id()
+      if (is.null(key)) {
+        queued_tasks <- self$queue$queue_list()
+      } else {
+        task_id <- self$con$HGET(self$keys$key_task_id, key)
+        queued_tasks <- self$queue$task_preceeding(task_id)
+      }
+      tasks <- c(running_tasks, queued_tasks)
+      lapply(unname(tasks), private$get_task_details)
     },
 
     #' @description
