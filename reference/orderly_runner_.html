@@ -73,7 +73,7 @@ Object for managing running jobs on the redis queue" />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">orderly.server</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.8</span>
       </span>
     </div>
 
@@ -148,7 +148,7 @@ and task_id</p></dd>
 <li><p><a href='#method-submit_task_report'><code>orderly_runner_$submit_task_report()</code></a></p></li>
 <li><p><a href='#method-submit'><code>orderly_runner_$submit()</code></a></p></li>
 <li><p><a href='#method-status'><code>orderly_runner_$status()</code></a></p></li>
-<li><p><a href='#method-get_preceeding_tasks'><code>orderly_runner_$get_preceeding_tasks()</code></a></p></li>
+<li><p><a href='#method-queue_status'><code>orderly_runner_$queue_status()</code></a></p></li>
 <li><p><a href='#method-check_timeout'><code>orderly_runner_$check_timeout()</code></a></p></li>
 <li><p><a href='#method-kill'><code>orderly_runner_$kill()</code></a></p></li>
 <li><p><a href='#method-destroy'><code>orderly_runner_$destroy()</code></a></p></li>
@@ -210,6 +210,7 @@ killed. Expect this is only finite during local testing.</p></dd>
   parameters <span class='op'>=</span> <span class='cn'>NULL</span>,
   ref <span class='op'>=</span> <span class='cn'>NULL</span>,
   instance <span class='op'>=</span> <span class='cn'>NULL</span>,
+  changelog <span class='op'>=</span> <span class='cn'>NULL</span>,
   poll <span class='op'>=</span> <span class='fl'>0.1</span>,
   timeout <span class='op'>=</span> <span class='fl'>60</span> <span class='op'>*</span> <span class='fl'>60</span> <span class='op'>*</span> <span class='fl'>3</span>
 <span class='op'>)</span></pre><p></div></p>
@@ -223,6 +224,8 @@ killed. Expect this is only finite during local testing.</p></dd>
 <dt><code>ref</code></dt><dd><p>The git sha to run the report.</p></dd>
 
 <dt><code>instance</code></dt><dd><p>The db instance for the report to pull data from.</p></dd>
+
+<dt><code>changelog</code></dt><dd><p>Description of changes to the report.</p></dd>
 
 <dt><code>poll</code></dt><dd><p>How frequently to poll for the report ID being available.</p></dd>
 
@@ -262,13 +265,14 @@ can be retrieved from redis using the key.</p>
 <p>List containing the key, status, report_id (if available),
 output and the position of the job in the queue.</p>
 <p><hr>
-<a id="method-get_preceeding_tasks"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>get_preceeding_tasks()</code></h3>
-<p>Get the running and queued tasks in front of key in the queue</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
-<p><div class="r"></p><pre><span class='va'>orderly_runner_</span><span class='op'>$</span><span class='fu'>get_preceeding_tasks</span><span class='op'>(</span><span class='va'>key</span><span class='op'>)</span></pre><p></div></p>
+<a id="method-queue_status"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>queue_status()</code></h3>
+<p>Get the running and queued tasks in front of key in the queue.</p>
+<p>If <code>key</code> is NULL then includes all queued tasks.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>orderly_runner_</span><span class='op'>$</span><span class='fu'>queue_status</span><span class='op'>(</span>key <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre><p></div></p>
 
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
-<dt><code>key</code></dt><dd><p>The job key.</p></dd>
+<dt><code>key</code></dt><dd><p>The job key, if NULL returns all queued tasks.</p></dd>
 
 </dl><p></div></p>
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
