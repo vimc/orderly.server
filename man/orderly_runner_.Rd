@@ -39,7 +39,7 @@ and task_id}
 \item \href{#method-submit_task_report}{\code{orderly_runner_$submit_task_report()}}
 \item \href{#method-submit}{\code{orderly_runner_$submit()}}
 \item \href{#method-status}{\code{orderly_runner_$status()}}
-\item \href{#method-get_preceeding_tasks}{\code{orderly_runner_$get_preceeding_tasks()}}
+\item \href{#method-queue_status}{\code{orderly_runner_$queue_status()}}
 \item \href{#method-check_timeout}{\code{orderly_runner_$check_timeout()}}
 \item \href{#method-kill}{\code{orderly_runner_$kill()}}
 \item \href{#method-destroy}{\code{orderly_runner_$destroy()}}
@@ -120,6 +120,7 @@ Queue a job to run an orderly report.
   parameters = NULL,
   ref = NULL,
   instance = NULL,
+  changelog = NULL,
   poll = 0.1,
   timeout = 60 * 60 * 3
 )}\if{html}{\out{</div>}}
@@ -135,6 +136,8 @@ Queue a job to run an orderly report.
 \item{\code{ref}}{The git sha to run the report.}
 
 \item{\code{instance}}{The db instance for the report to pull data from.}
+
+\item{\code{changelog}}{Description of changes to the report.}
 
 \item{\code{poll}}{How frequently to poll for the report ID being available.}
 
@@ -193,18 +196,20 @@ output and the position of the job in the queue.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-get_preceeding_tasks"></a>}}
-\if{latex}{\out{\hypertarget{method-get_preceeding_tasks}{}}}
-\subsection{Method \code{get_preceeding_tasks()}}{
-Get the running and queued tasks in front of key in the queue
+\if{html}{\out{<a id="method-queue_status"></a>}}
+\if{latex}{\out{\hypertarget{method-queue_status}{}}}
+\subsection{Method \code{queue_status()}}{
+Get the running and queued tasks in front of key in the queue.
+
+If \code{key} is NULL then includes all queued tasks.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{orderly_runner_$get_preceeding_tasks(key)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{orderly_runner_$queue_status(key = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{key}}{The job key.}
+\item{\code{key}}{The job key, if NULL returns all queued tasks.}
 }
 \if{html}{\out{</div>}}
 }

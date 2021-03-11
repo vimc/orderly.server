@@ -14,6 +14,7 @@ build_api <- function(runner, path, backup_period = NULL, rate_limit = 2 * 60) {
   api$handle(endpoint_report_info(path))
   api$handle(endpoint_run(runner))
   api$handle(endpoint_status(runner))
+  api$handle(endpoint_queue_status(runner))
   api$handle(endpoint_kill(runner))
   api$handle(endpoint_dependencies(path))
   api$handle(endpoint_run_metadata(runner))
@@ -312,6 +313,18 @@ endpoint_status <- function(runner) {
     porcelain::porcelain_input_query(output = "logical"),
     porcelain::porcelain_state(runner = runner),
     returning = returning_json("Status.schema"))
+}
+
+target_queue_status <- function(runner) {
+  res <- runner$queue_status()
+  recursive_scalar(res)
+}
+
+endpoint_queue_status <- function(runner) {
+  porcelain::porcelain_endpoint$new(
+    "GET", "/v1/queue/status/", target_queue_status,
+    porcelain::porcelain_state(runner = runner),
+    returning = returning_json("QueueStatus.schema"))
 }
 
 target_kill <- function(runner, key) {

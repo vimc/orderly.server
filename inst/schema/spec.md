@@ -112,6 +112,31 @@ Schema: [`Status.schema.json`](Status.schema.json)
 }
 ```
 
+## GET /queue/status/
+
+Get the status of the queue.
+
+This returns the key, report name and status of jobs. It includes jobs which are actively running and jobs which are waiting in the queue.
+
+Schema: [`QueueStatus.schema.json`](QueueStatus.schema.json)
+
+### Example queued status
+
+```json
+[
+    {
+        "key": "antiutopian_peregrinefalcon",
+        "status": "running",
+        "name": "minimal"
+    },
+    {
+        "key": "flavoured_bassethound",
+        "status": "queued",
+        "name": "other"
+    }
+]
+```
+
 ## DELETE /reports/:key/kill/
 
 Kill a running report.  If the report was running then `true` will be returned.  Otherwise an error will be thrown.
