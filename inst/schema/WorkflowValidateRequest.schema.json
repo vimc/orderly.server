@@ -1,0 +1,10 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "WorkflowValidateRequest",
+    "type": "object",
+    "properties": {
+        "tasks": { "$ref": "WorkflowTasks.schema.json" }
+    },
+    "required": ["tasks"],
+    "additionalProperties": false
+}

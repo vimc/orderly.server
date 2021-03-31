@@ -1,0 +1,19 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "WorkflowTasks",
+    "definitions": {
+        "task": {
+            "properties": {
+                "ref": { "type": "string" },
+                "instance": { "type": "object" },
+                "params": { "$ref": "Parameters.schema.json" }
+            },
+            "required": [ "ref", "instance" ],
+            "additionalProperties": false
+        }
+    },
+    "type": "object",
+    "patternProperties": {
+        "^.*&": { "$ref": "#/definitions/task" }
+    }
+}

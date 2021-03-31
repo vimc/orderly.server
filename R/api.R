@@ -18,6 +18,7 @@ build_api <- function(runner, path, backup_period = NULL, rate_limit = 2 * 60) {
   api$handle(endpoint_kill(runner))
   api$handle(endpoint_dependencies(path))
   api$handle(endpoint_run_metadata(runner))
+  api$handle(endpoint_workflow_validate(runner))
   api$setDocs(FALSE)
   backup <- orderly_backup(runner$config, backup_period)
   api$registerHook("preroute", backup$check_backup)
@@ -409,6 +410,23 @@ endpoint_run_metadata <- function(runner) {
    porcelain::porcelain_state(runner = runner),
    returning = returning_json("RunMetadata.schema")
  )
+}
+
+target_workflow_validate <- function(path, body) {
+  body <- jsonlite::fromJSON(body)
+  tasks <- body$tasks
+  workflow_validate(path, tasks)
+
+}
+
+endpoint_workflow_validate <- function(path) {
+  porcelain::porcelain_endpoint$new(
+    "POST", "/v1/workflow/validate/", target_workflow_validate,
+    porcelain::porcelain_input_body_json("body",
+                                         "WorkflowValidateRequest.schema",
+                                         schema_root()),
+    porcelain::porcelain_state(path = path),
+    returning = returning_json("WorkflowValidateResponse.schema"))
 }
 
 check_timeout <- function(runner, rate_limit = 2 * 60) {
