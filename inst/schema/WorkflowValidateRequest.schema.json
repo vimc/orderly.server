@@ -6,5 +6,5 @@
         "tasks": { "$ref": "WorkflowTasks.schema.json" }
     },
     "required": ["tasks"],
-    "additionalProperties": false
+    "additionalProperties": true
 }
