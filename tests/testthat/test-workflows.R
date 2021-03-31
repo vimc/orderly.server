@@ -61,3 +61,42 @@ test_that("workflow validate only looks at depth 1 dependencies", {
                  use_dependency_2 = list(scalar("use_dependency"))
                )))
 })
+
+test_that("workflow validate can handle multiple dependencies", {
+  path <- orderly_prepare_orderly_example("depends", testing = TRUE)
+
+  tasks <- list(
+    depend4 = list(
+      ref = "123"
+    )
+  )
+  expect_equal(workflow_validate(path, tasks),
+               list(missing_dependencies = list(
+                 depend4 = list(scalar("example"), scalar("depend2")))
+               ))
+
+  tasks <- list(
+    depend4 = list(
+      ref = "123"
+    ),
+    depend2 = list(
+      ref = "123"
+    )
+  )
+  expect_equal(workflow_validate(path, tasks),
+               list(missing_dependencies = list(
+                 depend4 = list(scalar("example")),
+                 depend2 =  list(scalar("example")))
+               ))
+
+
+  tasks <- list(
+    depend2 = list(
+      ref = "123"
+    )
+  )
+  expect_equal(workflow_validate(path, tasks),
+               list(missing_dependencies = list(
+                 depend2 = list(scalar("example"))
+               )))
+})
