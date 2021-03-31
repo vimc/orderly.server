@@ -18,7 +18,7 @@ build_api <- function(runner, path, backup_period = NULL, rate_limit = 2 * 60) {
   api$handle(endpoint_kill(runner))
   api$handle(endpoint_dependencies(path))
   api$handle(endpoint_run_metadata(runner))
-  api$handle(endpoint_workflow_validate(runner))
+  api$handle(endpoint_workflow_validate(path))
   api$setDocs(FALSE)
   backup <- orderly_backup(runner$config, backup_period)
   api$registerHook("preroute", backup$check_backup)

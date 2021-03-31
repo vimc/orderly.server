@@ -508,3 +508,27 @@ test_that("can get report info", {
   expect_equal(info$data$params$time, 1)
   expect_equal(info$data$params$poll, 0.1)
 })
+
+test_that("can validate workflow", {
+  server <- start_test_server()
+  on.exit(server$stop())
+
+  ## Run a report first to retrieve info for
+  r <- httr::POST(server$api_url("/v1/workflow/validate/"),
+                  body = list(tasks = list(
+                    depend = list(
+                      ref = "123",
+                      instance = list(source = "production")
+                    )
+                  )),
+                  encode = "json")
+
+  expect_equal(httr::status_code(r), 200)
+  dat <- content(r)
+  expect_equal(dat$status, "success")
+  expect_equal(dat$data, list(
+    missing_dependencies = list(
+      depend = "example"
+    )
+  ))
+})
