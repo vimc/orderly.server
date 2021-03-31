@@ -513,7 +513,6 @@ test_that("can validate workflow", {
   server <- start_test_server()
   on.exit(server$stop())
 
-  ## Run a report first to retrieve info for
   r <- httr::POST(server$api_url("/v1/workflow/validate/"),
                   body = list(tasks = list(
                     depend = list(
