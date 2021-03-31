@@ -1,3 +1,5 @@
+context("api-workflows")
+
 test_that("workflow can be validated", {
   t <- tempfile()
   writeLines(jsonlite::toJSON(list(

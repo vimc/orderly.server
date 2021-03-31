@@ -416,7 +416,6 @@ target_workflow_validate <- function(path, body) {
   body <- jsonlite::fromJSON(body)
   tasks <- body$tasks
   workflow_validate(path, tasks)
-
 }
 
 endpoint_workflow_validate <- function(path) {
