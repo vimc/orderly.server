@@ -13,7 +13,7 @@ Imports:
     heartbeatr,
     ids,
     jsonlite,
-    orderly (>= 1.2.30),
+    orderly (>= 1.2.32),
     porcelain (>= 0.1.0),
     processx,
     redux,
@@ -35,4 +35,4 @@ Encoding: UTF-8
 Remotes:
     reside-ic/porcelain,
     ropensci/jsonvalidate,
-    vimc/orderly
+    vimc/orderly@mrc-2321

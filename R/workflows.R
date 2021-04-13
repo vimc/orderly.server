@@ -10,11 +10,8 @@ workflow_validate <- function(path, tasks) {
 }
 
 get_missing_dependencies <- function(task, path, tasks) {
-  ## Not ideal that we build a graph of all dependencies then throw all
-  ## these away deeper than 1 level, should probably add support for that
-  ## in orderly to avoid unnecessary computation
   graph <- orderly::orderly_graph(task, root = path, direction = "upstream",
-                                  use = "src")
+                                  use = "src", max_depth = 1)
   dependencies <- lapply(graph$root$children, function(vertex) {
     scalar(vertex$name)
   })
