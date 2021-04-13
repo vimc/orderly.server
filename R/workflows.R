@@ -15,9 +15,5 @@ get_missing_dependencies <- function(task, path, tasks) {
   dependencies <- lapply(graph$root$children, function(vertex) {
     scalar(vertex$name)
   })
-  ## TODO: consider search query dependencies i.e.
-  ## latest(parameters:iso3 = iso3)
-  ## these should probably only be considered if their parameter matches between
-  ## dependency and this task
   deps <- dependencies[!(dependencies %in% names(tasks))]
 }
