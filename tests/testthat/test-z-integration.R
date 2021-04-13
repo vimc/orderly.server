@@ -509,11 +509,11 @@ test_that("can get report info", {
   expect_equal(info$data$params$poll, 0.1)
 })
 
-test_that("can validate workflow", {
+test_that("can get missing dependencies of a workflow", {
   server <- start_test_server()
   on.exit(server$stop())
 
-  r <- httr::POST(server$api_url("/v1/workflow/validate/"),
+  r <- httr::POST(server$api_url("/v1/workflow/missing-dependencies/"),
                   body = list(tasks = list(
                     depend = list(
                       ref = "123",

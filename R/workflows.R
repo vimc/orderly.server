@@ -1,4 +1,4 @@
-workflow_validate <- function(path, tasks) {
+workflow_missing_dependencies <- function(path, tasks) {
   reports <- orderly::orderly_list(root = path)
   missing_deps <- lapply(names(tasks), function(task) {
     if (!(task %in% reports)) {

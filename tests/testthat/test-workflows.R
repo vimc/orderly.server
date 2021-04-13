@@ -1,25 +1,25 @@
 context("workflows")
 
 
-test_that("workflow validate erros if report not found", {
+test_that("workflow missing dependencies errors if report not found", {
   path <- orderly_prepare_orderly_example("minimal")
   tasks <- list(
     missing_task = list(
       ref = "123"
     )
   )
-  expect_error(workflow_validate(path, tasks),
+  expect_error(workflow_missing_dependencies(path, tasks),
                "Task with name 'missing_task' cannot be found.")
 })
 
-test_that("workflow can be validated", {
+test_that("can get missing dependencies of a workflow", {
   path <- orderly_prepare_orderly_example("demo")
   tasks <- list(
     other = list(
       ref = "123"
     )
   )
-  expect_equal(workflow_validate(path, tasks),
+  expect_equal(workflow_missing_dependencies(path, tasks),
                list(missing_dependencies = list(
                  other = list()
                )))
@@ -29,7 +29,7 @@ test_that("workflow can be validated", {
       ref = "123"
     )
   )
-  expect_equal(workflow_validate(path, tasks),
+  expect_equal(workflow_missing_dependencies(path, tasks),
                list(missing_dependencies = list(
                  use_dependency = list(scalar("other"))
                )))
@@ -42,27 +42,27 @@ test_that("workflow can be validated", {
       ref = "abc"
     )
   )
-  expect_equal(workflow_validate(path, tasks),
+  expect_equal(workflow_missing_dependencies(path, tasks),
                list(missing_dependencies = list(
                  use_dependency = list(),
                  other = list()
                )))
 })
 
-test_that("workflow validate only looks at depth 1 dependencies", {
+test_that("workflow missing dependencies only looks at depth 1 dependencies", {
   path <- orderly_prepare_orderly_example("demo")
   tasks <- list(
     use_dependency_2 = list(
       ref = "123"
     )
   )
-  expect_equal(workflow_validate(path, tasks),
+  expect_equal(workflow_missing_dependencies(path, tasks),
                list(missing_dependencies = list(
                  use_dependency_2 = list(scalar("use_dependency"))
                )))
 })
 
-test_that("workflow validate can handle multiple dependencies", {
+test_that("workflow missing dependencies can handle multiple dependencies", {
   path <- orderly_prepare_orderly_example("depends", testing = TRUE)
 
   tasks <- list(
@@ -70,7 +70,7 @@ test_that("workflow validate can handle multiple dependencies", {
       ref = "123"
     )
   )
-  expect_equal(workflow_validate(path, tasks),
+  expect_equal(workflow_missing_dependencies(path, tasks),
                list(missing_dependencies = list(
                  depend4 = list(scalar("example"), scalar("depend2")))
                ))
@@ -83,7 +83,7 @@ test_that("workflow validate can handle multiple dependencies", {
       ref = "123"
     )
   )
-  expect_equal(workflow_validate(path, tasks),
+  expect_equal(workflow_missing_dependencies(path, tasks),
                list(missing_dependencies = list(
                  depend4 = list(scalar("example")),
                  depend2 =  list(scalar("example")))
@@ -95,7 +95,7 @@ test_that("workflow validate can handle multiple dependencies", {
       ref = "123"
     )
   )
-  expect_equal(workflow_validate(path, tasks),
+  expect_equal(workflow_missing_dependencies(path, tasks),
                list(missing_dependencies = list(
                  depend2 = list(scalar("example"))
                )))
