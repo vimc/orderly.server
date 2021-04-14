@@ -1,0 +1,20 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "WorkflowRunRequest",
+    "type": "object",
+    "properties": {
+        "tasks": { "$ref": "WorkflowTasks.schema.json" },
+        "changelog": {
+            "type": "object",
+            "properties": {
+                "message": { "type": "string" },
+                "type": { "type": "string" }
+            },
+            "required": [ "message", "type" ],
+            "additionalProperties": false
+        }
+        "autocommit": { "type": "boolean" }
+    },
+    "required": ["tasks", "automcommit"],
+    "additionalProperties": true
+}

@@ -19,6 +19,7 @@ build_api <- function(runner, path, backup_period = NULL, rate_limit = 2 * 60) {
   api$handle(endpoint_dependencies(path))
   api$handle(endpoint_run_metadata(runner))
   api$handle(endpoint_workflow_missing_dependencies(path))
+  api$handle(endpoint_workflow_run(runner))
   api$setDocs(FALSE)
   backup <- orderly_backup(runner$config, backup_period)
   api$registerHook("preroute", backup$check_backup)
@@ -428,6 +429,21 @@ endpoint_workflow_missing_dependencies <- function(path) {
       schema_root()),
     porcelain::porcelain_state(path = path),
     returning = returning_json("WorkflowMissingDependenciesResponse.schema"))
+}
+
+target_workflow_run <- function(runner, body) {
+  body <- jsonlite::fromJSON(body)
+  runner$submit_workflow(body$tasks, body$changelog)
+}
+
+endpoint_workflow_run <- function(runner) {
+  porcelain::porcelain_endpoint$new(
+    "POST", "/v1/workflow/run/",
+    target_workflow_run,
+    porcelain::porcelain_input_body_json("body", "WorkflowRunRequest.schema",
+                                         schema_root()),
+    porcelain::porcelain_state(path = path),
+    returning = returning_json("WorkflowRunResponse.schema"))
 }
 
 check_timeout <- function(runner, rate_limit = 2 * 60) {

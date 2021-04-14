@@ -223,6 +223,32 @@ orderly_runner_ <- R6::R6Class(
     },
 
     #' @description
+    #' Queue a workflow.
+    #'
+    #' @param reports Details of reports to be run
+    #' @param changelog Description of changes to the reports - applied to
+    #' all reports.
+    #'
+    #' @return The key for the workflow and each individual report
+    submit_workflow = function(reports, changelog = NULL) {
+      dependencies_graph <- build_dependencies_graph(self$root, reports)
+      workflow <- build_workflow(reports, dependencies_graph)
+      self$queue_workflow(workflow)
+    },
+
+    queue_workflow = function(workflow) {
+      workflow_key <- ids::adjective_animal()
+      ## Add it to redis
+      for (report in names(workflow)) {
+        task_id <- self$queue$enqueue_(report$expr, report$envir)
+        self$con$HSET(self$keys$key_task_id, report$key, task_id)
+        self$con$HSET(self$keys$task_id_key, task_id, report$key)
+        self$con$HSET(self$keys$task_timeout, task_id, timeout)
+        ## redis map workflow to task id
+      }
+    },
+
+    #' @description
     #' Submit an arbitrary job on the queue
     #'
     #' @param job A quoted R expression.

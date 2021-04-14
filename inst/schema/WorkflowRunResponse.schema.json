@@ -1,0 +1,22 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "WorkflowRunResponse",
+    "type": "object",
+    "properties": {
+        "workflow_id": { "type": "string" },
+        "reports": {
+            "type": "array"
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": { "type": "string" },
+                    "id": { "type": "string" }
+                },
+                "required": ["name", "id"],
+                "additionalProperties": false
+            }
+        }
+    },
+    "required": ["workflow_id", "reports"],
+    "additionalProperties": false
+}
