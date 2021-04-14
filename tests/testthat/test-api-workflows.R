@@ -4,9 +4,8 @@ test_that("workflow can be validated", {
   path <- orderly_prepare_orderly_example("minimal")
   t <- tempfile()
   writeLines(jsonlite::toJSON(list(
-    tasks = list(
+    reports = list(
       preprocess = list(
-        ref = scalar("123"),
         instance = list(
           source = scalar("production")
         ),
@@ -16,18 +15,17 @@ test_that("workflow can be validated", {
         )
       ),
       process = list(
-        ref = scalar("ba123"),
         instance = list(
           source = scalar("production")
         )
       ),
       postprocess = list(
-        ref = scalar("2134"),
         instance = list(
           source = scalar("production")
         )
       )
-    )
+    ),
+    ref = scalar("123")
   )), t)
 
   output <- list(

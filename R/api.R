@@ -414,8 +414,8 @@ endpoint_run_metadata <- function(runner) {
 
 target_workflow_missing_dependencies <- function(path, body) {
   body <- jsonlite::fromJSON(body)
-  tasks <- body$tasks
-  workflow_missing_dependencies(path, tasks)
+  reports <- body$reports
+  workflow_missing_dependencies(path, reports)
 }
 
 endpoint_workflow_missing_dependencies <- function(path) {
