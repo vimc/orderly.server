@@ -657,6 +657,8 @@ test_that("status: lists queued tasks", {
     key4_status <- runner$status(key4)
     expect_equal(key4_status$key, key4)
     expect_equal(key4_status$status, "queued")
+    key1_status <- runner$status(key1)
+    expect_true(!is.null(key1_status$version))
   })
   ## Key1 is running, key 2, 3 & 4 are queued
   key1_status <- runner$status(key1)

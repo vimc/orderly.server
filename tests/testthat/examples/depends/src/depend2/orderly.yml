@@ -1,0 +1,18 @@
+data: ~
+depends:
+  - example:
+      id: latest
+      use:
+        previous1.rds: data.rds
+  - example:
+      id: latest
+      use:
+        previous2.rds: data.rds
+script: script.R
+artefacts:
+  - data:
+      description: results
+      filenames: results.rds
+  - data:
+      description: some data
+      filenames: output.rds

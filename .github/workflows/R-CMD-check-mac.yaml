@@ -58,6 +58,7 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           brew install hiredis
+          brew install libgit2
 
       - name: Install dependencies
         run: |

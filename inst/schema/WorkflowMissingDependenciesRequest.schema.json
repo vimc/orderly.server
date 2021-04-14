@@ -1,0 +1,10 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "WorkflowMissingDependenciesRequest",
+    "type": "object",
+    "properties": {
+        "tasks": { "$ref": "WorkflowTasks.schema.json" }
+    },
+    "required": ["tasks"],
+    "additionalProperties": true
+}
