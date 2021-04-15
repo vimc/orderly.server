@@ -4,7 +4,7 @@ context("workflows")
 test_that("workflow missing dependencies errors if report not found", {
   path <- orderly_prepare_orderly_example("minimal")
   reports <- list(
-    missing_report = list()
+    list(name = "missing_report")
   )
   expect_error(workflow_missing_dependencies(path, reports),
                "Report with name 'missing_report' cannot be found.")
@@ -13,7 +13,7 @@ test_that("workflow missing dependencies errors if report not found", {
 test_that("can get missing dependencies of a workflow", {
   path <- orderly_prepare_orderly_example("demo")
   reports <- list(
-    other = list()
+    list(name = "other")
   )
   expect_equal(workflow_missing_dependencies(path, reports),
                list(missing_dependencies = list(
@@ -21,7 +21,7 @@ test_that("can get missing dependencies of a workflow", {
                )))
 
   reports <- list(
-    use_dependency = list()
+    list(name = "use_dependency")
   )
   expect_equal(workflow_missing_dependencies(path, reports),
                list(missing_dependencies = list(
@@ -29,8 +29,8 @@ test_that("can get missing dependencies of a workflow", {
                )))
 
   reports <- list(
-    use_dependency = list(),
-    other = list()
+    list(name = "use_dependency"),
+    list(name = "other")
   )
   expect_equal(workflow_missing_dependencies(path, reports),
                list(missing_dependencies = list(
@@ -42,7 +42,7 @@ test_that("can get missing dependencies of a workflow", {
 test_that("workflow missing dependencies only looks at depth 1 dependencies", {
   path <- orderly_prepare_orderly_example("demo")
   reports <- list(
-    use_dependency_2 = list()
+    list(name = "use_dependency_2")
   )
   expect_equal(workflow_missing_dependencies(path, reports),
                list(missing_dependencies = list(
@@ -54,7 +54,7 @@ test_that("workflow missing dependencies can handle multiple dependencies", {
   path <- orderly_prepare_orderly_example("depends", testing = TRUE)
 
   reports <- list(
-    depend4 = list()
+    list(name = "depend4")
   )
   expect_equal(workflow_missing_dependencies(path, reports),
                list(missing_dependencies = list(
@@ -62,8 +62,8 @@ test_that("workflow missing dependencies can handle multiple dependencies", {
                ))
 
   reports <- list(
-    depend4 = list(),
-    depend2 = list()
+    list(name = "depend4"),
+    list(name = "depend2")
   )
   expect_equal(workflow_missing_dependencies(path, reports),
                list(missing_dependencies = list(
@@ -73,7 +73,7 @@ test_that("workflow missing dependencies can handle multiple dependencies", {
 
 
   reports <- list(
-    depend2 = list()
+    list(name = "depend2")
   )
   expect_equal(workflow_missing_dependencies(path, reports),
                list(missing_dependencies = list(

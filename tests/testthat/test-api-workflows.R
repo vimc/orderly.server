@@ -5,7 +5,8 @@ test_that("workflow can be validated", {
   t <- tempfile()
   writeLines(jsonlite::toJSON(list(
     reports = list(
-      preprocess = list(
+      list(
+        name = scalar("preprocess"),
         instance = list(
           source = scalar("production")
         ),
@@ -14,12 +15,14 @@ test_that("workflow can be validated", {
           nmax = scalar(2)
         )
       ),
-      process = list(
+      list(
+        name = scalar("process"),
         instance = list(
           source = scalar("production")
         )
       ),
-      postprocess = list(
+      list(
+        name = scalar("postprocess"),
         instance = list(
           source = scalar("production")
         )
