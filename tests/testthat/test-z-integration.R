@@ -521,8 +521,7 @@ test_that("can get missing dependencies of a workflow", {
                     )
                   ),
                   ref = scalar("123")),
-                  encode = "json",
-                  httr::verbose())
+                  encode = "json")
 
   expect_equal(httr::status_code(r), 200)
   dat <- content(r)
