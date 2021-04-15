@@ -14,7 +14,6 @@
 ##'
 ##' @keywords internal
 workflow_missing_dependencies <- function(path, reports) {
-  browser()
   all_reports <- orderly::orderly_list(root = path)
   report_names <- lapply(reports, function(report) report$name)
   missing_deps <- lapply(reports, function(report) {
