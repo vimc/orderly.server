@@ -3,8 +3,9 @@
     "id": "WorkflowMissingDependenciesRequest",
     "type": "object",
     "properties": {
-        "tasks": { "$ref": "WorkflowTasks.schema.json" }
+        "reports": { "$ref": "WorkflowReports.schema.json" },
+        "ref": { "type": "string" }
     },
-    "required": ["tasks"],
+    "required": ["reports", "ref"],
     "additionalProperties": true
 }

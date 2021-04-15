@@ -1,12 +1,12 @@
-workflow_missing_dependencies <- function(path, tasks) {
-  reports <- orderly::orderly_list(root = path)
-  missing_deps <- lapply(names(tasks), function(task) {
-    if (!(task %in% reports)) {
-      stop(sprintf("Task with name '%s' cannot be found.", task))
+workflow_missing_dependencies <- function(path, reports) {
+  all_reports <- orderly::orderly_list(root = path)
+  missing_deps <- lapply(names(reports), function(report) {
+    if (!(report %in% all_reports)) {
+      stop(sprintf("Report with name '%s' cannot be found.", report))
     }
-    get_missing_dependencies(task, path, tasks)
+    get_missing_dependencies(report, path, reports)
   })
-  list(missing_dependencies = setNames(missing_deps, names(tasks)))
+  list(missing_dependencies = setNames(missing_deps, names(reports)))
 }
 
 get_missing_dependencies <- function(task, path, tasks) {
@@ -45,12 +45,14 @@ build_dependencies_graph <- function(path, reports) {
   deps_graph
 }
 
-build_workflow <- function(reports, dependencies_graph) {
+build_workflow <- function(path, reports, ref, changelog, key_report_id, poll) {
+  dependencies_graph <- build_dependencies_graph(path, reports)
   order <- topological_sort(dependencies_graph)
   build_item <- function(report) {
     report_details <- reports[[report]]
-    prepare_task(report, report_details$parameters, report_details$ref,
-                         report_details$instance, reports$changelog)
+    prepare_task(key_report_id, path, report, report_details$parameters,
+                 ref, report_details$instance, changelog, poll,
+                 depends_on = dependencies_graph[[report]])
   }
   workflow <- lapply(order, build_item)
   names(workflow) <- order
@@ -94,24 +96,21 @@ topological_sort <- function(graph) {
   names(graph)[graph_sorted]
 }
 
-prepare_task <- function(name, parameters = NULL, ref = NULL,
-                         instance = NULL, changelog = NULL, poll = 0.1) {
-
-  if (!self$allow_ref && !is.null(ref)) {
-    stop("Reference switching is disallowed in this runner",
-         call. = FALSE)
-  }
-
-  root <- self$root
+prepare_task <- function(key_report_id, root, name, parameters = NULL,
+                         ref = NULL, instance = NULL, changelog = NULL,
+                         poll = 0.1, depends_on = NULL) {
   key <- ids::adjective_animal()
-  key_report_id <- self$keys$key_report_id
   expr <- quote(
     orderly.server:::runner_run(key_report_id, key, root, name,   # nolint
                                 parameters, instance, ref,
                                 changelog = changelog, poll = poll))
+  if (anyNA(depends_on)) {
+    depends_on <- NULL
+  }
   list(
     expr = expr,
     envir = environment(),
-    key = key
+    key = key,
+    depends_on = depends_on
   )
 }

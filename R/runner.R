@@ -225,28 +225,45 @@ orderly_runner_ <- R6::R6Class(
     #' @description
     #' Queue a workflow.
     #'
-    #' @param reports Details of reports to be run
+    #' @param reports Details of reports to be run.
+    #' @param ref The git sha to run the workflow.
     #' @param changelog Description of changes to the reports - applied to
     #' all reports.
+    #' @param poll How frequently to poll for the report ID being available.
+    #' Applied to each of the reports run in the workflow
+    #' @param timeout Timeout for each of the reports run as part
+    #' of the workflow default 3 hours.
     #'
     #' @return The key for the workflow and each individual report
-    submit_workflow = function(reports, changelog = NULL) {
-      dependencies_graph <- build_dependencies_graph(self$root, reports)
-      workflow <- build_workflow(reports, dependencies_graph)
-      self$queue_workflow(workflow)
+    submit_workflow = function(reports, ref = NULL, changelog = NULL,
+                               poll = 0.1, timeout = 60 * 60 * 3) {
+      if (!self$allow_ref && !is.null(ref)) {
+        stop("Reference switching is disallowed in this runner",
+             call. = FALSE)
+      }
+      workflow <- build_workflow(path, reports, ref, changelog,
+                                 self$keys$key_report_id, poll)
+      queue_task <- function(report) {
+        report_details <- workflow[[report]]
+        task_id <- self$queue$enqueue_(report_details$expr,
+                                       report_details$envir,
+                                       depends_on = report_details$depends_on)
+        self$con$HSET(self$keys$key_task_id, report_details$key, task_id)
+        self$con$HSET(self$keys$task_id_key, task_id, report_details$key)
+        self$con$HSET(self$keys$task_timeout, task_id, timeout)
+        task_id
+      }
+      task_ids <- vcapply(names(workflow), queue_task)
+      workflow_key <- ids::adjective_animal()
+      redis_key <- workflow_redis_key(self$queue$queue_id, workflow_key)
+      self$con$SADD(self$keys$key_workflows, workflow_key)
+      self$con$SADD(redis_key, task_ids)
+      list(
+        workflow_key = workflow_key,
+        reports = task_ids
+      )
     },
 
-    queue_workflow = function(workflow) {
-      workflow_key <- ids::adjective_animal()
-      ## Add it to redis
-      for (report in names(workflow)) {
-        task_id <- self$queue$enqueue_(report$expr, report$envir)
-        self$con$HSET(self$keys$key_task_id, report$key, task_id)
-        self$con$HSET(self$keys$task_id_key, task_id, report$key)
-        self$con$HSET(self$keys$task_timeout, task_id, timeout)
-        ## redis map workflow to task id
-      }
-    },
 
     #' @description
     #' Submit an arbitrary job on the queue
@@ -484,5 +501,10 @@ orderly_key <- function(base) {
   list(key_task_id = sprintf("%s:orderly.server:key_task_id", base),
        task_id_key = sprintf("%s:orderly.server:task_id_key", base),
        task_timeout = sprintf("%s:orderly.server:task_timeout", base),
-       key_report_id = sprintf("%s:orderly.server:key_report_id", base))
+       key_report_id = sprintf("%s:orderly.server:key_report_id", base),
+       key_workflows = sprintf("%s:orderly.server:workflows", base))
+}
+
+workflow_redis_key <- function(base, workflow_key) {
+  sprintf("%s:orderly.server:workflow:%s", base, workflow_key)
 }

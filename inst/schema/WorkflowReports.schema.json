@@ -2,9 +2,8 @@
     "$schema": "http://json-schema.org/draft-04/schema#",
     "id": "WorkflowTasks",
     "definitions": {
-        "task": {
+        "report": {
             "properties": {
-                "ref": { "type": "string" },
                 "instance": { "type": "object" },
                 "params": { "$ref": "Parameters.schema.json" }
             },
@@ -14,6 +13,6 @@
     },
     "type": "object",
     "patternProperties": {
-        "^.*&": { "$ref": "#/definitions/task" }
+        "^.*&": { "$ref": "#/definitions/report" }
     }
 }

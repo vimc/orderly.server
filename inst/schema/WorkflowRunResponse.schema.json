@@ -3,16 +3,16 @@
     "id": "WorkflowRunResponse",
     "type": "object",
     "properties": {
-        "workflow_id": { "type": "string" },
+        "workflow_key": { "type": "string" },
         "reports": {
             "type": "array"
             "items": {
                 "type": "object",
                 "properties": {
                     "name": { "type": "string" },
-                    "id": { "type": "string" }
+                    "key": { "type": "string" }
                 },
-                "required": ["name", "id"],
+                "required": ["name", "key"],
                 "additionalProperties": false
             }
         }
