@@ -4,7 +4,7 @@ context("workflows")
 test_that("workflow missing dependencies errors if report not found", {
   path <- orderly_prepare_orderly_example("minimal")
   reports <- list(
-    missing_report = list()
+    list(name = "missing_report")
   )
   expect_error(workflow_missing_dependencies(path, reports),
                "Report with name 'missing_report' cannot be found.")
@@ -13,7 +13,7 @@ test_that("workflow missing dependencies errors if report not found", {
 test_that("can get missing dependencies of a workflow", {
   path <- orderly_prepare_orderly_example("demo")
   reports <- list(
-    other = list()
+    list(name = "other")
   )
   expect_equal(workflow_missing_dependencies(path, reports),
                list(missing_dependencies = list(
@@ -21,7 +21,7 @@ test_that("can get missing dependencies of a workflow", {
                )))
 
   reports <- list(
-    use_dependency = list()
+    list(name = "use_dependency")
   )
   expect_equal(workflow_missing_dependencies(path, reports),
                list(missing_dependencies = list(
@@ -29,8 +29,8 @@ test_that("can get missing dependencies of a workflow", {
                )))
 
   reports <- list(
-    use_dependency = list(),
-    other = list()
+    list(name = "use_dependency"),
+    list(name = "other")
   )
   expect_equal(workflow_missing_dependencies(path, reports),
                list(missing_dependencies = list(
@@ -42,7 +42,7 @@ test_that("can get missing dependencies of a workflow", {
 test_that("workflow missing dependencies only looks at depth 1 dependencies", {
   path <- orderly_prepare_orderly_example("demo")
   reports <- list(
-    use_dependency_2 = list()
+    list(name = "use_dependency_2")
   )
   expect_equal(workflow_missing_dependencies(path, reports),
                list(missing_dependencies = list(
@@ -54,7 +54,7 @@ test_that("workflow missing dependencies can handle multiple dependencies", {
   path <- orderly_prepare_orderly_example("depends", testing = TRUE)
 
   reports <- list(
-    depend4 = list()
+    list(name = "depend4")
   )
   expect_equal(workflow_missing_dependencies(path, reports),
                list(missing_dependencies = list(
@@ -62,8 +62,8 @@ test_that("workflow missing dependencies can handle multiple dependencies", {
                ))
 
   reports <- list(
-    depend4 = list(),
-    depend2 = list()
+    list(name = "depend4"),
+    list(name = "depend2")
   )
   expect_equal(workflow_missing_dependencies(path, reports),
                list(missing_dependencies = list(
@@ -73,7 +73,7 @@ test_that("workflow missing dependencies can handle multiple dependencies", {
 
 
   reports <- list(
-    depend2 = list()
+    list(name = "depend2")
   )
   expect_equal(workflow_missing_dependencies(path, reports),
                list(missing_dependencies = list(
@@ -83,7 +83,8 @@ test_that("workflow missing dependencies can handle multiple dependencies", {
 
 test_that("can work out dependencies graph", {
   no_deps <- list(
-    depend = list(
+    list(
+      name = "depend",
       instance = list(
         source = "production"
       ),
@@ -94,7 +95,8 @@ test_that("can work out dependencies graph", {
     )
   )
   one_dep <- list(
-    example = list(
+    list(
+      name = "example",
       instance = list(
         source = "production"
       ),
@@ -103,14 +105,16 @@ test_that("can work out dependencies graph", {
         nmax = 1
       )
     ),
-    depend = list(
+    list(
+      name = "depend",
       instance = list(
         source = "production"
       )
     )
   )
   two_deps <- list(
-    example = list(
+   list(
+      name = "example",
       instance = list(
         source = "production"
       ),
@@ -119,29 +123,34 @@ test_that("can work out dependencies graph", {
         nmax = 1
       )
     ),
-    depend = list(
+    list(
+      name = "depend",
       instance = list(
         source = "production"
       )
     ),
-    depend2 = list(
+    list(
+      name = "depend2",
       instance = list(
         source = "production"
       )
     )
   )
   multiple_deps <- list(
-    example = list(
+    list(
+      name = "example",
       instance = list(
         source = "production"
       )
     ),
-    depend2 = list(
+    list(
+      name = "depend2",
       instance = list(
         source = "production"
       )
     ),
-    depend4 = list(
+    list(
+      name = "depend4",
       instance = list(
         source = "production"
       )
@@ -197,7 +206,8 @@ test_that("cycled can be detected", {
 test_that("workflow representation can be built", {
   path <- orderly_prepare_orderly_example("depends", testing = TRUE)
   no_deps <- list(
-    depend = list(
+    list(
+      name = "depend",
       instance = list(
         source = "production"
       ),
@@ -208,52 +218,67 @@ test_that("workflow representation can be built", {
     )
   )
   workflow <- build_workflow(path, no_deps, "key-report-id")
-  expect_equal(names(workflow), "depend")
-  expect_equal(names(workflow$depend), c("expr", "envir", "key", "depends_on"))
-  expect_type(workflow$depend$expr, "language")
+  expect_length(workflow, 1)
+  expect_equal(names(workflow[[1]]),
+               c("expr", "envir", "key", "depends_on", "original_order"))
+  expect_type(workflow[[1]]$expr, "language")
   required_params <- c("key_report_id", "key", "root", "name", "parameters",
                        "instance", "ref", "changelog", "poll")
-  expect_true(all(required_params %in% ls(workflow$depend$envir)))
-  expect_null(workflow$depend$depends_on)
-  expect_true(!is.null(workflow$depend$key))
+  expect_true(all(required_params %in% ls(workflow[[1]]$envir)))
+  expect_equal(get("name", workflow[[1]]$envir), "depend")
+  expect_null(workflow[[1]]$depends_on)
+  expect_true(!is.null(workflow[[1]]$key))
+  expect_equal(workflow[[1]]$original_order, 1)
 
   multiple_deps <- list(
-    example = list(
+    list(
+      name = "example",
       instance = list(
         source = "production"
       )
     ),
-    depend4 = list(
+    list(
+      name = "depend4",
       instance = list(
         source = "production"
       )
     ),
-    depend2 = list(
+    list(
+      name = "depend2",
       instance = list(
         source = "production"
       )
     )
   )
   workflow <- build_workflow(path, multiple_deps, "key-report-id")
-  expect_equal(names(workflow), c("example", "depend2", "depend4"))
+  expect_length(workflow, 3)
 
-  expect_equal(names(workflow$example), c("expr", "envir", "key", "depends_on"))
-  expect_type(workflow$example$expr, "language")
-  expect_true(all(required_params %in% ls(workflow$example$envir)))
-  expect_null(workflow$example$depends_on)
-  expect_true(!is.null(workflow$example$key))
+  expect_equal(names(workflow[[1]]),
+               c("expr", "envir", "key", "depends_on", "original_order"))
+  expect_type(workflow[[1]]$expr, "language")
+  expect_true(all(required_params %in% ls(workflow[[1]]$envir)))
+  expect_equal(get("name", workflow[[1]]$envir), "example")
+  expect_null(workflow[[1]]$depends_on)
+  expect_true(!is.null(workflow[[1]]$key))
+  expect_equal(workflow[[1]]$original_order, 1)
 
-  expect_equal(names(workflow$depend2), c("expr", "envir", "key", "depends_on"))
-  expect_type(workflow$depend2$expr, "language")
-  expect_true(all(required_params %in% ls(workflow$depend2$envir)))
-  expect_equal(workflow$depend2$depends_on, "example")
-  expect_true(!is.null(workflow$depend2$key))
+  expect_equal(names(workflow[[2]]),
+               c("expr", "envir", "key", "depends_on", "original_order"))
+  expect_type(workflow[[2]]$expr, "language")
+  expect_true(all(required_params %in% ls(workflow[[2]]$envir)))
+  expect_equal(get("name", workflow[[2]]$envir), "depend2")
+  expect_equal(workflow[[2]]$depends_on, "example")
+  expect_true(!is.null(workflow[[2]]$key))
+  expect_equal(workflow[[2]]$original_order, 3)
 
-  expect_equal(names(workflow$depend4), c("expr", "envir", "key", "depends_on"))
-  expect_type(workflow$depend4$expr, "language")
-  expect_true(all(required_params %in% ls(workflow$depend4$envir)))
-  expect_equal(workflow$depend4$depends_on, c("example", "depend2"))
-  expect_true(!is.null(workflow$depend4$key))
+  expect_equal(names(workflow[[3]]),
+               c("expr", "envir", "key", "depends_on", "original_order"))
+  expect_type(workflow[[3]]$expr, "language")
+  expect_true(all(required_params %in% ls(workflow[[3]]$envir)))
+  expect_equal(get("name", workflow[[3]]$envir), "depend4")
+  expect_equal(workflow[[3]]$depends_on, c("example", "depend2"))
+  expect_true(!is.null(workflow[[3]]$key))
+  expect_equal(workflow[[3]]$original_order, 2)
 })
 
 test_that("workflow can be run: simple", {
@@ -264,7 +289,8 @@ test_that("workflow can be run: simple", {
   runner <- orderly_runner(path)
 
   no_deps <- list(
-    depend = list(
+    list(
+      name = "depend",
       instance = list(
         source = "production"
       ),

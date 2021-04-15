@@ -1,21 +1,37 @@
+##' Get missing dependencies for list of reports.
+##'
+##' Report A has a missing dependency if, report A has a "depends" block in
+##' its `orderly.yml` which depends on latest version (or latest with some
+##' search term) of report B and report B does not occur in the list of reports.
+##'
+##' @param path Path to orderly root.
+##' @param reports List of reports to get missing dependencies for,
+##'   this must be at a minimum a list of lists each item containing "name"
+##'   property of the report name. It can have additional data too but this
+##'   is ignored for checking dependencies.
+##'
+##' @return List with key report name and value is any missing dependencies.
+##'
+##' @keywords internal
 workflow_missing_dependencies <- function(path, reports) {
   all_reports <- orderly::orderly_list(root = path)
-  missing_deps <- lapply(names(reports), function(report) {
-    if (!(report %in% all_reports)) {
-      stop(sprintf("Report with name '%s' cannot be found.", report))
+  report_names <- lapply(reports, function(report) report$name)
+  missing_deps <- lapply(reports, function(report) {
+    if (!(report$name %in% all_reports)) {
+      stop(sprintf("Report with name '%s' cannot be found.", report$name))
     }
-    get_missing_dependencies(report, path, reports)
+    get_missing_dependencies(report$name, path, report_names)
   })
-  list(missing_dependencies = setNames(missing_deps, names(reports)))
+  list(missing_dependencies = setNames(missing_deps, report_names))
 }
 
-get_missing_dependencies <- function(task, path, tasks) {
-  dependencies <- get_report_dependencies(task, path)
-  deps <- dependencies[!(dependencies %in% names(tasks))]
+get_missing_dependencies <- function(report_name, path, report_names) {
+  dependencies <- get_report_dependencies(report_name, path)
+  deps <- dependencies[!(dependencies %in% report_names)]
 }
 
-get_report_dependencies <- function(report, path) {
-  graph <- orderly::orderly_graph(report, root = path, direction = "upstream",
+get_report_dependencies <- function(report_name, path) {
+  graph <- orderly::orderly_graph(report_name, root = path, direction = "upstream",
                                   use = "src", max_depth = 1)
   lapply(graph$root$children, function(vertex) {
     scalar(vertex$name)
@@ -32,31 +48,46 @@ get_report_dependencies <- function(report, path) {
 build_dependencies_graph <- function(path, reports) {
   ## TODO: When building these dependencies need to make sure we are
   ## respecting git ref - should git ref be top level param?
+  report_names <- vcapply(reports, function(report) report$name)
   get_present_dependencies <- function(report) {
-    dependencies <- unique(unlist(get_report_dependencies(report, path)))
-    present_deps <- names(reports)[names(reports) %in% dependencies]
+    dependencies <- unique(unlist(get_report_dependencies(report$name, path)))
+    present_deps <- report_names[report_names %in% dependencies]
     if (length(present_deps) == 0) {
       present_deps <- NA
     }
     present_deps
   }
-  deps_graph <- lapply(names(reports), get_present_dependencies)
-  names(deps_graph) <- names(reports)
+  deps_graph <- lapply(reports, get_present_dependencies)
+  names(deps_graph) <- report_names
   deps_graph
 }
 
 build_workflow <- function(path, reports, ref, changelog, key_report_id, poll) {
   dependencies_graph <- build_dependencies_graph(path, reports)
   order <- topological_sort(dependencies_graph)
-  build_item <- function(report) {
-    report_details <- reports[[report]]
-    prepare_task(key_report_id, path, report, report_details$parameters,
-                 ref, report_details$instance, changelog, poll,
-                 depends_on = dependencies_graph[[report]])
+  ## We want to return in order which this workflow run was requested
+  ## preserve this now for ordering the result before return
+  counter <- 1
+  for (index in seq_along(reports)) {
+    reports[[index]]$original_order <- counter
+    counter <- counter + 1
+  }
+  report_names <- vcapply(reports, function(report) report$name)
+  build_item <- function(report_name) {
+    ## There may be multiple reports due to be run with this name
+    report_details <- reports[report_name == report_names]
+    lapply(report_details, function(report_detail) {
+      prepare_task(key_report_id, path, report_name,
+                   report_detail$original_order,
+                   report_detail$parameters, ref,
+                   report_detail$instance, changelog, poll,
+                   depends_on = dependencies_graph[[report_name]])
+    })
   }
   workflow <- lapply(order, build_item)
-  names(workflow) <- order
-  workflow
+  ## Workflow is list of lists of task details - collapse to
+  ## list of task details
+  do.call(c, workflow)
 }
 
 ## This algorithm comes from here:
@@ -96,9 +127,9 @@ topological_sort <- function(graph) {
   names(graph)[graph_sorted]
 }
 
-prepare_task <- function(key_report_id, root, name, parameters = NULL,
-                         ref = NULL, instance = NULL, changelog = NULL,
-                         poll = 0.1, depends_on = NULL) {
+prepare_task <- function(key_report_id, root, name, original_order,
+                         parameters = NULL, ref = NULL, instance = NULL,
+                         changelog = NULL, poll = 0.1, depends_on = NULL) {
   key <- ids::adjective_animal()
   expr <- quote(
     orderly.server:::runner_run(key_report_id, key, root, name,   # nolint
@@ -111,6 +142,7 @@ prepare_task <- function(key_report_id, root, name, parameters = NULL,
     expr = expr,
     envir = environment(),
     key = key,
-    depends_on = depends_on
+    depends_on = depends_on,
+    original_order = original_order
   )
 }
