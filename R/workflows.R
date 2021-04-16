@@ -22,7 +22,7 @@ workflow_missing_dependencies <- function(path, reports) {
     }
     get_missing_dependencies(report$name, path, report_names)
   })
-  list(missing_dependencies = setNames(missing_deps, report_names))
+  list(missing_dependencies = stats::setNames(missing_deps, report_names))
 }
 
 get_missing_dependencies <- function(report_name, path, report_names) {
