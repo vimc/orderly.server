@@ -441,7 +441,7 @@ endpoint_workflow_run <- function(runner) {
     target_workflow_run,
     porcelain::porcelain_input_body_json("body", "WorkflowRunRequest.schema",
                                          schema_root()),
-    porcelain::porcelain_state(path = path),
+    porcelain::porcelain_state(runner = runner),
     returning = returning_json("WorkflowRunResponse.schema"))
 }
 

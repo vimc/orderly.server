@@ -12,7 +12,7 @@
             },
             "required": [ "message", "type" ],
             "additionalProperties": false
-        }
+        },
         "ref": { "type": "string" }
     },
     "required": ["tasks", "ref"],

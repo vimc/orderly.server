@@ -5,7 +5,7 @@
     "properties": {
         "workflow_key": { "type": "string" },
         "reports": {
-            "type": "array"
+            "type": "array",
             "items": {
                 "type": "object",
                 "properties": {
@@ -17,6 +17,6 @@
             }
         }
     },
-    "required": ["workflow_id", "reports"],
+    "required": ["workflow_key", "reports"],
     "additionalProperties": false
 }

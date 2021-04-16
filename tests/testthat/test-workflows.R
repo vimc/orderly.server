@@ -219,8 +219,8 @@ test_that("workflow representation can be built", {
   )
   workflow <- build_workflow(path, no_deps, "key-report-id")
   expect_length(workflow, 1)
-  expect_equal(names(workflow[[1]]),
-               c("expr", "envir", "key", "depends_on", "original_order"))
+  expect_equal(names(workflow[[1]]), c("expr", "envir", "name",
+                                       "key", "depends_on", "original_order"))
   expect_type(workflow[[1]]$expr, "language")
   required_params <- c("key_report_id", "key", "root", "name", "parameters",
                        "instance", "ref", "changelog", "poll")
@@ -253,8 +253,8 @@ test_that("workflow representation can be built", {
   workflow <- build_workflow(path, multiple_deps, "key-report-id")
   expect_length(workflow, 3)
 
-  expect_equal(names(workflow[[1]]),
-               c("expr", "envir", "key", "depends_on", "original_order"))
+  expect_equal(names(workflow[[1]]), c("expr", "envir", "name",
+                                       "key", "depends_on", "original_order"))
   expect_type(workflow[[1]]$expr, "language")
   expect_true(all(required_params %in% ls(workflow[[1]]$envir)))
   expect_equal(get("name", workflow[[1]]$envir), "example")
@@ -262,8 +262,8 @@ test_that("workflow representation can be built", {
   expect_true(!is.null(workflow[[1]]$key))
   expect_equal(workflow[[1]]$original_order, 1)
 
-  expect_equal(names(workflow[[2]]),
-               c("expr", "envir", "key", "depends_on", "original_order"))
+  expect_equal(names(workflow[[2]]), c("expr", "envir", "name",
+                                       "key", "depends_on", "original_order"))
   expect_type(workflow[[2]]$expr, "language")
   expect_true(all(required_params %in% ls(workflow[[2]]$envir)))
   expect_equal(get("name", workflow[[2]]$envir), "depend2")
@@ -271,8 +271,8 @@ test_that("workflow representation can be built", {
   expect_true(!is.null(workflow[[2]]$key))
   expect_equal(workflow[[2]]$original_order, 3)
 
-  expect_equal(names(workflow[[3]]),
-               c("expr", "envir", "key", "depends_on", "original_order"))
+  expect_equal(names(workflow[[3]]), c("expr", "envir", "name",
+                                       "key", "depends_on", "original_order"))
   expect_type(workflow[[3]]$expr, "language")
   expect_true(all(required_params %in% ls(workflow[[3]]$envir)))
   expect_equal(get("name", workflow[[3]]$envir), "depend4")
