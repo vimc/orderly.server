@@ -147,6 +147,9 @@ test_that("workflow job can be submitted", {
 })
 
 test_that("additional parameters are passed to task run", {
+  testthat::skip_on_cran()
+  skip_on_windows()
+  skip_if_no_redis()
   path <- orderly_git_example("demo")
   runner <- orderly_runner(path)
   reports <- list(
