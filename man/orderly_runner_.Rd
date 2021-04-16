@@ -37,6 +37,7 @@ and task_id}
 \item \href{#method-new}{\code{orderly_runner_$new()}}
 \item \href{#method-start_workers}{\code{orderly_runner_$start_workers()}}
 \item \href{#method-submit_task_report}{\code{orderly_runner_$submit_task_report()}}
+\item \href{#method-submit_workflow}{\code{orderly_runner_$submit_workflow()}}
 \item \href{#method-submit}{\code{orderly_runner_$submit()}}
 \item \href{#method-status}{\code{orderly_runner_$status()}}
 \item \href{#method-queue_status}{\code{orderly_runner_$queue_status()}}
@@ -148,6 +149,43 @@ Queue a job to run an orderly report.
 \subsection{Returns}{
 The key for the job, note this is not the task id. The task id
 can be retrieved from redis using the key.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-submit_workflow"></a>}}
+\if{latex}{\out{\hypertarget{method-submit_workflow}{}}}
+\subsection{Method \code{submit_workflow()}}{
+Queue a workflow.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{orderly_runner_$submit_workflow(
+  reports,
+  ref = NULL,
+  changelog = NULL,
+  poll = 0.1,
+  timeout = 60 * 60 * 3
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{reports}}{Details of reports to be run.}
+
+\item{\code{ref}}{The git sha to run the workflow.}
+
+\item{\code{changelog}}{Description of changes to the reports - applied to
+all reports.}
+
+\item{\code{poll}}{How frequently to poll for the report ID being available.
+Applied to each of the reports run in the workflow}
+
+\item{\code{timeout}}{Timeout for each of the reports run as part
+of the workflow default 3 hours.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+The key for the workflow and each individual report
 }
 }
 \if{html}{\out{<hr>}}
