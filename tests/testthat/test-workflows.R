@@ -385,6 +385,9 @@ test_that("workflow can be run: dependencies", {
 })
 
 test_that("dependencies are set correctly", {
+  testthat::skip_on_cran()
+  skip_on_windows()
+  skip_if_no_redis()
   path <- orderly_git_example("depends", testing = TRUE)
   mock_submit <- mockery::mock("1", "2", "3", cycle = TRUE)
   mock_orderly_runner <- R6::R6Class(
