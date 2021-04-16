@@ -515,8 +515,9 @@ test_that("can get missing dependencies of a workflow", {
 
   r <- httr::POST(server$api_url("/v1/workflow/missing-dependencies/"),
                   body = list(reports = list(
-                    depend = list(
-                      instance = list(source = "production")
+                    list(
+                      name = scalar("depend"),
+                      instance = list(source = scalar("production"))
                     )
                   ),
                   ref = scalar("123")),

@@ -1,18 +1,17 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
-    "id": "WorkflowTasks",
+    "id": "WorkflowReports",
     "definitions": {
         "report": {
             "properties": {
+                "name": { "type": "string" },
                 "instance": { "type": "object" },
                 "params": { "$ref": "Parameters.schema.json" }
             },
-            "required": [ "ref", "instance" ],
+            "required": [ "name", "instance" ],
             "additionalProperties": false
         }
     },
-    "type": "object",
-    "patternProperties": {
-        "^.*&": { "$ref": "#/definitions/report" }
-    }
+    "type": "array",
+    "items": { "$ref": "#/definitions/report" }
 }
