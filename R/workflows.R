@@ -79,7 +79,7 @@ build_workflow <- function(path, reports, ref, changelog, key_report_id, poll) {
     lapply(report_details, function(report_detail) {
       prepare_task(key_report_id, path, report_name,
                    report_detail$original_order,
-                   report_detail$parameters, ref,
+                   report_detail$params, ref,
                    report_detail$instance, changelog, poll,
                    depends_on = dependencies_graph[[report_name]])
     })

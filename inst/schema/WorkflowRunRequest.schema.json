@@ -15,6 +15,6 @@
         },
         "ref": { "type": "string" }
     },
-    "required": ["tasks", "ref"],
+    "required": ["reports", "ref"],
     "additionalProperties": true
 }

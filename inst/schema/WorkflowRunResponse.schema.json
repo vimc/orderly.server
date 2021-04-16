@@ -6,15 +6,7 @@
         "workflow_key": { "type": "string" },
         "reports": {
             "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "name": { "type": "string" },
-                    "key": { "type": "string" }
-                },
-                "required": ["name", "key"],
-                "additionalProperties": false
-            }
+            "items": { "type": "string" }
         }
     },
     "required": ["workflow_key", "reports"],

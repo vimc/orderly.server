@@ -432,7 +432,8 @@ endpoint_workflow_missing_dependencies <- function(path) {
 
 target_workflow_run <- function(runner, body) {
   body <- jsonlite::fromJSON(body, simplifyDataFrame = FALSE)
-  runner$submit_workflow(body$reports, body$ref, body$changelog)
+  res <- runner$submit_workflow(body$reports, body$ref, body$changelog)
+  recursive_scalar(res)
 }
 
 endpoint_workflow_run <- function(runner) {
