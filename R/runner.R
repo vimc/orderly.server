@@ -241,26 +241,36 @@ orderly_runner_ <- R6::R6Class(
         stop("Reference switching is disallowed in this runner",
              call. = FALSE)
       }
-      workflow <- build_workflow(path, reports, ref, changelog,
+      workflow <- build_workflow(self$root, reports, ref, changelog,
                                  self$keys$key_report_id, poll)
+      ## Build a list of dependencies
+      ## report_name : [task_id1, task_id2, ...]
+      ## There could be multiple tasks queued with the same name
+      dependencies <- list()
       queue_task <- function(report) {
-        report_details <- workflow[[report]]
-        task_id <- self$queue$enqueue_(report_details$expr,
-                                       report_details$envir,
-                                       depends_on = report_details$depends_on)
-        self$con$HSET(self$keys$key_task_id, report_details$key, task_id)
-        self$con$HSET(self$keys$task_id_key, task_id, report_details$key)
+        depends_on <- unlist(dependencies[report$depends_on])
+        task_id <- self$queue$enqueue_(report$expr,
+                                       report$envir,
+                                       depends_on = depends_on)
+        self$con$HSET(self$keys$key_task_id, report$key, task_id)
+        self$con$HSET(self$keys$task_id_key, task_id, report$key)
         self$con$HSET(self$keys$task_timeout, task_id, timeout)
+        dependencies[[report$name]] <- c(dependencies[[report$name]], task_id)
         task_id
       }
-      task_ids <- vcapply(names(workflow), queue_task)
+      task_ids <- vcapply(workflow, queue_task)
       workflow_key <- ids::adjective_animal()
       redis_key <- workflow_redis_key(self$queue$queue_id, workflow_key)
       self$con$SADD(self$keys$key_workflows, workflow_key)
       self$con$SADD(redis_key, task_ids)
+      report_keys <- vcapply(workflow, function(report) report$key)
+      ## Return in same order we received the reports
+      ## These will be used by OW to map returned ID to specific report
+      return_order <- vnapply(workflow, function(report) report$original_order)
+      report_keys <- report_keys[return_order]
       list(
         workflow_key = workflow_key,
-        reports = task_ids
+        reports = report_keys
       )
     },
 

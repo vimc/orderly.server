@@ -131,6 +131,9 @@ prepare_task <- function(key_report_id, root, name, original_order,
                          parameters = NULL, ref = NULL, instance = NULL,
                          changelog = NULL, poll = 0.1, depends_on = NULL) {
   key <- ids::adjective_animal()
+  ## We should in future support multiple instances, at the
+  ## moment this only supports 1 instance of type "source" see VIMC-4561
+  instance <- instance$source
   expr <- quote(
     orderly.server:::runner_run(key_report_id, key, root, name,   # nolint
                                 parameters, instance, ref,
@@ -141,6 +144,7 @@ prepare_task <- function(key_report_id, root, name, original_order,
   list(
     expr = expr,
     envir = environment(),
+    name = name,
     key = key,
     depends_on = depends_on,
     original_order = original_order

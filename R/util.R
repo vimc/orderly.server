@@ -44,6 +44,10 @@ vcapply <- function(X, FUN, ...) { # nolint
   vapply(X, FUN, character(1), ...)
 }
 
+vnapply <- function(X, FUN, ...) { # nolint
+  vapply(X, FUN, numeric(1), ...)
+}
+
 protect <- function(fun) {
   fun <- match.fun(fun)
   function() {
