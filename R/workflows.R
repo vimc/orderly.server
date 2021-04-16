@@ -31,7 +31,8 @@ get_missing_dependencies <- function(report_name, path, report_names) {
 }
 
 get_report_dependencies <- function(report_name, path) {
-  graph <- orderly::orderly_graph(report_name, root = path, direction = "upstream",
+  graph <- orderly::orderly_graph(report_name, root = path,
+                                  direction = "upstream",
                                   use = "src", max_depth = 1)
   lapply(graph$root$children, function(vertex) {
     scalar(vertex$name)
@@ -40,10 +41,10 @@ get_report_dependencies <- function(report_name, path) {
 
 
 ## Build a representation like
-## reportA = NA
-## reportB = reportC
-## reportC = NA
-## reportD = c(reportA, reportB)
+## - reportA = NA
+## - reportB = reportC
+## - reportC = NA
+## - reportD = c(reportA, reportB)
 ## means A & C have no dependencies, B depends on C, D depends on A & B
 build_dependencies_graph <- function(path, reports) {
   ## TODO: When building these dependencies need to make sure we are
