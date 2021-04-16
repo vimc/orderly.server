@@ -87,7 +87,7 @@ mock_runner <- function(key = NULL, status = NULL,
                         config = NULL, root = NULL,
                         check_timeout = NULL,
                         queue_status = NULL,
-                        submit_workflow = FALSE) {
+                        submit_workflow = NULL) {
   list(
     submit_task_report = mockery::mock(key, cycle = TRUE),
     status = mockery::mock(status, cycle = TRUE),

@@ -249,13 +249,13 @@ orderly_runner_ <- R6::R6Class(
       dependencies <- list()
       queue_task <- function(report) {
         depends_on <- unlist(dependencies[report$depends_on])
-        task_id <- self$queue$enqueue_(report$expr,
-                                       report$envir,
-                                       depends_on = depends_on)
+        task_id <- self$submit(report$expr,
+                               report$envir,
+                               depends_on = depends_on)
         self$con$HSET(self$keys$key_task_id, report$key, task_id)
         self$con$HSET(self$keys$task_id_key, task_id, report$key)
         self$con$HSET(self$keys$task_timeout, task_id, timeout)
-        dependencies[[report$name]] <- c(dependencies[[report$name]], task_id)
+        dependencies[[report$name]] <<- c(dependencies[[report$name]], task_id)
         task_id
       }
       task_ids <- vcapply(workflow, queue_task)
@@ -280,10 +280,11 @@ orderly_runner_ <- R6::R6Class(
     #'
     #' @param job A quoted R expression.
     #' @param environment Environment to run the expression in.
+    #' @param depends_on Task ids for any dependencies of this job.
     #'
     #' @return Task id
-    submit = function(job, environment = parent.frame()) {
-       self$queue$enqueue_(job, environment)
+    submit = function(job, environment = parent.frame(), depends_on = NULL) {
+       self$queue$enqueue_(job, environment, depends_on = depends_on)
     },
 
     #' @description

@@ -383,3 +383,36 @@ test_that("workflow can be run: dependencies", {
                paste0("\\[ ... +\\]  depend2@", status_3$version),
                all = FALSE)
 })
+
+test_that("dependencies are set correctly", {
+  path <- orderly_git_example("depends", testing = TRUE)
+  mock_submit = mockery::mock("1", "2", "3", cycle = TRUE)
+  mock_orderly_runner <- R6::R6Class(
+    "mock_orderly_runner",
+    inherit = orderly_runner_,
+    public = list(
+      submit = function(job, environment, depends_on) {
+        mock_submit(job, environment, depends_on = depends_on)
+      }
+    ))
+  runner <- mock_orderly_runner$new(path, allow_ref = NULL,
+                                    queue_id = NULL, workers = 0)
+
+  multiple_deps <- list(
+    list(
+      name = "example"
+    ),
+    list(
+      name = "depend4"
+    ),
+    list(
+      name = "depend2"
+    )
+  )
+  res <- runner$submit_workflow(multiple_deps)
+  args <- mockery::mock_args(mock_submit)
+  expect_length(args, 3)
+  expect_null(args[[1]]$depends_on)
+  expect_equal(args[[2]]$depends_on, c(example = "1"))
+  expect_equal(args[[3]]$depends_on, c(example = "1", depend2 = "2"))
+})
