@@ -41,10 +41,10 @@ get_report_dependencies <- function(report_name, path) {
 
 
 ## Build a representation like
-## - reportA = NA
-## - reportB = reportC
-## - reportC = NA
-## - reportD = c(reportA, reportB)
+## - reportA = NA                     # nolint
+## - reportB = reportC                # nolint
+## - reportC = NA                     # nolint
+## - reportD = c(reportA, reportB)    # nolint
 ## means A & C have no dependencies, B depends on C, D depends on A & B
 build_dependencies_graph <- function(path, reports) {
   ## TODO: When building these dependencies need to make sure we are
