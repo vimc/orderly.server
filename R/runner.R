@@ -108,12 +108,12 @@ orderly_runner_ <- R6::R6Class(
     config = NULL,
     #' @field allow_ref Allow git to change branch/ref for run
     allow_ref = FALSE,
-    #' @field temp_root A copy of Orderly root in some tempdir.
+    #' @field alternative_root A copy of Orderly root in some tempdir.
     #' This is a copy we can safely switch the git ref on for e.g.
     #' finding report dependencies on a particular branch. This avoids
     #' changing the checked out branch on the main root, potentially
     #' causing issues for anything else which relies on global state
-    temp_root = NULL,
+    alternative_root = NULL,
 
     #' @field con Redis connection
     con = NULL,

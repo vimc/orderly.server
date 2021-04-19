@@ -438,18 +438,19 @@ test_that("dependencies are resolved using git ref", {
                                     queue_id = NULL, workers = 0)
 
   ## Remove dependencies on branch
-  prev <- git_checkout_branch("test", root = runner$temp_root, create = TRUE)
-  depend4_path <- file.path(runner$temp_root,  "src/depend4/orderly.yml")
+  prev <- git_checkout_branch("test", root = runner$alternative_root,
+                              create = TRUE)
+  depend4_path <- file.path(runner$alternative_root,  "src/depend4/orderly.yml")
   writeLines(c("script: script.R",
                "artefacts:",
                "  staticgraph:",
                "    description: A graph of things",
                "    filenames: mygraph.png"),
              depend4_path)
-  gert::git_add(".", repo = runner$temp_root)
-  gert::git_commit("Remove dependencies", repo = runner$temp_root,
+  gert::git_add(".", repo = runner$alternative_root)
+  gert::git_commit("Remove dependencies", repo = runner$alternative_root,
                    author = "Test User <test.user@example.com>")
-  git_checkout_branch(prev, root = runner$temp_root)
+  git_checkout_branch(prev, root = runner$alternative_root)
 
   multiple_deps <- list(
     list(
@@ -477,5 +478,5 @@ test_that("dependencies are resolved using git ref", {
 
   ## Git branch has been restored
   expect_equal(git_branch_name(root = runner$root), "master")
-  expect_equal(git_branch_name(root = runner$temp_root), "master")
+  expect_equal(git_branch_name(root = runner$alternative_root), "master")
 })

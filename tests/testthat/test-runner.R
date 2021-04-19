@@ -792,10 +792,10 @@ test_that("runner creates copy of root with git available", {
   skip_if_no_redis()
   path <- orderly_git_example("minimal")
   runner <- orderly_runner(path)
-  expect_true(!is.null(runner$temp_root))
-  expect_true(file.exists(runner$temp_root))
-  expect_setequal(list.files(runner$temp_root),
+  expect_true(!is.null(runner$alternative_root))
+  expect_true(file.exists(runner$alternative_root))
+  expect_setequal(list.files(runner$alternative_root),
                c("archive", "data", "demo.yml", "draft", "gitignore",
                  "orderly_config.yml", "README.md", "source.sqlite", "src"))
-  expect_true(file.exists(file.path(runner$temp_root, ".git")))
+  expect_true(file.exists(file.path(runner$alternative_root, ".git")))
 })
