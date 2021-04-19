@@ -192,26 +192,26 @@ test_that("additional parameters are passed to task run", {
   task_ids <- vcapply(keys, function(key) get_task_id_key(runner, key))
 
   data_1 <- runner$queue$task_data(task_ids[1])
-  expect_equal(data_1$objects$key, keys[1])
-  expect_equal(data_1$objects$name, "other")
-  expect_equal(data_1$objects$parameters, list(nmin = 0.5))
-  expect_equal(data_1$objects$instance, "production")
-  expect_equal(data_1$objects$ref, ref)
-  expect_equal(data_1$objects$changelog, list(
+  expect_equal(data_1$expr$key, keys[1])
+  expect_equal(data_1$expr$name, "other")
+  expect_equal(data_1$expr$parameters, list(nmin = 0.5))
+  expect_equal(data_1$expr$instance, "production")
+  expect_equal(data_1$expr$ref, ref)
+  expect_equal(data_1$expr$changelog, list(
     message = "changelog 1",
     type = "internal"
   ))
-  expect_equal(data_1$objects$poll, 0.1)
+  expect_equal(data_1$expr$poll, 0.1)
 
   data_2 <- runner$queue$task_data(task_ids[2])
-  expect_equal(data_2$objects$key, keys[2])
-  expect_equal(data_2$objects$name, "minimal")
-  expect_null(data_2$objects$parameters)
-  expect_equal(data_2$objects$instance, "science")
-  expect_equal(data_2$objects$ref, ref)
-  expect_equal(data_2$objects$changelog, list(
+  expect_equal(data_2$expr$key, keys[2])
+  expect_equal(data_2$expr$name, "minimal")
+  expect_null(data_2$expr$parameters)
+  expect_equal(data_2$expr$instance, "science")
+  expect_equal(data_2$expr$ref, ref)
+  expect_equal(data_2$expr$changelog, list(
     message = "changelog 1",
     type = "internal"
   ))
-  expect_equal(data_2$objects$poll, 0.1)
+  expect_equal(data_2$expr$poll, 0.1)
 })

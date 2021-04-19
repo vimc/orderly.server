@@ -61,8 +61,7 @@ build_dependencies_graph <- function(path, reports) {
   deps_graph
 }
 
-build_workflow <- function(root, alternative_root, reports, ref, changelog,
-                           key_report_id, poll) {
+build_workflow <- function(root, alternative_root, reports, ref) {
   dependencies_graph <- build_dependencies_graph(alternative_root, reports)
   order <- topological_sort(dependencies_graph)
   ## We want to return in order which this workflow run was requested
@@ -72,16 +71,17 @@ build_workflow <- function(root, alternative_root, reports, ref, changelog,
     reports[[index]]$original_order <- counter
     counter <- counter + 1
   }
-  report_names <- vcapply(reports, function(report) report$name)
+  report_names <- vcapply(reports, "[[", "name")
   build_item <- function(report_name) {
     ## There may be multiple reports due to be run with this name
     report_details <- reports[report_name == report_names]
     lapply(report_details, function(report_detail) {
-      prepare_task(key_report_id, root, report_name,
-                   report_detail$original_order,
-                   report_detail$params, ref,
-                   report_detail$instance, changelog, poll,
-                   depends_on = dependencies_graph[[report_name]])
+      deps <- dependencies_graph[[report_name]]
+      if (length(deps) == 0 || is.na(deps)) {
+        deps <- NULL
+      }
+      report_detail$depends_on <- deps
+      report_detail
     })
   }
   workflow <- lapply(order, build_item)
@@ -123,28 +123,4 @@ topological_sort <- function(graph) {
     }
   }
   names(graph)[graph_sorted]
-}
-
-prepare_task <- function(key_report_id, root, name, original_order,
-                         parameters = NULL, ref = NULL, instance = NULL,
-                         changelog = NULL, poll = 0.1, depends_on = NULL) {
-  key <- ids::adjective_animal()
-  ## We should in future support multiple instances, at the
-  ## moment this only supports 1 instance of type "source" see VIMC-4561
-  instance <- instance$source
-  expr <- quote(
-    orderly.server:::runner_run(key_report_id, key, root, name,   # nolint
-                                parameters, instance, ref,
-                                changelog = changelog, poll = poll))
-  if (anyNA(depends_on)) {
-    depends_on <- NULL
-  }
-  list(
-    expr = expr,
-    envir = environment(),
-    name = name,
-    key = key,
-    depends_on = depends_on,
-    original_order = original_order
-  )
 }

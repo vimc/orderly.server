@@ -219,15 +219,9 @@ test_that("workflow representation can be built", {
   )
   workflow <- build_workflow(path, path, no_deps, "key-report-id")
   expect_length(workflow, 1)
-  expect_equal(names(workflow[[1]]), c("expr", "envir", "name",
-                                       "key", "depends_on", "original_order"))
-  expect_type(workflow[[1]]$expr, "language")
-  required_params <- c("key_report_id", "key", "root", "name", "parameters",
-                       "instance", "ref", "changelog", "poll")
-  expect_true(all(required_params %in% ls(workflow[[1]]$envir)))
-  expect_equal(get("name", workflow[[1]]$envir), "depend")
-  expect_null(workflow[[1]]$depends_on)
-  expect_true(!is.null(workflow[[1]]$key))
+  expect_equal(names(workflow[[1]]),
+               c("name", "instance", "params", "original_order"))
+  expect_equal(workflow[[1]]$name, "depend")
   expect_equal(workflow[[1]]$original_order, 1)
 
   multiple_deps <- list(
@@ -253,31 +247,21 @@ test_that("workflow representation can be built", {
   workflow <- build_workflow(path, path, multiple_deps, "key-report-id")
   expect_length(workflow, 3)
 
-  expect_equal(names(workflow[[1]]), c("expr", "envir", "name",
-                                       "key", "depends_on", "original_order"))
-  expect_type(workflow[[1]]$expr, "language")
-  expect_true(all(required_params %in% ls(workflow[[1]]$envir)))
-  expect_equal(get("name", workflow[[1]]$envir), "example")
+  expect_equal(names(workflow[[1]]), c("name", "instance", "original_order"))
+  expect_equal(workflow[[1]]$name, "example")
   expect_null(workflow[[1]]$depends_on)
-  expect_true(!is.null(workflow[[1]]$key))
   expect_equal(workflow[[1]]$original_order, 1)
 
-  expect_equal(names(workflow[[2]]), c("expr", "envir", "name",
-                                       "key", "depends_on", "original_order"))
-  expect_type(workflow[[2]]$expr, "language")
-  expect_true(all(required_params %in% ls(workflow[[2]]$envir)))
-  expect_equal(get("name", workflow[[2]]$envir), "depend2")
+  expect_equal(names(workflow[[2]]),
+               c("name", "instance", "original_order", "depends_on"))
+  expect_equal(workflow[[2]]$name, "depend2")
   expect_equal(workflow[[2]]$depends_on, "example")
-  expect_true(!is.null(workflow[[2]]$key))
   expect_equal(workflow[[2]]$original_order, 3)
 
-  expect_equal(names(workflow[[3]]), c("expr", "envir", "name",
-                                       "key", "depends_on", "original_order"))
-  expect_type(workflow[[3]]$expr, "language")
-  expect_true(all(required_params %in% ls(workflow[[3]]$envir)))
-  expect_equal(get("name", workflow[[3]]$envir), "depend4")
+  expect_equal(names(workflow[[3]]),
+               c("name", "instance", "original_order", "depends_on"))
+  expect_equal(workflow[[3]]$name, "depend4")
   expect_equal(workflow[[3]]$depends_on, c("example", "depend2"))
-  expect_true(!is.null(workflow[[3]]$key))
   expect_equal(workflow[[3]]$original_order, 2)
 })
 
@@ -394,8 +378,8 @@ test_that("dependencies are set correctly", {
     "mock_orderly_runner",
     inherit = orderly_runner_,
     public = list(
-      submit = function(job, environment, depends_on) {
-        mock_submit(job, environment, depends_on = depends_on)
+      submit = function(expr, depends_on) {
+        mock_submit(expr, depends_on = depends_on)
       }
     ))
   runner <- mock_orderly_runner$new(path, allow_ref = NULL,
@@ -416,8 +400,8 @@ test_that("dependencies are set correctly", {
   args <- mockery::mock_args(mock_submit)
   expect_length(args, 3)
   expect_null(args[[1]]$depends_on)
-  expect_equal(args[[2]]$depends_on, "1")
-  expect_equal(args[[3]]$depends_on, c("1", "2"))
+  expect_equivalent(args[[2]]$depends_on, "1")
+  expect_equivalent(args[[3]]$depends_on, c("1", "2"))
 })
 
 test_that("dependencies are resolved using git ref", {
@@ -430,8 +414,8 @@ test_that("dependencies are resolved using git ref", {
     "mock_orderly_runner",
     inherit = orderly_runner_,
     public = list(
-      submit = function(job, environment, depends_on) {
-        mock_submit(job, environment, depends_on = depends_on)
+      submit = function(expr, depends_on) {
+        mock_submit(expr, depends_on = depends_on)
       }
     ))
   runner <- mock_orderly_runner$new(path, allow_ref = NULL,
@@ -467,14 +451,14 @@ test_that("dependencies are resolved using git ref", {
   args <- mockery::mock_args(mock_submit)
   expect_length(args, 3)
   expect_null(args[[1]]$depends_on)
-  expect_equal(get("ref", args[[1]][[2]]), "test")
-  expect_equal(get("name", args[[1]][[2]]), "example")
+  expect_equal(args[[1]][[1]]$ref, "test")
+  expect_equal(args[[1]][[1]]$name, "example")
   expect_null(args[[2]]$depends_on)
-  expect_equal(get("ref", args[[2]][[2]]), "test")
-  expect_equal(get("name", args[[2]][[2]]), "depend4")
-  expect_equal(args[[3]]$depends_on, "1")
-  expect_equal(get("ref", args[[3]][[2]]), "test")
-  expect_equal(get("name", args[[3]][[2]]), "depend2")
+  expect_equal(args[[2]][[1]]$ref, "test")
+  expect_equal(args[[2]][[1]]$name, "depend4")
+  expect_equivalent(args[[3]]$depends_on, "1")
+  expect_equal(args[[3]][[1]]$ref, "test")
+  expect_equal(args[[3]][[1]]$name, "depend2")
 
   ## Git branch has been restored
   expect_equal(git_branch_name(root = runner$root), "master")

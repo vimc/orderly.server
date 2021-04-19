@@ -19,7 +19,7 @@ test_that("queue works as intended", {
   expect_length(runner$queue$task_list(), 0)
 
   ## jobs can be pushed to queue
-  job_id <- runner$submit(quote({
+  job_id <- runner$queue$enqueue_(quote({
     Sys.sleep(1)
     1 + 1
   }))
@@ -798,4 +798,31 @@ test_that("runner creates copy of root with git available", {
                c("archive", "data", "demo.yml", "draft", "gitignore",
                  "orderly_config.yml", "README.md", "source.sqlite", "src"))
   expect_true(file.exists(file.path(runner$alternative_root, ".git")))
+})
+
+test_that("submit_task_report can queue items with dependencies", {
+  testthat::skip_on_cran()
+  skip_on_windows()
+  skip_if_no_redis()
+  path <- orderly_git_example("minimal")
+  mock_submit <- mockery::mock("1", "2", "3", cycle = TRUE)
+  mock_orderly_runner <- R6::R6Class(
+    "mock_orderly_runner",
+    inherit = orderly_runner_,
+    public = list(
+      submit = function(expr, depends_on) {
+        mock_submit(expr, depends_on = depends_on)
+      }
+    ))
+  runner <- mock_orderly_runner$new(path, queue_id = NULL, workers = 0)
+
+  key1 <- runner$submit_task_report("example")
+  key2 <- runner$submit_task_report("example", depends_on = key1)
+  key3 <- runner$submit_task_report("example", depends_on = c(key1, key2))
+
+  args <- mockery::mock_args(mock_submit)
+  expect_equal(args[[1]]$depends_on, NULL)
+  expect_equal(args[[2]]$depends_on, stats::setNames("1", key1))
+  expect_equal(args[[3]]$depends_on,
+               stats::setNames(c("1", "2"), c(key1, key2)))
 })
