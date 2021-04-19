@@ -7,7 +7,7 @@ test_that("can identify missing dependencies of a workflow", {
   path <- orderly_git_example("minimal")
   runner <- orderly_runner(path)
   t <- tempfile()
-  ref <- git_branch_name(root = path)
+  ref <- git_ref_to_sha("HEAD", root = path)
   writeLines(jsonlite::toJSON(list(
     reports = list(
       list(
@@ -157,7 +157,7 @@ test_that("additional parameters are passed to task run", {
   skip_if_no_redis()
   path <- orderly_git_example("demo")
   runner <- orderly_runner(path)
-  ref <- git_branch_name(root = path)
+  ref <- git_ref_to_sha("HEAD", root = path)
   reports <- list(
     list(
       name = scalar("other"),

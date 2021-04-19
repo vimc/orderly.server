@@ -151,10 +151,9 @@ orderly_runner_ <- R6::R6Class(
         stop("Not starting server as orderly root is not version controlled")
       }
 
-      t <- tempfile()
-      dir_create(t)
-      file_copy(self$root, t, recursive = TRUE)
-      self$alternative_root <- list.files(t, full.names = TRUE)
+      self$alternative_root <- tempfile()
+      dir_create(self$alternative_root)
+      gert::git_clone(self$root, self$alternative_root)
 
       self$allow_ref <- runner_allow_ref(allow_ref, self$config)
       if (!self$allow_ref) {
@@ -252,6 +251,7 @@ orderly_runner_ <- R6::R6Class(
         stop("Reference switching is disallowed in this runner",
              call. = FALSE)
       }
+      git_pull(self$root)
       if (!is.null(ref)) {
         git_fetch(self$alternative_root)
         prev <- git_checkout_branch(ref, root = self$alternative_root)
