@@ -1,8 +1,10 @@
 context("api-workflows")
 
 test_that("can identify missing dependencies of a workflow", {
-  path <- orderly_prepare_orderly_example("minimal")
+  path <- orderly_git_example("minimal")
+  runner <- orderly_runner(path)
   t <- tempfile()
+  ref <- git_branch_name(root = path)
   writeLines(jsonlite::toJSON(list(
     reports = list(
       list(
@@ -28,7 +30,7 @@ test_that("can identify missing dependencies of a workflow", {
         )
       )
     ),
-    ref = scalar("123")
+    ref = scalar(ref)
   )), t)
 
   output <- list(
@@ -41,7 +43,7 @@ test_that("can identify missing dependencies of a workflow", {
   mock_missing_dependencies <- mockery::mock(output, cycle = TRUE)
   with_mock("orderly.server:::workflow_missing_dependencies" =
               mock_missing_dependencies, {
-    res <- target_workflow_missing_dependencies(path, t)
+    res <- target_workflow_missing_dependencies(runner, t)
   })
   mockery::expect_called(mock_missing_dependencies, 1)
   expect_equal(res, output)
@@ -49,7 +51,7 @@ test_that("can identify missing dependencies of a workflow", {
   ## endpoint
   with_mock("orderly.server:::workflow_missing_dependencies" =
               mock_missing_dependencies, {
-    endpoint <- endpoint_workflow_missing_dependencies(path)
+    endpoint <- endpoint_workflow_missing_dependencies(runner)
     res_endpoint <- endpoint$run(t)
   })
   expect_equal(res_endpoint$status_code, 200)
@@ -59,7 +61,7 @@ test_that("can identify missing dependencies of a workflow", {
   ## api
   with_mock("orderly.server:::workflow_missing_dependencies" =
               mock_missing_dependencies, {
-    api <- build_api(mock_runner(), path)
+    api <- build_api(runner, path)
     res_api <- api$request("POST", "/v1/workflow/missing-dependencies/",
                            body = readLines(t))
   })
