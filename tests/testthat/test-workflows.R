@@ -447,7 +447,8 @@ test_that("dependencies are resolved using git ref", {
                "    filenames: mygraph.png"),
              depend4_path)
   gert::git_add(".", repo = runner$temp_root)
-  gert::git_commit("Remove dependencies", repo = runner$temp_root)
+  gert::git_commit("Remove dependencies", repo = runner$temp_root,
+                   author = "Test User <test.user@example.com>")
   git_checkout_branch(prev, root = runner$temp_root)
 
   multiple_deps <- list(
