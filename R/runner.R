@@ -154,7 +154,7 @@ orderly_runner_ <- R6::R6Class(
       t <- tempfile()
       dir_create(t)
       file_copy(self$root, t, recursive = TRUE)
-      self$temp_root <- list.files(t, full.names = TRUE)
+      self$alternative_root <- list.files(t, full.names = TRUE)
 
       self$allow_ref <- runner_allow_ref(allow_ref, self$config)
       if (!self$allow_ref) {
@@ -253,13 +253,13 @@ orderly_runner_ <- R6::R6Class(
              call. = FALSE)
       }
       if (!is.null(ref)) {
-        git_fetch(self$temp_root)
-        prev <- git_checkout_branch(ref, root = self$temp_root)
-        on.exit(git_checkout_branch(prev, root = self$temp_root))
+        git_fetch(self$alternative_root)
+        prev <- git_checkout_branch(ref, root = self$alternative_root)
+        on.exit(git_checkout_branch(prev, root = self$alternative_root))
       } else {
-        git_pull(self$temp_root)
+        git_pull(self$alternative_root)
       }
-      workflow <- build_workflow(self$root, self$temp_root,
+      workflow <- build_workflow(self$root, self$alternative_root,
                                  reports, ref, changelog,
                                  self$keys$key_report_id, poll)
       ## Build a list of dependencies
