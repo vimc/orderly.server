@@ -513,6 +513,7 @@ test_that("can get missing dependencies of a workflow", {
   server <- start_test_server()
   on.exit(server$stop())
 
+  sha <- git_ref_to_sha("HEAD", server$path)
   r <- httr::POST(server$api_url("/v1/workflow/missing-dependencies/"),
                   body = list(reports = list(
                     list(
@@ -520,7 +521,7 @@ test_that("can get missing dependencies of a workflow", {
                       instance = list(source = scalar("production"))
                     )
                   ),
-                  ref = scalar("123")),
+                  ref = scalar(sha)),
                   encode = "json")
 
   expect_equal(httr::status_code(r), 200)
