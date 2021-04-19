@@ -1,6 +1,9 @@
 context("api-workflows")
 
 test_that("can identify missing dependencies of a workflow", {
+  testthat::skip_on_cran()
+  skip_on_windows()
+  skip_if_no_redis()
   path <- orderly_git_example("minimal")
   runner <- orderly_runner(path)
   t <- tempfile()
