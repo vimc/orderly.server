@@ -108,6 +108,12 @@ orderly_runner_ <- R6::R6Class(
     config = NULL,
     #' @field allow_ref Allow git to change branch/ref for run
     allow_ref = FALSE,
+    #' @field temp_root A copy of Orderly root in some tempdir.
+    #' This is a copy we can safely switch the git ref on for e.g.
+    #' finding report dependencies on a particular branch. This avoids
+    #' changing the checked out branch on the main root, potentially
+    #' causing issues for anything else which relies on global state
+    temp_root = NULL,
 
     #' @field con Redis connection
     con = NULL,
@@ -144,6 +150,11 @@ orderly_runner_ <- R6::R6Class(
       if (!runner_has_git(self$root)) {
         stop("Not starting server as orderly root is not version controlled")
       }
+
+      t <- tempfile()
+      dir_create(t)
+      file_copy(self$root, t, recursive = TRUE)
+      self$temp_root <- list.files(t, full.names = TRUE)
 
       self$allow_ref <- runner_allow_ref(allow_ref, self$config)
       if (!self$allow_ref) {
@@ -241,7 +252,15 @@ orderly_runner_ <- R6::R6Class(
         stop("Reference switching is disallowed in this runner",
              call. = FALSE)
       }
-      workflow <- build_workflow(self$root, reports, ref, changelog,
+      if (!is.null(ref)) {
+        git_fetch(self$temp_root)
+        prev <- git_checkout_branch(ref, root = self$temp_root)
+        on.exit(git_checkout_branch(prev, root = self$temp_root))
+      } else {
+        git_pull(self$temp_root)
+      }
+      workflow <- build_workflow(self$root, self$temp_root,
+                                 reports, ref, changelog,
                                  self$keys$key_report_id, poll)
       ## Build a list of dependencies
       ## report_name : [task_id1, task_id2, ...]

@@ -152,6 +152,7 @@ test_that("additional parameters are passed to task run", {
   skip_if_no_redis()
   path <- orderly_git_example("demo")
   runner <- orderly_runner(path)
+  ref <- git_branch_name(root = path)
   reports <- list(
     list(
       name = scalar("other"),
@@ -169,14 +170,13 @@ test_that("additional parameters are passed to task run", {
       )
     )
   )
-  ref <- scalar("ref123")
   changelog <- list(
     message = scalar("changelog 1"),
     type = scalar("internal")
   )
   body <- jsonlite::toJSON(list(
     reports = reports,
-    ref = ref,
+    ref = scalar(ref),
     changelog = changelog
   ))
 
@@ -191,7 +191,7 @@ test_that("additional parameters are passed to task run", {
   expect_equal(data_1$objects$name, "other")
   expect_equal(data_1$objects$parameters, list(nmin = 0.5))
   expect_equal(data_1$objects$instance, "production")
-  expect_equal(data_1$objects$ref, "ref123")
+  expect_equal(data_1$objects$ref, ref)
   expect_equal(data_1$objects$changelog, list(
     message = "changelog 1",
     type = "internal"
@@ -203,7 +203,7 @@ test_that("additional parameters are passed to task run", {
   expect_equal(data_2$objects$name, "minimal")
   expect_null(data_2$objects$parameters)
   expect_equal(data_2$objects$instance, "science")
-  expect_equal(data_2$objects$ref, "ref123")
+  expect_equal(data_2$objects$ref, ref)
   expect_equal(data_2$objects$changelog, list(
     message = "changelog 1",
     type = "internal"

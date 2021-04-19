@@ -63,8 +63,9 @@ build_dependencies_graph <- function(path, reports) {
   deps_graph
 }
 
-build_workflow <- function(path, reports, ref, changelog, key_report_id, poll) {
-  dependencies_graph <- build_dependencies_graph(path, reports)
+build_workflow <- function(root, temp_root, reports, ref, changelog,
+                           key_report_id, poll) {
+  dependencies_graph <- build_dependencies_graph(temp_root, reports)
   order <- topological_sort(dependencies_graph)
   ## We want to return in order which this workflow run was requested
   ## preserve this now for ordering the result before return
@@ -78,7 +79,7 @@ build_workflow <- function(path, reports, ref, changelog, key_report_id, poll) {
     ## There may be multiple reports due to be run with this name
     report_details <- reports[report_name == report_names]
     lapply(report_details, function(report_detail) {
-      prepare_task(key_report_id, path, report_name,
+      prepare_task(key_report_id, root, report_name,
                    report_detail$original_order,
                    report_detail$params, ref,
                    report_detail$instance, changelog, poll,

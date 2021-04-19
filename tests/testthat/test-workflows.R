@@ -217,7 +217,7 @@ test_that("workflow representation can be built", {
       )
     )
   )
-  workflow <- build_workflow(path, no_deps, "key-report-id")
+  workflow <- build_workflow(path, path, no_deps, "key-report-id")
   expect_length(workflow, 1)
   expect_equal(names(workflow[[1]]), c("expr", "envir", "name",
                                        "key", "depends_on", "original_order"))
@@ -250,7 +250,7 @@ test_that("workflow representation can be built", {
       )
     )
   )
-  workflow <- build_workflow(path, multiple_deps, "key-report-id")
+  workflow <- build_workflow(path, path, multiple_deps, "key-report-id")
   expect_length(workflow, 3)
 
   expect_equal(names(workflow[[1]]), c("expr", "envir", "name",
@@ -418,4 +418,63 @@ test_that("dependencies are set correctly", {
   expect_null(args[[1]]$depends_on)
   expect_equal(args[[2]]$depends_on, c(example = "1"))
   expect_equal(args[[3]]$depends_on, c(example = "1", depend2 = "2"))
+})
+
+test_that("dependencies are resolved using git ref", {
+  testthat::skip_on_cran()
+  skip_on_windows()
+  skip_if_no_redis()
+  path <- orderly_git_example("depends", testing = TRUE)
+  mock_submit <- mockery::mock("1", "2", "3", cycle = TRUE)
+  mock_orderly_runner <- R6::R6Class(
+    "mock_orderly_runner",
+    inherit = orderly_runner_,
+    public = list(
+      submit = function(job, environment, depends_on) {
+        mock_submit(job, environment, depends_on = depends_on)
+      }
+    ))
+  runner <- mock_orderly_runner$new(path, allow_ref = NULL,
+                                    queue_id = NULL, workers = 0)
+
+  ## Remove dependencies on branch
+  prev <- git_checkout_branch("test", root = runner$temp_root, create = TRUE)
+  depend4_path <- file.path(runner$temp_root,  "src/depend4/orderly.yml")
+  writeLines(c("script: script.R",
+               "artefacts:",
+               "  staticgraph:",
+               "    description: A graph of things",
+               "    filenames: mygraph.png"),
+             depend4_path)
+  gert::git_add(".", repo = runner$temp_root)
+  gert::git_commit("Remove dependencies", repo = runner$temp_root)
+  git_checkout_branch(prev, root = runner$temp_root)
+
+  multiple_deps <- list(
+    list(
+      name = "example"
+    ),
+    list(
+      name = "depend4"
+    ),
+    list(
+      name = "depend2"
+    )
+  )
+  res <- runner$submit_workflow(multiple_deps, ref = "test")
+  args <- mockery::mock_args(mock_submit)
+  expect_length(args, 3)
+  expect_null(args[[1]]$depends_on)
+  expect_equal(get("ref", args[[1]][[2]]), "test")
+  expect_equal(get("name", args[[1]][[2]]), "example")
+  expect_null(args[[2]]$depends_on)
+  expect_equal(get("ref", args[[2]][[2]]), "test")
+  expect_equal(get("name", args[[2]][[2]]), "depend4")
+  expect_equal(args[[3]]$depends_on, c(example = "1"))
+  expect_equal(get("ref", args[[3]][[2]]), "test")
+  expect_equal(get("name", args[[3]][[2]]), "depend2")
+
+  ## Git branch has been restored
+  expect_equal(git_branch_name(root = runner$root), "master")
+  expect_equal(git_branch_name(root = runner$temp_root), "master")
 })

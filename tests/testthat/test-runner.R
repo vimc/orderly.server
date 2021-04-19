@@ -785,3 +785,17 @@ test_that("queue_status", {
         name = "interactive",
         version = NULL))))
 })
+
+test_that("runner creates copy of root with git available", {
+  testthat::skip_on_cran()
+  skip_on_windows()
+  skip_if_no_redis()
+  path <- orderly_git_example("minimal")
+  runner <- orderly_runner(path)
+  expect_true(!is.null(runner$temp_root))
+  expect_true(file.exists(runner$temp_root))
+  expect_setequal(list.files(runner$temp_root),
+               c("archive", "data", "demo.yml", "draft", "gitignore",
+                 "orderly_config.yml", "README.md", "source.sqlite", "src"))
+  expect_true(file.exists(file.path(runner$temp_root, ".git")))
+})
