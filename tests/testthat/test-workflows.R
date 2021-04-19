@@ -416,8 +416,8 @@ test_that("dependencies are set correctly", {
   args <- mockery::mock_args(mock_submit)
   expect_length(args, 3)
   expect_null(args[[1]]$depends_on)
-  expect_equal(args[[2]]$depends_on, c(example = "1"))
-  expect_equal(args[[3]]$depends_on, c(example = "1", depend2 = "2"))
+  expect_equal(args[[2]]$depends_on, "1")
+  expect_equal(args[[3]]$depends_on, c("1", "2"))
 })
 
 test_that("dependencies are resolved using git ref", {
@@ -472,7 +472,7 @@ test_that("dependencies are resolved using git ref", {
   expect_null(args[[2]]$depends_on)
   expect_equal(get("ref", args[[2]][[2]]), "test")
   expect_equal(get("name", args[[2]][[2]]), "depend4")
-  expect_equal(args[[3]]$depends_on, c(example = "1"))
+  expect_equal(args[[3]]$depends_on, "1")
   expect_equal(get("ref", args[[3]][[2]]), "test")
   expect_equal(get("name", args[[3]][[2]]), "depend2")
 

@@ -166,3 +166,21 @@ format_changelog <- function(changelog) {
   assert_scalar_character(changelog$message)
   sprintf("[%s] %s", changelog$type, changelog$message)
 }
+
+key_value_collector <- function(init = list()) {
+  env <- new.env(parent = emptyenv())
+  env$res <- init
+  add <- function(key, value) {
+    env$res[[key]] <- c(env$res[[key]], value)
+  }
+  get <- function(key) {
+    if (is.null(key)) {
+      return(NULL)
+    }
+    env$res[[key]]
+  }
+  list(add = add,
+       length = function(x) length(env$res),
+       get_all = function() env$res,
+       get = function(keys) unlist(lapply(keys, get), recursive = FALSE))
+}

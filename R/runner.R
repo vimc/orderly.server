@@ -265,16 +265,16 @@ orderly_runner_ <- R6::R6Class(
       ## Build a list of dependencies
       ## report_name : [task_id1, task_id2, ...]
       ## There could be multiple tasks queued with the same name
-      dependencies <- list()
+      dependencies <- key_value_collector()
       queue_task <- function(report) {
-        depends_on <- unlist(dependencies[report$depends_on])
+        depends_on <- dependencies$get(report$depends_on)
         task_id <- self$submit(report$expr,
                                report$envir,
                                depends_on = depends_on)
         self$con$HSET(self$keys$key_task_id, report$key, task_id)
         self$con$HSET(self$keys$task_id_key, task_id, report$key)
         self$con$HSET(self$keys$task_timeout, task_id, timeout)
-        dependencies[[report$name]] <<- c(dependencies[[report$name]], task_id)
+        dependencies$add(report$name, task_id)
         task_id
       }
       task_ids <- vcapply(workflow, queue_task)
@@ -282,7 +282,7 @@ orderly_runner_ <- R6::R6Class(
       redis_key <- workflow_redis_key(self$queue$queue_id, workflow_key)
       self$con$SADD(self$keys$key_workflows, workflow_key)
       self$con$SADD(redis_key, task_ids)
-      report_keys <- vcapply(workflow, function(report) report$key)
+      report_keys <- vcapply(workflow, "[[", "key")
       ## Return in same order we received the reports
       ## These will be used by OW to map returned ID to specific report
       return_order <- vnapply(workflow, function(report) report$original_order)

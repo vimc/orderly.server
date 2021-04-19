@@ -41,10 +41,10 @@ get_report_dependencies <- function(report_name, path) {
 
 
 ## Build a representation like
-## - reportA = NA                     # nolint
-## - reportB = reportC                # nolint
-## - reportC = NA                     # nolint
-## - reportD = c(reportA, reportB)    # nolint
+## > - reportA = NA
+## > - reportB = reportC
+## > - reportC = NA
+## > - reportD = c(reportA, reportB)
 ## means A & C have no dependencies, B depends on C, D depends on A & B
 build_dependencies_graph <- function(path, reports) {
   report_names <- vcapply(reports, function(report) report$name)
@@ -85,9 +85,7 @@ build_workflow <- function(root, alternative_root, reports, ref, changelog,
     })
   }
   workflow <- lapply(order, build_item)
-  ## Workflow is list of lists of task details - collapse to
-  ## list of task details
-  do.call(c, workflow)
+  unlist(workflow, recursive = FALSE, use.names = FALSE)
 }
 
 ## This algorithm comes from here:

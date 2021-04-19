@@ -137,3 +137,27 @@ test_that("can recursively convert to scalar", {
   expect_equal(recursive_scalar(list(x = 1)),
                list(x = scalar(1)))
 })
+
+test_that("collector", {
+  collection <- key_value_collector()
+  expect_equal(collection$length(), 0)
+  expect_equal(collection$get_all(), list())
+  collection$add("test", "new item")
+  expect_equal(collection$length(), 1)
+  expect_equal(collection$get_all(), list(test = "new item"))
+  collection$add("test", "item2")
+  expect_equal(collection$length(), 1)
+  expect_equal(collection$get_all(), list(test = c("new item", "item2")))
+  collection$add("foo", c("A", "B"))
+  expect_equal(collection$length(), 2)
+  expect_equal(collection$get_all(), list(
+    test = c("new item", "item2"),
+    foo = c("A", "B")
+  ))
+  expect_equal(collection$get("foo"), c("A", "B"))
+  expect_equal(collection$get("test"), c("new item", "item2"))
+  expect_null(collection$get("bar"))
+  expect_null(collection$get(NULL))
+  expect_equal(collection$get(c("foo", "test")),
+                              c("A", "B", "new item", "item2"))
+})
