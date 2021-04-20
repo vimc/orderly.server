@@ -359,6 +359,36 @@ orderly_runner_ <- R6::R6Class(
     },
 
     #' @description
+    #' Get the status of a workflow.
+    #'
+    #' @param key The workflow key.
+    #' @param output If TRUE include the output from each job in the workflow.
+    #'
+    #' @return List containing the workflow_key, status and status of each
+    #' job in the workflow.
+    workflow_status = function(workflow_key, output = FALSE) {
+      redis_key <- workflow_redis_key(self$queue$queue_id, workflow_key)
+      report_ids <- self$con$SMEMBERS(redis_key)
+      reports <- lapply(report_ids, self$status, output, FALSE)
+      report_status <- lapply(reports, "[[", status)
+      workflow_status <- NULL
+      if (all(report_status == "success")) {
+        workflow_status <- "success"
+      } else if (any(report_status == "running")) {
+        workflow_status <- "running"
+      } else if (all(report_status %in% c("queued", "deferred"))) {
+        workflow_status <- "queued"
+      } else {
+        workflow_status <- "error"
+      }
+      list(
+        workflow_key = workflow_key,
+        status = workflow_status,
+        reports = reports
+      )
+    },
+
+    #' @description
     #' Get the running and queued tasks in front of key in the queue.
     #'
     #' If \code{key} is NULL then includes all queued tasks.

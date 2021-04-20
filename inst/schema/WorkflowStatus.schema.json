@@ -1,0 +1,13 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "WorkflowStatus",
+    "type": "object",
+    "properties": {
+        "workflow_key": {"type": "string"},
+        "status": {
+            "enum": ["queued", "running", "success", "error"]
+        },
+        "reports": { "$ref": "Status.schema.json" },
+    "required": ["key", "status", "reports"],
+    "additionalProperties": false
+}

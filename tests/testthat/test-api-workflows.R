@@ -215,3 +215,54 @@ test_that("additional parameters are passed to task run", {
   ))
   expect_equal(data_2$expr$poll, 0.1)
 })
+
+test_that("workflow status", {
+  workflow_key <- "workflow-key"
+  workflow_status <- list(workflow_key = workflow_key,
+                          status = "queued",
+                          reports = list(
+                            list(
+                              key = "key1",
+                              status = "queued",
+                              version = NULL,
+                              output = NULL,
+                              queue = list()
+                            )
+                          ))
+
+  runner <- mock_runner(key, workflow_status = workflow_status)
+
+  res <- target_workflow_status(runner, workflow_key)
+  expect_equal(
+    res,
+    list(workflow_key = scalar(workflow_key),
+         status = scalar("queued"),
+         reports = list(
+           list(
+             key = scalar("key1"),
+             status = scalar("queued"),
+             version = NULL,
+             output = NULL,
+             queue = list()
+           )
+         )))
+
+  expect_equal(mockery::mock_args(runner$workflow_status)[[1]],
+               list(workflow_key, FALSE))
+
+  ## endpoint
+  endpoint <- endpoint_status(runner)
+  res_endpoint <- endpoint$run(workflow_key)
+  expect_equal(res_endpoint$status_code, 200)
+  expect_equal(res_endpoint$content_type, "application/json")
+  expect_equal(res_endpoint$data, res)
+  expect_equal(mockery::mock_args(runner$status)[[2]], list(key, FALSE))
+
+  ## api
+  api <- build_api(runner, "path")
+  res_api <- api$request("GET", sprintf("/v1/reports/%s/status/", key))
+  expect_equal(res_api$status, 200L)
+  expect_equal(res_api$headers[["Content-Type"]], "application/json")
+  expect_equal(res_api$body, as.character(res_endpoint$body))
+  expect_equal(mockery::mock_args(runner$status)[[3]], list(key, FALSE))
+})

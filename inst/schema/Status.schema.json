@@ -5,7 +5,7 @@
     "properties": {
         "key": {"type": "string"},
         "status": {
-            "enum": ["queued", "running", "success", "error", "orphan", "interrupted", "redirect", "missing"]
+            "enum": ["queued", "running", "success", "error", "orphan", "interrupted", "redirect", "missing", "deferred", "impossible"]
         },
         "version": {
             "oneOf": [
