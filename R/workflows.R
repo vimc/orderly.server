@@ -77,7 +77,7 @@ build_workflow <- function(root, alternative_root, reports, ref) {
     report_details <- reports[report_name == report_names]
     lapply(report_details, function(report_detail) {
       deps <- dependencies_graph[[report_name]]
-      if (length(deps) == 0 || is.na(deps)) {
+      if (length(deps) == 0 || all(is.na(deps))) {
         deps <- NULL
       }
       report_detail$depends_on <- deps
