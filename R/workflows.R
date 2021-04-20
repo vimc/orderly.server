@@ -107,10 +107,6 @@ topological_sort <- function(graph) {
       m[i, ] <- FALSE
     } else {
       f <- function(i) {
-        ## Note that this is not going to give the right answer here
-        ## but it might still be useful (dim_x -> dim(x), initial_x ->
-        ## initial(x) etc.)  Could swap these around with
-        ## RESERVED_PREFIX perhaps.
         sprintf("  %s: depends on %s",
                 names(graph)[[i]], paste(err[m[pending, i]], collapse = ", "))
       }
