@@ -100,7 +100,7 @@ test_that("workflow job can be submitted", {
 
   res <- list(
     workflow_key = scalar("123"),
-    reports = list(scalar("report1_key"), scalar("report2_key")))
+    reports = c(scalar("report1_key"), scalar("report2_key")))
   expect_equal(target_workflow_run(runner, body), res)
   args <- mockery::mock_args(runner$submit_workflow)
   expect_length(args, 1)
