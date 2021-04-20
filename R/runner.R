@@ -273,8 +273,7 @@ orderly_runner_ <- R6::R6Class(
       } else {
         git_pull(self$alternative_root)
       }
-      workflow <- build_workflow(self$root, self$alternative_root,
-                                 reports, ref)
+      workflow <- build_workflow(self$root, self$alternative_root, reports)
       ## Build a list of dependencies
       ## report_name : [task_id1, task_id2, ...]
       ## There could be multiple tasks queued with the same name

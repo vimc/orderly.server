@@ -217,7 +217,7 @@ test_that("workflow representation can be built", {
       )
     )
   )
-  workflow <- build_workflow(path, path, no_deps, "ref")
+  workflow <- build_workflow(path, path, no_deps)
   expect_length(workflow, 1)
   expect_equal(names(workflow[[1]]),
                c("name", "instance", "params", "original_order"))
@@ -244,7 +244,7 @@ test_that("workflow representation can be built", {
       )
     )
   )
-  workflow <- build_workflow(path, path, multiple_deps, "ref")
+  workflow <- build_workflow(path, path, multiple_deps)
   expect_length(workflow, 3)
 
   expect_equal(names(workflow[[1]]), c("name", "instance", "original_order"))
