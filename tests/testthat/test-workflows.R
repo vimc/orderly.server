@@ -291,7 +291,6 @@ test_that("workflow can be run: simple", {
   task_id <- get_task_id_key(runner, res$reports)
   expect_equal(tasks, task_id)
 
-  ## TODO: Test it has actually run successfully
   result <- runner$queue$task_wait(task_id)
   status <- runner$status(res$reports, output = TRUE)
   expect_equal(status$status, "success")
