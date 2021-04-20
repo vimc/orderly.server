@@ -154,11 +154,8 @@ orderly_runner_ <- R6::R6Class(
       self$allow_ref <- runner_allow_ref(allow_ref, self$config)
       if (!self$allow_ref) {
         message("Disallowing reference switching in runner")
-      }
-      if (self$allow_ref) {
-        self$alternative_root <- tempfile()
-        dir_create(self$alternative_root)
-        gert::git_clone(self$root, self$alternative_root)
+      } else {
+        self$alternative_root <- git_clone_local(self$root)
       }
 
       ## This ensures that the index will be present, which will be

@@ -348,3 +348,12 @@ test_that("git_pull updates git", {
   commits <- git_commits("master", path[["local"]])
   expect_equal(nrow(commits), 2)
 })
+
+test_that("can clone a local repo", {
+  testthat::skip_on_cran()
+  path <- orderly_git_example("minimal")
+
+  destination <- git_clone_local(path)
+  expect_true(!identical(path, destination))
+  expect_setequal(list.files(path), list.files(destination))
+})
