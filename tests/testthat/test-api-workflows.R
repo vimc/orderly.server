@@ -241,7 +241,6 @@ test_that("single report workflow can be run", {
     workflow_key = scalar("123"),
     reports = "report1_key")
 
-  ## endpoint
   endpoint <- endpoint_workflow_run(runner)
   output <- endpoint$run(body)
   expect_equal(output$status_code, 200)
