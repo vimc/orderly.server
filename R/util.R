@@ -174,9 +174,6 @@ key_value_collector <- function(init = list()) {
     env$res[[key]] <- c(env$res[[key]], value)
   }
   get <- function(key) {
-    if (is.null(key)) {
-      return(NULL)
-    }
     env$res[[key]]
   }
   list(add = add,

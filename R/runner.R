@@ -216,10 +216,7 @@ orderly_runner_ <- R6::R6Class(
                                   instance = NULL, changelog = NULL,
                                   poll = 0.1, timeout = 60 * 60 * 3,
                                   depends_on = NULL) {
-      if (!self$allow_ref && !is.null(ref)) {
-        stop("Reference switching is disallowed in this runner",
-             call. = FALSE)
-      }
+      private$assert_ref_switching_allowed(ref)
       root <- self$root
       key <- ids::adjective_animal()
       key_report_id <- self$keys$key_report_id
@@ -267,10 +264,7 @@ orderly_runner_ <- R6::R6Class(
     #' @return The key for the workflow and each individual report
     submit_workflow = function(reports, ref = NULL, changelog = NULL,
                                poll = 0.1, timeout = 60 * 60 * 3) {
-      if (!self$allow_ref && !is.null(ref)) {
-        stop("Reference switching is disallowed in this runner",
-             call. = FALSE)
-      }
+      private$assert_ref_switching_allowed(ref)
       git_pull(self$root)
       if (!is.null(ref)) {
         git_fetch(self$alternative_root)
@@ -490,6 +484,14 @@ orderly_runner_ <- R6::R6Class(
         name = task_data$expr$name,
         version = report_id
       )
+    },
+
+    assert_ref_switching_allowed = function(ref) {
+      if (!self$allow_ref && !is.null(ref)) {
+        stop("Reference switching is disallowed in this runner",
+             call. = FALSE)
+      }
+      invisible(TRUE)
     }
   )
 )

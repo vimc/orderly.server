@@ -415,13 +415,9 @@ endpoint_run_metadata <- function(runner) {
 
 target_workflow_missing_dependencies <- function(runner, body) {
   body <- jsonlite::fromJSON(body, simplifyDataFrame = FALSE)
-  if (!is.null(body$ref)) {
-    git_fetch(runner$alternative_root)
-    prev <- git_checkout_branch(body$ref, root = runner$alternative_root)
-    on.exit(git_checkout_branch(prev, root = runner$alternative_root))
-  } else {
-    git_pull(runner$alternative_root)
-  }
+  git_fetch(runner$alternative_root)
+  prev <- git_checkout_branch(body$ref, root = runner$alternative_root)
+  on.exit(git_checkout_branch(prev, root = runner$alternative_root))
   workflow_missing_dependencies(runner$alternative_root, body$reports)
 }
 
