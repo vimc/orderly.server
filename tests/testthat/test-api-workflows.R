@@ -215,3 +215,44 @@ test_that("additional parameters are passed to task run", {
   ))
   expect_equal(data_2$expr$poll, 0.1)
 })
+
+test_that("single report workflow can be run", {
+  path <- orderly_git_example("depends", testing = TRUE)
+  runner <- mock_runner(submit_workflow = list(
+    workflow_key = "123",
+    reports = "report1_key"))
+  reports <- list(
+    list(
+      name = scalar("report1")
+    )
+  )
+  ref <- scalar("ref123")
+  changelog <- list(
+    message = scalar("changelog 1"),
+    type = scalar("internal")
+  )
+  body <- jsonlite::toJSON(list(
+    reports = reports,
+    ref = ref,
+    changelog = changelog
+  ))
+
+  res <- list(
+    workflow_key = scalar("123"),
+    reports = "report1_key")
+
+  ## endpoint
+  endpoint <- endpoint_workflow_run(runner)
+  output <- endpoint$run(body)
+  expect_equal(output$status_code, 200)
+  expect_equal(output$data, res)
+  args <- mockery::mock_args(runner$submit_workflow)
+  expect_length(args, 1)
+  expect_equal(args[[1]][[1]], list(
+    list(name = "report1")))
+  expect_equal(args[[1]][[2]], "ref123")
+  expect_equal(args[[1]][[3]], list(
+    message = "changelog 1",
+    type = "internal"
+  ))
+})
