@@ -571,11 +571,23 @@ test_that("workflow can be run", {
   expect_true(!is.null(status_1$data$version))
 
   report_2_status <- httr::GET(server$api_url(
-    sprintf("/v1/reports/%s/status/", dat$data$reports[1])),
+    sprintf("/v1/reports/%s/status/", dat$data$reports[2])),
     query = list(output = TRUE))
   expect_equal(httr::status_code(report_2_status), 200)
   status_2 <- content(report_2_status)
   expect_equal(status_2$status, "success")
   expect_equal(status_2$data$status, "success")
   expect_true(!is.null(status_2$data$version))
+
+  ## Can get workflow status
+  workflow_status <- httr::GET(server$api_url(
+    sprintf("/v1/workflow/%s/status/", dat$data$workflow_key)),
+    query = list(output = TRUE))
+  expect_equal(httr::status_code(workflow_status), 200)
+  status <- content(workflow_status)
+  expect_equal(status$status, "success")
+  expect_equal(status$data$status, "success")
+  expect_equal(status$data$workflow_key, dat$data$workflow_key)
+  expect_equal(length(status$data$reports), 2)
+  expect_setequal(status$data$reports, list(status_1$data, status_2$data))
 })
