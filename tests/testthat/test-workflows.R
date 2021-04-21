@@ -265,6 +265,24 @@ test_that("workflow representation can be built", {
   expect_equal(workflow[[3]]$original_order, 2)
 })
 
+test_that("workflow with duplicate reports can be built", {
+  path <- orderly_prepare_orderly_example("depends", testing = TRUE)
+  no_deps <- list(
+    list(
+      name = "depend"
+    ),
+    list(
+      name = "depend"
+    )
+  )
+  workflow <- build_workflow(path, path, no_deps)
+  expect_length(workflow, 2)
+  expect_equal(workflow[[1]]$name, "depend")
+  expect_equal(workflow[[1]]$original_order, 1)
+  expect_equal(workflow[[2]]$name, "depend")
+  expect_equal(workflow[[2]]$original_order, 2)
+})
+
 test_that("workflow can be run: simple", {
   testthat::skip_on_cran()
   skip_on_windows()

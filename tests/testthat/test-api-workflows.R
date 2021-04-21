@@ -255,3 +255,43 @@ test_that("single report workflow can be run", {
     type = "internal"
   ))
 })
+
+test_that("report can be included in a workflow twice", {
+  testthat::skip_on_cran()
+  skip_on_windows()
+  skip_if_no_redis()
+  path <- orderly_git_example("minimal")
+  runner <- orderly_runner(path)
+  ref <- git_ref_to_sha("HEAD", root = path)
+  reports <- list(
+    list(
+      name = scalar("example")
+    ),
+    list(
+      name = scalar("example")
+    )
+  )
+  body <- jsonlite::toJSON(list(
+    reports = reports,
+    ref = scalar(ref)
+  ))
+
+  api <- build_api(runner, path)
+  res_api <- api$request("POST", "/v1/workflow/run/",
+                         body = body)
+  keys <- jsonlite::fromJSON(res_api$body)$data$reports
+  task_ids <- vcapply(keys, function(key) get_task_id_key(runner, key))
+  expect_length(task_ids, 2)
+
+  data_1 <- runner$queue$task_data(task_ids[1])
+  expect_equal(data_1$expr$key, keys[1])
+  expect_equal(data_1$expr$name, "example")
+  expect_equal(data_1$expr$ref, ref)
+  expect_equal(data_1$expr$poll, 0.1)
+
+  data_2 <- runner$queue$task_data(task_ids[2])
+  expect_equal(data_2$expr$key, keys[2])
+  expect_equal(data_2$expr$name, "example")
+  expect_equal(data_2$expr$ref, ref)
+  expect_equal(data_2$expr$poll, 0.1)
+})

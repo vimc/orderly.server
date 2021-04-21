@@ -47,16 +47,16 @@ get_report_dependencies <- function(report_name, path) {
 ## > - reportD = c(reportA, reportB)
 ## means A & C have no dependencies, B depends on C, D depends on A & B
 build_dependencies_graph <- function(path, reports) {
-  report_names <- vcapply(reports, function(report) report$name)
+  report_names <- unique(vcapply(reports, function(report) report$name))
   get_present_dependencies <- function(report) {
-    dependencies <- unique(unlist(get_report_dependencies(report$name, path)))
+    dependencies <- unique(unlist(get_report_dependencies(report, path)))
     present_deps <- report_names[report_names %in% dependencies]
     if (length(present_deps) == 0) {
       present_deps <- NA
     }
     present_deps
   }
-  deps_graph <- lapply(reports, get_present_dependencies)
+  deps_graph <- lapply(report_names, get_present_dependencies)
   names(deps_graph) <- report_names
   deps_graph
 }
