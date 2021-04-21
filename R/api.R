@@ -462,16 +462,28 @@ endpoint_workflow_run <- function(runner) {
 
 target_workflow_status <- function(runner, workflow_key, output = FALSE) {
   res <- runner$workflow_status(workflow_key, output)
+  reports <- lapply(res$reports, function(report) {
+    list(
+      key = scalar(report$key),
+      status = scalar(report$status),
+      version = scalar(report$version),
+      output = report$output,
+      queue = lapply(report$queue, function(item) {
+        lapply(item, scalar)
+      })
+    )
+  })
   list(
     workflow_key = scalar(res$workflow_key),
     status = scalar(res$status),
-    reports = recursive_scalar(res$reports)
+    reports = reports
   )
 }
 
 endpoint_workflow_status <- function(runner) {
   porcelain::porcelain_endpoint$new(
-    "GET", "/v1/workflow/<workflow_key>/status/", target_workflow_status,
+    "GET", "/v1/workflow/<workflow_key>/status/",
+    target_workflow_status,
     porcelain::porcelain_input_query(output = "logical"),
     porcelain::porcelain_state(runner = runner),
     returning = returning_json("WorkflowStatus.schema"))

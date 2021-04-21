@@ -120,3 +120,16 @@ topological_sort <- function(graph) {
   }
   names(graph)[graph_sorted]
 }
+
+workflow_combine_status <- function(report_status) {
+  if (all(report_status == "success")) {
+    workflow_status <- "success"
+  } else if (any(report_status == "running")) {
+    workflow_status <- "running"
+  } else if (all(report_status %in% c("queued", "deferred"))) {
+    workflow_status <- "queued"
+  } else {
+    workflow_status <- "error"
+  }
+  workflow_status
+}

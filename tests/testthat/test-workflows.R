@@ -481,3 +481,74 @@ test_that("dependencies are resolved using git ref", {
   expect_equal(git_branch_name(root = runner$root), "master")
   expect_equal(git_branch_name(root = runner$alternative_root), "master")
 })
+
+test_that("workflow status can be calcualted", {
+  expect_equal(workflow_combine_status("success"), "success")
+  expect_equal(workflow_combine_status("running"), "running")
+  expect_equal(workflow_combine_status("queued"), "queued")
+  expect_equal(workflow_combine_status("error"), "error")
+  report_status <- c("success", "success")
+  expect_equal(workflow_combine_status(report_status), "success")
+  report_status <- c("success", "running")
+  expect_equal(workflow_combine_status(report_status), "running")
+  report_status <- c("queued", "running")
+  expect_equal(workflow_combine_status(report_status), "running")
+  report_status <- c("queued", "deferred")
+  expect_equal(workflow_combine_status(report_status), "queued")
+  report_status <- c("error", "success")
+  expect_equal(workflow_combine_status(report_status), "error")
+})
+
+test_that("can get status of a worfklow", {
+  path <- orderly_git_example("depends", testing = TRUE)
+  runner <- orderly_runner(path)
+
+  multiple_deps <- list(
+    list(
+      name = "example"
+    ),
+    list(
+      name = "depend4"
+    ),
+    list(
+      name = "depend2"
+    )
+  )
+  res <- runner$submit_workflow(multiple_deps)
+  testthat::try_again(5, {
+    Sys.sleep(0.5)
+    tasks <- runner$queue$task_list()
+    expect_length(tasks, 3)
+  })
+  results <- lapply(tasks, runner$queue$task_wait)
+  status <- runner$workflow_status(res$workflow_key)
+
+  expect_equal(names(status), c("workflow_key", "status", "reports"))
+  sexpect_equal(status$workflow_key, res$workflow_key)
+  expect_equal(status$status, "success")
+  expect_length(status$reports, 3)
+  report_keys <- lapply(status$reports, "[[", "key")
+  expect_setequal(report_keys, res$reports)
+  expect_equal(status$reports[[1]]$status, "success")
+  expect_match(status$reports[[1]]$version, "^\\d{8}-\\d{6}-\\w{8}")
+  expect_null(status$reports[[1]]$output)
+  expect_equal(status$reports[[1]]$queue, list())
+  expect_equal(status$reports[[2]]$status, "success")
+  expect_match(status$reports[[2]]$version, "^\\d{8}-\\d{6}-\\w{8}")
+  expect_null(status$reports[[2]]$output)
+  expect_equal(status$reports[[2]]$queue, list())
+  expect_equal(status$reports[[3]]$status, "success")
+  expect_match(status$reports[[3]]$version, "^\\d{8}-\\d{6}-\\w{8}")
+  expect_null(status$reports[[3]]$output)
+  expect_equal(status$reports[[3]]$queue, list())
+
+  ## Output can be included
+  status <- runner$workflow_status(res$workflow_key, output = TRUE)
+  expect_length(status$reports, 3)
+  expect_match(status$reports[[1]]$output, "\\[ success +\\]  :)",
+               all = FALSE)
+  expect_match(status$reports[[2]]$output, "\\[ success +\\]  :)",
+               all = FALSE)
+  expect_match(status$reports[[3]]$output, "\\[ success +\\]  :)",
+               all = FALSE)
+})

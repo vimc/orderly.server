@@ -7,7 +7,11 @@
         "status": {
             "enum": ["queued", "running", "success", "error"]
         },
-        "reports": { "$ref": "Status.schema.json" },
-    "required": ["key", "status", "reports"],
+        "reports": {
+            "type": "array",
+            "items": {"$ref": "Status.schema.json" }
+        }
+    },
+    "required": ["workflow_key", "status", "reports"],
     "additionalProperties": false
 }

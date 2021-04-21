@@ -306,23 +306,28 @@ test_that("workflow status", {
              queue = list()
            )
          )))
-
+  mockery::expect_called(runner$workflow_status, 1)
   expect_equal(mockery::mock_args(runner$workflow_status)[[1]],
                list(workflow_key, FALSE))
 
   ## endpoint
-  endpoint <- endpoint_status(runner)
+  endpoint <- endpoint_workflow_status(runner)
   res_endpoint <- endpoint$run(workflow_key)
   expect_equal(res_endpoint$status_code, 200)
   expect_equal(res_endpoint$content_type, "application/json")
   expect_equal(res_endpoint$data, res)
-  expect_equal(mockery::mock_args(runner$status)[[2]], list(key, FALSE))
+  mockery::expect_called(runner$workflow_status, 2)
+  expect_equal(mockery::mock_args(runner$workflow_status)[[2]],
+               list(workflow_key, FALSE))
 
   ## api
   api <- build_api(runner, "path")
-  res_api <- api$request("GET", sprintf("/v1/reports/%s/status/", key))
+  res_api <- api$request("GET",
+                         sprintf("/v1/workflow/%s/status/", workflow_key))
   expect_equal(res_api$status, 200L)
   expect_equal(res_api$headers[["Content-Type"]], "application/json")
   expect_equal(res_api$body, as.character(res_endpoint$body))
-  expect_equal(mockery::mock_args(runner$status)[[3]], list(key, FALSE))
+  mockery::expect_called(runner$workflow_status, 3)
+  expect_equal(mockery::mock_args(runner$workflow_status)[[3]],
+               list(workflow_key, FALSE))
 })
