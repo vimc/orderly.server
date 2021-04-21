@@ -108,10 +108,7 @@ test_that("workflow job can be submitted", {
     list(name = "report1"),
     list(name = "report2")))
   expect_equal(args[[1]][[2]], "ref123")
-  expect_equal(args[[1]][[3]], list(
-    message = "changelog 1",
-    type = "internal"
-  ))
+  expect_equal(args[[1]][[3]],  "[internal] changelog 1")
 
   ## endpoint
   endpoint <- endpoint_workflow_run(runner)
@@ -124,10 +121,7 @@ test_that("workflow job can be submitted", {
     list(name = "report1"),
     list(name = "report2")))
   expect_equal(args[[2]][[2]], "ref123")
-  expect_equal(args[[2]][[3]], list(
-    message = "changelog 1",
-    type = "internal"
-  ))
+  expect_equal(args[[2]][[3]],  "[internal] changelog 1")
 
   ## api
   api <- build_api(runner, path)
@@ -145,10 +139,7 @@ test_that("workflow job can be submitted", {
     list(name = "report1"),
     list(name = "report2")))
   expect_equal(args[[3]][[2]], "ref123")
-  expect_equal(args[[3]][[3]], list(
-    message = "changelog 1",
-    type = "internal"
-  ))
+  expect_equal(args[[3]][[3]],  "[internal] changelog 1")
 })
 
 test_that("additional parameters are passed to task run", {
@@ -161,18 +152,12 @@ test_that("additional parameters are passed to task run", {
   reports <- list(
     list(
       name = scalar("other"),
-      instance = list(
-        source = scalar("production")
-      ),
       params = list(
         nmin = 0.5
       )
     ),
     list(
-      name = scalar("minimal"),
-      instance = list(
-        source = scalar("science")
-      )
+      name = scalar("minimal")
     )
   )
   changelog <- list(
@@ -190,30 +175,28 @@ test_that("additional parameters are passed to task run", {
                          body = body)
   keys <- jsonlite::fromJSON(res_api$body)$data$reports
   task_ids <- vcapply(keys, function(key) get_task_id_key(runner, key))
+  result_1 <- runner$queue$task_wait(task_ids[[1]])
+  result_2 <- runner$queue$task_wait(task_ids[[2]])
 
   data_1 <- runner$queue$task_data(task_ids[1])
   expect_equal(data_1$expr$key, keys[1])
   expect_equal(data_1$expr$name, "other")
   expect_equal(data_1$expr$parameters, list(nmin = 0.5))
-  expect_equal(data_1$expr$instance, "production")
   expect_equal(data_1$expr$ref, ref)
-  expect_equal(data_1$expr$changelog, list(
-    message = "changelog 1",
-    type = "internal"
-  ))
+  expect_equal(data_1$expr$changelog, "[internal] changelog 1")
   expect_equal(data_1$expr$poll, 0.1)
+  res_1 <- runner$status(keys[1])
+  expect_equal(res_1$status, "success")
 
   data_2 <- runner$queue$task_data(task_ids[2])
   expect_equal(data_2$expr$key, keys[2])
   expect_equal(data_2$expr$name, "minimal")
   expect_null(data_2$expr$parameters)
-  expect_equal(data_2$expr$instance, "science")
   expect_equal(data_2$expr$ref, ref)
-  expect_equal(data_2$expr$changelog, list(
-    message = "changelog 1",
-    type = "internal"
-  ))
+  expect_equal(data_2$expr$changelog,  "[internal] changelog 1")
   expect_equal(data_2$expr$poll, 0.1)
+  res_2 <- runner$status(keys[2])
+  expect_equal(res_2$status, "success")
 })
 
 test_that("single report workflow can be run", {
@@ -250,10 +233,7 @@ test_that("single report workflow can be run", {
   expect_equal(args[[1]][[1]], list(
     list(name = "report1")))
   expect_equal(args[[1]][[2]], "ref123")
-  expect_equal(args[[1]][[3]], list(
-    message = "changelog 1",
-    type = "internal"
-  ))
+  expect_equal(args[[1]][[3]],  "[internal] changelog 1")
 })
 
 test_that("report can be included in a workflow twice", {

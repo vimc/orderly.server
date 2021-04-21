@@ -355,5 +355,6 @@ test_that("can clone a local repo", {
 
   destination <- git_clone_local(path)
   expect_true(!identical(path, destination))
-  expect_setequal(list.files(path), list.files(destination))
+  ## gitignored files in source path are not copied
+  expect_true(all(list.files(destination) %in% list.files(path)))
 })
