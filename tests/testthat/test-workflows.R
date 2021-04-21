@@ -344,7 +344,7 @@ test_that("workflow can be run: dependencies", {
   expect_equal(names(res), c("workflow_key", "reports"))
   expect_true(!is.null(res$workflow_key))
   redis_key <- workflow_redis_key(runner$queue$queue_id, res$workflow_key)
-  expect_equal(runner$con$SMEMBERS(redis_key), as.list(res$reports))
+  expect_setequal(runner$con$SMEMBERS(redis_key), res$reports)
   expect_length(res$reports, 3)
   task_ids <- vcapply(res$reports, function(id) get_task_id_key(runner, id))
   expect_setequal(tasks, task_ids)
