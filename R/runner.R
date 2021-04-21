@@ -151,13 +151,11 @@ orderly_runner_ <- R6::R6Class(
         stop("Not starting server as orderly root is not version controlled")
       }
 
-      self$alternative_root <- tempfile()
-      dir_create(self$alternative_root)
-      gert::git_clone(self$root, self$alternative_root)
-
       self$allow_ref <- runner_allow_ref(allow_ref, self$config)
       if (!self$allow_ref) {
         message("Disallowing reference switching in runner")
+      } else {
+        self$alternative_root <- git_clone_local(self$root)
       }
 
       ## This ensures that the index will be present, which will be
@@ -199,6 +197,22 @@ orderly_runner_ <- R6::R6Class(
     },
 
     #' @description
+    #' Check if ref switching is allowed in this runner. Errors if
+    #' ref is non NULL and ref switching disallowed, otherwise
+    #' does nothing.
+    #'
+    #' @param ref Input ref to check
+    #'
+    #' @return TRUE, called for side effects.
+    assert_ref_switching_allowed = function(ref) {
+      if (!self$allow_ref && !is.null(ref)) {
+        stop("Reference switching is disallowed in this runner",
+             call. = FALSE)
+      }
+      invisible(TRUE)
+    },
+
+    #' @description
     #' Queue a job to run an orderly report.
     #'
     #' @param name Name of report to be queued.
@@ -216,7 +230,7 @@ orderly_runner_ <- R6::R6Class(
                                   instance = NULL, changelog = NULL,
                                   poll = 0.1, timeout = 60 * 60 * 3,
                                   depends_on = NULL) {
-      private$assert_ref_switching_allowed(ref)
+      self$assert_ref_switching_allowed(ref)
       root <- self$root
       key <- ids::adjective_animal()
       key_report_id <- self$keys$key_report_id
@@ -264,17 +278,16 @@ orderly_runner_ <- R6::R6Class(
     #' @return The key for the workflow and each individual report
     submit_workflow = function(reports, ref = NULL, changelog = NULL,
                                poll = 0.1, timeout = 60 * 60 * 3) {
-      private$assert_ref_switching_allowed(ref)
-      git_pull(self$root)
+      self$assert_ref_switching_allowed(ref)
       if (!is.null(ref)) {
-        git_fetch(self$alternative_root)
-        prev <- git_checkout_branch(ref, root = self$alternative_root)
-        on.exit(git_checkout_branch(prev, root = self$alternative_root))
+        dependency_root <- self$alternative_root
+        git_fetch(dependency_root)
+        prev <- git_checkout_branch(ref, root = dependency_root)
+        on.exit(git_checkout_branch(prev, root = dependency_root))
       } else {
-        git_pull(self$alternative_root)
+        dependency_root <- self$root
       }
-      workflow <- build_workflow(self$root, self$alternative_root,
-                                 reports, ref)
+      workflow <- build_workflow(self$root, dependency_root, reports)
       ## Build a list of dependencies
       ## report_name : [task_id1, task_id2, ...]
       ## There could be multiple tasks queued with the same name
@@ -514,14 +527,6 @@ orderly_runner_ <- R6::R6Class(
         name = task_data$expr$name,
         version = report_id
       )
-    },
-
-    assert_ref_switching_allowed = function(ref) {
-      if (!self$allow_ref && !is.null(ref)) {
-        stop("Reference switching is disallowed in this runner",
-             call. = FALSE)
-      }
-      invisible(TRUE)
     }
   )
 )

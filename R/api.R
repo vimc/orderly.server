@@ -416,10 +416,16 @@ endpoint_run_metadata <- function(runner) {
 
 target_workflow_missing_dependencies <- function(runner, body) {
   body <- jsonlite::fromJSON(body, simplifyDataFrame = FALSE)
-  git_fetch(runner$alternative_root)
-  prev <- git_checkout_branch(body$ref, root = runner$alternative_root)
-  on.exit(git_checkout_branch(prev, root = runner$alternative_root))
-  workflow_missing_dependencies(runner$alternative_root, body$reports)
+  if (is.null(body$ref)) {
+    root <- runner$root
+  } else {
+    runner$assert_ref_switching_allowed(body$ref)
+    root <- runner$alternative_root
+    git_fetch(root)
+    prev <- git_checkout_branch(body$ref, root = root)
+    on.exit(git_checkout_branch(prev, root = root))
+  }
+  workflow_missing_dependencies(root, body$reports)
 }
 
 endpoint_workflow_missing_dependencies <- function(runner) {
@@ -436,8 +442,12 @@ endpoint_workflow_missing_dependencies <- function(runner) {
 
 target_workflow_run <- function(runner, body) {
   body <- jsonlite::fromJSON(body, simplifyDataFrame = FALSE)
-  res <- runner$submit_workflow(body$reports, body$ref, body$changelog)
-  recursive_scalar(res)
+  changelog <- format_changelog(body$changelog)
+  res <- runner$submit_workflow(body$reports, body$ref, changelog)
+  list(
+    workflow_key = scalar(res$workflow_key),
+    reports = res$reports
+  )
 }
 
 endpoint_workflow_run <- function(runner) {

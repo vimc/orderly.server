@@ -795,8 +795,7 @@ test_that("runner creates copy of root with git available", {
   expect_true(!is.null(runner$alternative_root))
   expect_true(file.exists(runner$alternative_root))
   expect_setequal(list.files(runner$alternative_root),
-               c("archive", "data", "demo.yml", "draft", "gitignore",
-                 "orderly_config.yml", "README.md", "source.sqlite", "src"))
+               c("demo.yml", "orderly_config.yml", "README.md", "src"))
   expect_true(file.exists(file.path(runner$alternative_root, ".git")))
 })
 
