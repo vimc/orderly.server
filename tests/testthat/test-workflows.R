@@ -474,6 +474,9 @@ test_that("workflow status can be calcualted", {
 })
 
 test_that("can get status of a worfklow", {
+  testthat::skip_on_cran()
+  skip_on_windows()
+  skip_if_no_redis()
   path <- orderly_git_example("depends", testing = TRUE)
   runner <- orderly_runner(path)
 
