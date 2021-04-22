@@ -518,7 +518,7 @@ test_that("can get missing dependencies of a workflow", {
                   body = list(reports = list(
                     list(
                       name = scalar("depend"),
-                      instance = list(source = scalar("production"))
+                      instance = scalar("production")
                     )
                   ),
                   ref = scalar(sha)),
