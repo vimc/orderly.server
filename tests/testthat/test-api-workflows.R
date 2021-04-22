@@ -12,9 +12,7 @@ test_that("can identify missing dependencies of a workflow", {
     reports = list(
       list(
         name = scalar("preprocess"),
-        instance = list(
-          source = scalar("production")
-        ),
+        instance = scalar("production"),
         params = list(
           nmin = scalar(0.5),
           nmax = scalar(2)
@@ -22,15 +20,11 @@ test_that("can identify missing dependencies of a workflow", {
       ),
       list(
         name = scalar("process"),
-        instance = list(
-          source = scalar("production")
-        )
+        instance = scalar("production")
       ),
       list(
         name = scalar("postprocess"),
-        instance = list(
-          source = scalar("production")
-        )
+        instance = scalar("production")
       )
     ),
     ref = scalar(ref)
