@@ -85,9 +85,7 @@ test_that("can work out dependencies graph", {
   no_deps <- list(
     list(
       name = "depend",
-      instance = list(
-        source = "production"
-      ),
+      instance = "production",
       params = list(
         nmin = 0.5,
         nmax = 1
@@ -97,9 +95,7 @@ test_that("can work out dependencies graph", {
   one_dep <- list(
     list(
       name = "example",
-      instance = list(
-        source = "production"
-      ),
+      instance = "production",
       params = list(
         nmin = 0.5,
         nmax = 1
@@ -107,17 +103,13 @@ test_that("can work out dependencies graph", {
     ),
     list(
       name = "depend",
-      instance = list(
-        source = "production"
-      )
+      instance = "production"
     )
   )
   two_deps <- list(
    list(
       name = "example",
-      instance = list(
-        source = "production"
-      ),
+      instance = "production",
       params = list(
         nmin = 0.5,
         nmax = 1
@@ -125,35 +117,25 @@ test_that("can work out dependencies graph", {
     ),
     list(
       name = "depend",
-      instance = list(
-        source = "production"
-      )
+      instance = "production"
     ),
     list(
       name = "depend2",
-      instance = list(
-        source = "production"
-      )
+      instance = "production"
     )
   )
   multiple_deps <- list(
     list(
       name = "example",
-      instance = list(
-        source = "production"
-      )
+      instance = "production"
     ),
     list(
       name = "depend2",
-      instance = list(
-        source = "production"
-      )
+      instance = "production"
     ),
     list(
       name = "depend4",
-      instance = list(
-        source = "production"
-      )
+      instance = "production"
     )
   )
   path <- orderly_prepare_orderly_example("depends", testing = TRUE)
@@ -208,9 +190,7 @@ test_that("workflow representation can be built", {
   no_deps <- list(
     list(
       name = "depend",
-      instance = list(
-        source = "production"
-      ),
+      instance = "production",
       params = list(
         nmin = 0.5,
         nmax = 1
@@ -227,21 +207,15 @@ test_that("workflow representation can be built", {
   multiple_deps <- list(
     list(
       name = "example",
-      instance = list(
-        source = "production"
-      )
+      instance = "production"
     ),
     list(
       name = "depend4",
-      instance = list(
-        source = "production"
-      )
+      instance = "production"
     ),
     list(
       name = "depend2",
-      instance = list(
-        source = "production"
-      )
+      instance = "production"
     )
   )
   workflow <- build_workflow(path, path, multiple_deps)

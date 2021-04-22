@@ -297,7 +297,7 @@ orderly_runner_ <- R6::R6Class(
         key <- self$submit_task_report(name = report$name,
                                            parameters = report$params,
                                            ref = ref,
-                                           instance = report$instance$source,
+                                           instance = report$instance,
                                            changelog = changelog,
                                            poll = poll,
                                            timeout = timeout,
