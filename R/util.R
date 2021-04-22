@@ -44,6 +44,10 @@ vcapply <- function(X, FUN, ...) { # nolint
   vapply(X, FUN, character(1), ...)
 }
 
+vnapply <- function(X, FUN, ...) { # nolint
+  vapply(X, FUN, numeric(1), ...)
+}
+
 protect <- function(fun) {
   fun <- match.fun(fun)
   function() {
@@ -161,4 +165,19 @@ format_changelog <- function(changelog) {
   assert_scalar_character(changelog$type)
   assert_scalar_character(changelog$message)
   sprintf("[%s] %s", changelog$type, changelog$message)
+}
+
+key_value_collector <- function(init = list()) {
+  env <- new.env(parent = emptyenv())
+  env$res <- init
+  add <- function(key, value) {
+    env$res[[key]] <- c(env$res[[key]], value)
+  }
+  get <- function(key) {
+    env$res[[key]]
+  }
+  list(add = add,
+       length = function(x) length(env$res),
+       get_all = function() env$res,
+       get = function(keys) unlist(lapply(keys, get), recursive = FALSE))
 }

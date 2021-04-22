@@ -18,7 +18,8 @@ build_api <- function(runner, path, backup_period = NULL, rate_limit = 2 * 60) {
   api$handle(endpoint_kill(runner))
   api$handle(endpoint_dependencies(path))
   api$handle(endpoint_run_metadata(runner))
-  api$handle(endpoint_workflow_missing_dependencies(path))
+  api$handle(endpoint_workflow_missing_dependencies(runner))
+  api$handle(endpoint_workflow_run(runner))
   api$setDocs(FALSE)
   backup <- orderly_backup(runner$config, backup_period)
   api$registerHook("preroute", backup$check_backup)
@@ -412,12 +413,21 @@ endpoint_run_metadata <- function(runner) {
  )
 }
 
-target_workflow_missing_dependencies <- function(path, body) {
+target_workflow_missing_dependencies <- function(runner, body) {
   body <- jsonlite::fromJSON(body, simplifyDataFrame = FALSE)
-  workflow_missing_dependencies(path, body$reports)
+  if (is.null(body$ref)) {
+    root <- runner$root
+  } else {
+    runner$assert_ref_switching_allowed(body$ref)
+    root <- runner$alternative_root
+    git_fetch(root)
+    prev <- git_checkout_branch(body$ref, root = root)
+    on.exit(git_checkout_branch(prev, root = root))
+  }
+  workflow_missing_dependencies(root, body$reports)
 }
 
-endpoint_workflow_missing_dependencies <- function(path) {
+endpoint_workflow_missing_dependencies <- function(runner) {
   porcelain::porcelain_endpoint$new(
     "POST", "/v1/workflow/missing-dependencies/",
     target_workflow_missing_dependencies,
@@ -425,8 +435,28 @@ endpoint_workflow_missing_dependencies <- function(path) {
       "body",
       "WorkflowMissingDependenciesRequest.schema",
       schema_root()),
-    porcelain::porcelain_state(path = path),
+    porcelain::porcelain_state(runner = runner),
     returning = returning_json("WorkflowMissingDependenciesResponse.schema"))
+}
+
+target_workflow_run <- function(runner, body) {
+  body <- jsonlite::fromJSON(body, simplifyDataFrame = FALSE)
+  changelog <- format_changelog(body$changelog)
+  res <- runner$submit_workflow(body$reports, body$ref, changelog)
+  list(
+    workflow_key = scalar(res$workflow_key),
+    reports = res$reports
+  )
+}
+
+endpoint_workflow_run <- function(runner) {
+  porcelain::porcelain_endpoint$new(
+    "POST", "/v1/workflow/run/",
+    target_workflow_run,
+    porcelain::porcelain_input_body_json("body", "WorkflowRunRequest.schema",
+                                         schema_root()),
+    porcelain::porcelain_state(runner = runner),
+    returning = returning_json("WorkflowRunResponse.schema"))
 }
 
 check_timeout <- function(runner, rate_limit = 2 * 60) {

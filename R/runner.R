@@ -108,6 +108,12 @@ orderly_runner_ <- R6::R6Class(
     config = NULL,
     #' @field allow_ref Allow git to change branch/ref for run
     allow_ref = FALSE,
+    #' @field alternative_root A copy of Orderly root in some tempdir.
+    #' This is a copy we can safely switch the git ref on for e.g.
+    #' finding report dependencies on a particular branch. This avoids
+    #' changing the checked out branch on the main root, potentially
+    #' causing issues for anything else which relies on global state
+    alternative_root = NULL,
 
     #' @field con Redis connection
     con = NULL,
@@ -148,6 +154,8 @@ orderly_runner_ <- R6::R6Class(
       self$allow_ref <- runner_allow_ref(allow_ref, self$config)
       if (!self$allow_ref) {
         message("Disallowing reference switching in runner")
+      } else {
+        self$alternative_root <- git_clone_local(self$root)
       }
 
       ## This ensures that the index will be present, which will be
@@ -189,6 +197,22 @@ orderly_runner_ <- R6::R6Class(
     },
 
     #' @description
+    #' Check if ref switching is allowed in this runner. Errors if
+    #' ref is non NULL and ref switching disallowed, otherwise
+    #' does nothing.
+    #'
+    #' @param ref Input ref to check
+    #'
+    #' @return TRUE, called for side effects.
+    assert_ref_switching_allowed = function(ref) {
+      if (!self$allow_ref && !is.null(ref)) {
+        stop("Reference switching is disallowed in this runner",
+             call. = FALSE)
+      }
+      invisible(TRUE)
+    },
+
+    #' @description
     #' Queue a job to run an orderly report.
     #'
     #' @param name Name of report to be queued.
@@ -198,24 +222,30 @@ orderly_runner_ <- R6::R6Class(
     #' @param changelog Description of changes to the report.
     #' @param poll How frequently to poll for the report ID being available.
     #' @param timeout Timeout for the report run default 3 hours.
+    #' @param depends_on Keys of any tasks which this report depends on
     #'
     #' @return The key for the job, note this is not the task id. The task id
     #' can be retrieved from redis using the key.
     submit_task_report = function(name, parameters = NULL, ref = NULL,
                                   instance = NULL, changelog = NULL,
-                                  poll = 0.1, timeout = 60 * 60 * 3) {
-      if (!self$allow_ref && !is.null(ref)) {
-        stop("Reference switching is disallowed in this runner",
-             call. = FALSE)
-      }
-
+                                  poll = 0.1, timeout = 60 * 60 * 3,
+                                  depends_on = NULL) {
+      self$assert_ref_switching_allowed(ref)
       root <- self$root
       key <- ids::adjective_animal()
       key_report_id <- self$keys$key_report_id
-      task_id <- self$submit(quote(
-        orderly.server:::runner_run(key_report_id, key, root, name,   # nolint
-                                    parameters, instance, ref,
-                                    changelog = changelog, poll = poll)))
+      expr <- as.call(list(quote(orderly.server:::runner_run), # nolint
+                           key_report_id = key_report_id,
+                           key = key, root = root, name = name,
+                           parameters = parameters, instance = instance,
+                           ref = ref, changelog = changelog, poll = poll))
+      depends_on_ids <- NULL
+      if (!is.null(depends_on)) {
+        depends_on_ids <- vcapply(depends_on, function(dependent_key) {
+          self$con$HGET(self$keys$key_task_id, dependent_key)
+        })
+      }
+      task_id <- self$submit(expr, depends_on = depends_on_ids)
       self$con$HSET(self$keys$key_task_id, key, task_id)
       self$con$HSET(self$keys$task_id_key, task_id, key)
       self$con$HSET(self$keys$task_timeout, task_id, timeout)
@@ -226,11 +256,71 @@ orderly_runner_ <- R6::R6Class(
     #' Submit an arbitrary job on the queue
     #'
     #' @param job A quoted R expression.
-    #' @param environment Environment to run the expression in.
+    #' @param depends_on Task ids for any dependencies of this job.
     #'
     #' @return Task id
-    submit = function(job, environment = parent.frame()) {
-       self$queue$enqueue_(job, environment)
+    submit = function(expr, depends_on = NULL) {
+      self$queue$enqueue_(expr, depends_on = depends_on)
+    },
+
+    #' @description
+    #' Queue a workflow.
+    #'
+    #' @param reports Details of reports to be run.
+    #' @param ref The git sha to run the workflow.
+    #' @param changelog Description of changes to the reports - applied to
+    #' all reports.
+    #' @param poll How frequently to poll for the report ID being available.
+    #' Applied to each of the reports run in the workflow
+    #' @param timeout Timeout for each of the reports run as part
+    #' of the workflow default 3 hours.
+    #'
+    #' @return The key for the workflow and each individual report
+    submit_workflow = function(reports, ref = NULL, changelog = NULL,
+                               poll = 0.1, timeout = 60 * 60 * 3) {
+      self$assert_ref_switching_allowed(ref)
+      if (!is.null(ref)) {
+        dependency_root <- self$alternative_root
+        git_fetch(dependency_root)
+        prev <- git_checkout_branch(ref, root = dependency_root)
+        on.exit(git_checkout_branch(prev, root = dependency_root))
+      } else {
+        dependency_root <- self$root
+      }
+      workflow <- build_workflow(self$root, dependency_root, reports)
+      ## Build a list of dependencies
+      ## report_name : [task_id1, task_id2, ...]
+      ## There could be multiple tasks queued with the same name
+      dependencies <- key_value_collector()
+      queue_task <- function(report) {
+        depends_on <- dependencies$get(report$depends_on)
+        key <- self$submit_task_report(name = report$name,
+                                           parameters = report$params,
+                                           ref = ref,
+                                           instance = report$instance,
+                                           changelog = changelog,
+                                           poll = poll,
+                                           timeout = timeout,
+                                           depends_on = depends_on)
+        dependencies$add(report$name, key)
+        key
+      }
+      report_keys <- vcapply(workflow, queue_task)
+      workflow_key <- ids::adjective_animal()
+      redis_key <- workflow_redis_key(self$queue$queue_id, workflow_key)
+      self$con$SADD(self$keys$key_workflows, workflow_key)
+      task_ids <- vcapply(report_keys, function(report_key) {
+        self$con$HGET(self$keys$key_task_id, report_key)
+      })
+      self$con$SADD(redis_key, task_ids)
+      ## Return in same order we received the reports
+      ## These will be used by OW to map returned ID to specific report
+      return_order <- vnapply(workflow, "[[", "original_order")
+      report_keys <- report_keys[return_order]
+      list(
+        workflow_key = workflow_key,
+        reports = report_keys
+      )
     },
 
     #' @description
@@ -404,7 +494,7 @@ orderly_runner_ <- R6::R6Class(
       list(
         key = key,
         status = status,
-        name = task_data$objects$name,
+        name = task_data$expr$name,
         version = report_id
       )
     }
@@ -458,5 +548,10 @@ orderly_key <- function(base) {
   list(key_task_id = sprintf("%s:orderly.server:key_task_id", base),
        task_id_key = sprintf("%s:orderly.server:task_id_key", base),
        task_timeout = sprintf("%s:orderly.server:task_timeout", base),
-       key_report_id = sprintf("%s:orderly.server:key_report_id", base))
+       key_report_id = sprintf("%s:orderly.server:key_report_id", base),
+       key_workflows = sprintf("%s:orderly.server:workflows", base))
+}
+
+workflow_redis_key <- function(base, workflow_key) {
+  sprintf("%s:orderly.server:workflow:%s", base, workflow_key)
 }

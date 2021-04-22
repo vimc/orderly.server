@@ -67,6 +67,16 @@ git_checkout_branch <- function(name, force = FALSE, root = NULL,
   prev
 }
 
+git_clone_local <- function(source, destination = NULL) {
+  orderly::orderly_log("git", "clone")
+  if (!length(destination)) {
+    destination <- tempfile()
+    dir_create(destination)
+  }
+  git_run(c("clone", source, destination), check = TRUE)
+  destination
+}
+
 git_fetch <- function(root = NULL) {
   orderly::orderly_log("git", "fetch")
   git_run("fetch", root = root, check = TRUE)

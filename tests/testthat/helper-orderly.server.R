@@ -86,7 +86,8 @@ read_json <- function(path, ...) {
 mock_runner <- function(key = NULL, status = NULL,
                         config = NULL, root = NULL,
                         check_timeout = NULL,
-                        queue_status = NULL) {
+                        queue_status = NULL,
+                        submit_workflow = NULL) {
   list(
     submit_task_report = mockery::mock(key, cycle = TRUE),
     status = mockery::mock(status, cycle = TRUE),
@@ -94,7 +95,8 @@ mock_runner <- function(key = NULL, status = NULL,
     kill = mockery::mock(TRUE, cycle = TRUE),
     config = config,
     root = root,
-    queue_status = mockery::mock(queue_status, cycle = TRUE)
+    queue_status = mockery::mock(queue_status, cycle = TRUE),
+    submit_workflow = mockery::mock(submit_workflow, cycle = TRUE)
   )
 }
 

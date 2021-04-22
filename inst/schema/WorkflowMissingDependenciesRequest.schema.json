@@ -6,6 +6,6 @@
         "reports": { "$ref": "WorkflowReports.schema.json" },
         "ref": { "type": "string" }
     },
-    "required": ["reports", "ref"],
+    "required": ["reports"],
     "additionalProperties": true
 }

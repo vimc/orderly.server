@@ -5,10 +5,10 @@
         "report": {
             "properties": {
                 "name": { "type": "string" },
-                "instance": { "type": "object" },
+                "instance": { "type": "string" },
                 "params": { "$ref": "Parameters.schema.json" }
             },
-            "required": [ "name", "instance" ],
+            "required": [ "name" ],
             "additionalProperties": false
         }
     },

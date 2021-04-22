@@ -513,14 +513,15 @@ test_that("can get missing dependencies of a workflow", {
   server <- start_test_server()
   on.exit(server$stop())
 
+  sha <- git_ref_to_sha("HEAD", server$path)
   r <- httr::POST(server$api_url("/v1/workflow/missing-dependencies/"),
                   body = list(reports = list(
                     list(
                       name = scalar("depend"),
-                      instance = list(source = scalar("production"))
+                      instance = scalar("production")
                     )
                   ),
-                  ref = scalar("123")),
+                  ref = scalar(sha)),
                   encode = "json")
 
   expect_equal(httr::status_code(r), 200)
@@ -531,4 +532,50 @@ test_that("can get missing dependencies of a workflow", {
       depend = "example"
     )
   ))
+})
+
+test_that("workflow can be run", {
+  path <- orderly_prepare_orderly_git_example()
+  server <- start_test_server(path[["local"]])
+  on.exit(server$stop())
+
+  sha <- git_ref_to_sha("HEAD", server$path)
+  r <- httr::POST(server$api_url("/v1/workflow/run/"),
+                  body = list(reports = list(
+                    list(
+                      name = scalar("global")
+                    ),
+                    list(
+                      name = scalar("minimal")
+                    )
+                  ),
+                  ref = scalar(sha)),
+                  encode = "json")
+
+  expect_equal(httr::status_code(r), 200)
+  dat <- content(r)
+  expect_equal(dat$status, "success")
+  expect_equal(names(dat$data), c("workflow_key", "reports"))
+  expect_length(dat$data$reports, 2)
+
+  wait_for_finished(dat$data$reports[1], server)
+  wait_for_finished(dat$data$reports[2], server)
+
+  report_1_status <- httr::GET(server$api_url(
+    sprintf("/v1/reports/%s/status/", dat$data$reports[1])),
+    query = list(output = TRUE))
+  expect_equal(httr::status_code(report_1_status), 200)
+  status_1 <- content(report_1_status)
+  expect_equal(status_1$status, "success")
+  expect_equal(status_1$data$status, "success")
+  expect_true(!is.null(status_1$data$version))
+
+  report_2_status <- httr::GET(server$api_url(
+    sprintf("/v1/reports/%s/status/", dat$data$reports[1])),
+    query = list(output = TRUE))
+  expect_equal(httr::status_code(report_2_status), 200)
+  status_2 <- content(report_2_status)
+  expect_equal(status_2$status, "success")
+  expect_equal(status_2$data$status, "success")
+  expect_true(!is.null(status_2$data$version))
 })
