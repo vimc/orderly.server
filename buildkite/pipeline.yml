@@ -38,7 +38,7 @@ steps:
     build:
       branch: master
 
-  - trigger: "covid19-forecasts"
+  - trigger: "covid19-forecasts-orderly"
     label: ":rocket: forecasts image (from orderly.server) :nerd:"
     branches: "master"
     build:
