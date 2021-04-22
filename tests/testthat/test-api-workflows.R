@@ -325,3 +325,49 @@ test_that("workflow status", {
   expect_equal(mockery::mock_args(runner$workflow_status)[[3]],
                list(workflow_key, FALSE))
 })
+
+test_that("workflow status - queued", {
+  workflow_key <- "workflow-key"
+  workflow_status <- list(workflow_key = workflow_key,
+                          status = "queued",
+                          reports = list(
+                            list(
+                              key = "key-2",
+                              status = "queued",
+                              version = NULL,
+                              output = NULL,
+                              queue = list(
+                                list(
+                                  key = "key-1",
+                                  status = "running",
+                                  name = "minimal",
+                                  version = "20210310-123928-fef89bc7"
+                                )))))
+
+  runner <- mock_runner(key, workflow_status = workflow_status)
+
+  res <- target_workflow_status(runner, workflow_key)
+  expect_equal(
+    res,
+    list(workflow_key = scalar(workflow_key),
+         status = scalar("queued"),
+         reports = list(
+           list(
+             key = scalar("key-2"),
+             status = scalar("queued"),
+             version = NULL,
+             output = NULL,
+             queue = list(
+               list(
+                 key = scalar("key-1"),
+                 status = scalar("running"),
+                 name = scalar("minimal"),
+                 version = scalar("20210310-123928-fef89bc7")
+               )
+             )
+           )
+         )))
+  mockery::expect_called(runner$workflow_status, 1)
+  expect_equal(mockery::mock_args(runner$workflow_status)[[1]],
+               list(workflow_key, FALSE))
+})
