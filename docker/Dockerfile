@@ -19,8 +19,7 @@ RUN install2.r --error \
 COPY docker/bin /usr/local/bin/
 
 RUN install_remote \
-  mrc-ide/heartbeatr \
-  mrc-ide/rrq \
+  mrc-ide/rrq@mrc-2361 \
   ropensci/jsonvalidate
 
 RUN Rscript -e 'remotes::install_github("reside-ic/porcelain@22eef9b")'
