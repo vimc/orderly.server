@@ -260,7 +260,8 @@ orderly_runner_ <- R6::R6Class(
     #'
     #' @return Task id
     submit = function(expr, depends_on = NULL) {
-      self$queue$enqueue_(expr, depends_on = depends_on)
+      self$queue$enqueue_(expr, depends_on = depends_on,
+                          separate_process = TRUE)
     },
 
     #' @description
@@ -403,7 +404,9 @@ orderly_runner_ <- R6::R6Class(
     check_timeout = function() {
       logs <- self$queue$worker_log_tail()
       ## Incomplete tasks are those where latest log is a START message
-      incomplete <- logs[logs$command == "TASK_START", ]
+      ## TODO: this is *terrible* and will come out
+      incomplete <- logs[logs$command == "REMOTE", ]
+
       if (nrow(incomplete) == 0) {
         return(invisible(NULL))
       }
