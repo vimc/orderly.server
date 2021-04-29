@@ -8,13 +8,14 @@ RUN apt-get update || apt-get update && apt-get install -y \
   openssh-client
 
 RUN install2.r --error \
-  --repos https://cloud.r-project.org \
-  --repos https://vimc.github.io/drat \
-  jsonlite \
-  porcelain \
-  processx \
-  remotes \
-  webutils
+        --repos https://cloud.r-project.org \
+        --repos https://vimc.github.io/drat \
+        callr \
+        jsonlite \
+        porcelain \
+        processx \
+        remotes \
+        webutils
 
 COPY docker/bin /usr/local/bin/
 
