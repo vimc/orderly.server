@@ -379,7 +379,7 @@ test_that("check_timeout prints message if fails to kill a report", {
   queue <- runner$queue
   mock_queue <- list(
     worker_log_tail = function() logs,
-    task_cancel = function(task_id) stop("Failed to cancel"),
+    task_cancel = function(task_id, delete) stop("Failed to cancel"),
     ## Needed for cleanup
     worker_stop = function(type) queue$worker_stop(type = "kill"),
     destroy = function(delete) queue$destroy(delete = TRUE)
