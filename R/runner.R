@@ -417,7 +417,7 @@ orderly_runner_ <- R6::R6Class(
 
       kill_task <- function(task_id, timeout) {
         tryCatch({
-          self$queue$task_cancel(task_id)
+          self$queue$task_cancel(task_id, delete = FALSE)
           message(sprintf("Successfully killed '%s', exceeded timeout of %s",
                           task_id, timeout))
           task_id
@@ -443,7 +443,7 @@ orderly_runner_ <- R6::R6Class(
           sprintf("Failed to kill '%s' task doesn't exist", key))
       }
       tryCatch(
-        self$queue$task_cancel(task_id),
+        self$queue$task_cancel(task_id, delete = FALSE),
         error = function(e) {
           porcelain::porcelain_stop(
             sprintf("Failed to kill '%s'\n  %s", key, e$message))
@@ -482,6 +482,7 @@ orderly_runner_ <- R6::R6Class(
       switch(status,
              "PENDING" = "queued",
              "COMPLETE" = "success",
+             "CANCELLED" = "interrupted",
              tolower(status)
       )
     },

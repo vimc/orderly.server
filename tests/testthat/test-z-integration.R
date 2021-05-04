@@ -580,3 +580,24 @@ test_that("workflow can be run", {
   expect_equal(status_2$data$status, "success")
   expect_true(!is.null(status_2$data$version))
 })
+
+
+test_that("Can cancel a running report", {
+  server <- start_test_server()
+
+  r <- httr::POST(server$api_url("/v1/reports/interactive/run/"),
+                  body = NULL, encode = "json")
+  dat <- content(r)
+  key <- dat$data$key
+
+  wait_for_version(key, server)
+
+  r <- httr::DELETE(
+    server$api_url("/v1/reports/%s/kill/", dat$data$key))
+  httr::content(r)
+
+  r <- httr::GET(server$api_url("/v1/reports/%s/status/", key))
+  dat <- httr::content(r)
+
+  expect_equal(dat$data$status, "interrupted")
+})
