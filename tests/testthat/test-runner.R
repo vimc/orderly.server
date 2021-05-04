@@ -404,6 +404,8 @@ test_that("kill - when running", {
 
   id <- wait_for_id(runner, key)
   expect_true(runner$kill(key))
+
+  expect_equal(runner$status(key)$status, "interrupted")
   expect_error(runner$kill(key), sprintf("Failed to kill '%s'", key))
 })
 
