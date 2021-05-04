@@ -393,6 +393,7 @@ test_that("check_timeout prints message if fails to kill a report", {
                sprintf("Failed to kill '%s'\n  Failed to cancel\n", task_id))
 })
 
+
 test_that("kill - when running", {
   testthat::skip_on_cran()
   skip_if_no_redis()
@@ -403,8 +404,8 @@ test_that("kill - when running", {
   key <- runner$submit_task_report(name)
 
   id <- wait_for_id(runner, key)
+  expect_equal(runner$status(key)$status, "running")
   expect_true(runner$kill(key))
-
   expect_equal(runner$status(key)$status, "interrupted")
   expect_error(runner$kill(key), sprintf("Failed to kill '%s'", key))
 })
