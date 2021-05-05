@@ -478,13 +478,8 @@ orderly_runner_ <- R6::R6Class(
     },
 
     task_status = function(task_id) {
-      status <- unname(self$queue$task_status(task_id))
-      switch(status,
-             "PENDING" = "queued",
-             "COMPLETE" = "success",
-             "CANCELLED" = "interrupted",
-             tolower(status)
-      )
+      rrq_to_orderly_status(
+        unname(self$queue$task_status(task_id)))
     },
 
     get_task_details = function(task_id) {
@@ -518,6 +513,16 @@ orderly_queue_id <- function(queue_id, worker = FALSE) {
     id <- sprintf("orderly.server:%s", ids::random_id())
   }
   id
+}
+
+
+rrq_to_orderly_status <- function(status) {
+  switch(status,
+         "PENDING" = "queued",
+         "COMPLETE" = "success",
+         "CANCELLED" = "interrupted",
+         "DIED" = "orphan",
+         tolower(status))
 }
 
 

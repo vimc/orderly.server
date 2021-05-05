@@ -828,3 +828,22 @@ test_that("submit_task_report can queue items with dependencies", {
   expect_equal(args[[3]]$depends_on,
                stats::setNames(c("1", "2"), c(key1, key2)))
 })
+
+
+test_that("status translation", {
+  ## These get translated, and always will
+  expect_equal(rrq_to_orderly_status(rrq:::TASK_PENDING), "queued")
+  expect_equal(rrq_to_orderly_status(rrq:::TASK_COMPLETE), "success")
+
+  ## these two might be worth changing in future
+  expect_equal(rrq_to_orderly_status(rrq:::TASK_CANCELLED), "interrupted")
+  expect_equal(rrq_to_orderly_status(rrq:::TASK_DIED), "orphan")
+
+  ## These are directly passed through
+  expect_equal(rrq_to_orderly_status(rrq:::TASK_DEFERRED), "deferred")
+  expect_equal(rrq_to_orderly_status(rrq:::TASK_ERROR), "error")
+  expect_equal(rrq_to_orderly_status(rrq:::TASK_IMPOSSIBLE), "impossible")
+  expect_equal(rrq_to_orderly_status(rrq:::TASK_MISSING), "missing")
+  expect_equal(rrq_to_orderly_status(rrq:::TASK_RUNNING), "running")
+  expect_equal(rrq_to_orderly_status(rrq:::TASK_TIMEOUT), "timeout")
+})
