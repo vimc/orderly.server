@@ -34,4 +34,4 @@ Encoding: UTF-8
 Remotes:
     reside-ic/porcelain,
     ropensci/jsonvalidate,
-    vimc/orderly@fix-gitignore
+    vimc/orderly
