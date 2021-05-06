@@ -20,9 +20,9 @@ function cleanup {
 trap cleanup EXIT
 
 rm -rf orderly-demo
-git clone https://github.com/vimc/orderly-demo
-mkdir -p orderly-demo/runner/log
-mkdir -p orderly-demo/runner/id
+git clone https://github.com/vimc/orderly-demo $PACKAGE_ROOT/orderly-demo
+mkdir -p $PACKAGE_ROOT/orderly-demo/runner/log
+mkdir -p $PACKAGE_ROOT/orderly-demo/runner/id
 
 docker network create $NAME_NETWORK
 

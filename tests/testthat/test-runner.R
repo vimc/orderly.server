@@ -379,7 +379,7 @@ test_that("check_timeout prints message if fails to kill a report", {
   queue <- runner$queue
   mock_queue <- list(
     worker_log_tail = function() logs,
-    task_cancel = function(task_id) stop("Failed to cancel"),
+    task_cancel = function(task_id, delete) stop("Failed to cancel"),
     ## Needed for cleanup
     worker_stop = function(type) queue$worker_stop(type = "kill"),
     destroy = function(delete) queue$destroy(delete = TRUE)
@@ -393,6 +393,7 @@ test_that("check_timeout prints message if fails to kill a report", {
                sprintf("Failed to kill '%s'\n  Failed to cancel\n", task_id))
 })
 
+
 test_that("kill - when running", {
   testthat::skip_on_cran()
   skip_if_no_redis()
@@ -403,7 +404,9 @@ test_that("kill - when running", {
   key <- runner$submit_task_report(name)
 
   id <- wait_for_id(runner, key)
+  expect_equal(runner$status(key)$status, "running")
   expect_true(runner$kill(key))
+  expect_equal(runner$status(key)$status, "interrupted")
   expect_error(runner$kill(key), sprintf("Failed to kill '%s'", key))
 })
 
@@ -824,4 +827,23 @@ test_that("submit_task_report can queue items with dependencies", {
   expect_equal(args[[2]]$depends_on, stats::setNames("1", key1))
   expect_equal(args[[3]]$depends_on,
                stats::setNames(c("1", "2"), c(key1, key2)))
+})
+
+
+test_that("status translation", {
+  ## These get translated, and always will
+  expect_equal(rrq_to_orderly_status(rrq:::TASK_PENDING), "queued")
+  expect_equal(rrq_to_orderly_status(rrq:::TASK_COMPLETE), "success")
+
+  ## these two might be worth changing in future
+  expect_equal(rrq_to_orderly_status(rrq:::TASK_CANCELLED), "interrupted")
+  expect_equal(rrq_to_orderly_status(rrq:::TASK_DIED), "orphan")
+
+  ## These are directly passed through
+  expect_equal(rrq_to_orderly_status(rrq:::TASK_DEFERRED), "deferred")
+  expect_equal(rrq_to_orderly_status(rrq:::TASK_ERROR), "error")
+  expect_equal(rrq_to_orderly_status(rrq:::TASK_IMPOSSIBLE), "impossible")
+  expect_equal(rrq_to_orderly_status(rrq:::TASK_MISSING), "missing")
+  expect_equal(rrq_to_orderly_status(rrq:::TASK_RUNNING), "running")
+  expect_equal(rrq_to_orderly_status(rrq:::TASK_TIMEOUT), "timeout")
 })
