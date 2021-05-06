@@ -5,7 +5,7 @@
     "properties": {
         "workflow_key": {"type": "string"},
         "status": {
-            "enum": ["queued", "running", "success", "error"]
+            "enum": ["queued", "running", "success", "error", "cancelled"]
         },
         "reports": {
             "type": "array",

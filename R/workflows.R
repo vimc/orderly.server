@@ -126,6 +126,8 @@ workflow_combine_status <- function(report_status) {
     workflow_status <- "success"
   } else if (any(report_status == "running")) {
     workflow_status <- "running"
+  } else if (any(report_status == "cancelled")) {
+    workflow_status <- "cancelled"
   } else if (all(report_status %in% c("queued", "deferred"))) {
     workflow_status <- "queued"
   } else {

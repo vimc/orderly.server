@@ -471,6 +471,8 @@ test_that("workflow status can be calcualted", {
   expect_equal(workflow_combine_status(report_status), "queued")
   report_status <- c("error", "success")
   expect_equal(workflow_combine_status(report_status), "error")
+  report_status <- c("queued", "cancelled")
+  expect_equal(workflow_combine_status(report_status), "cancelled")
 })
 
 test_that("can get status of a worfklow", {
