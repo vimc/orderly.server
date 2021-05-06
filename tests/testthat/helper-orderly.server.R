@@ -45,7 +45,8 @@ wait_for_id <- function(runner, key, ...) {
   e$st <- NULL
   continue <- function() {
     e$st <- runner$status(key)
-    e$st$status == "running" && is.null(e$st$version)
+    e$st$status == "queued" ||
+      (e$st$status == "running" && is.null(e$st$version))
   }
   wait_while(continue)
   e$st$version

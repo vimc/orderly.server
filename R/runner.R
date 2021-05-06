@@ -260,7 +260,8 @@ orderly_runner_ <- R6::R6Class(
     #'
     #' @return Task id
     submit = function(expr, depends_on = NULL) {
-      self$queue$enqueue_(expr, depends_on = depends_on)
+      self$queue$enqueue_(expr, depends_on = depends_on,
+                          separate_process = TRUE)
     },
 
     #' @description
@@ -403,7 +404,9 @@ orderly_runner_ <- R6::R6Class(
     check_timeout = function() {
       logs <- self$queue$worker_log_tail()
       ## Incomplete tasks are those where latest log is a START message
-      incomplete <- logs[logs$command == "TASK_START", ]
+      ## TODO: this is *terrible* and will come out
+      incomplete <- logs[logs$command == "REMOTE", ]
+
       if (nrow(incomplete) == 0) {
         return(invisible(NULL))
       }
@@ -414,7 +417,7 @@ orderly_runner_ <- R6::R6Class(
 
       kill_task <- function(task_id, timeout) {
         tryCatch({
-          self$queue$task_cancel(task_id)
+          self$queue$task_cancel(task_id, delete = FALSE)
           message(sprintf("Successfully killed '%s', exceeded timeout of %s",
                           task_id, timeout))
           task_id
@@ -440,7 +443,7 @@ orderly_runner_ <- R6::R6Class(
           sprintf("Failed to kill '%s' task doesn't exist", key))
       }
       tryCatch(
-        self$queue$task_cancel(task_id),
+        self$queue$task_cancel(task_id, delete = FALSE),
         error = function(e) {
           porcelain::porcelain_stop(
             sprintf("Failed to kill '%s'\n  %s", key, e$message))
@@ -475,12 +478,8 @@ orderly_runner_ <- R6::R6Class(
     },
 
     task_status = function(task_id) {
-      status <- unname(self$queue$task_status(task_id))
-      switch(status,
-             "PENDING" = "queued",
-             "COMPLETE" = "success",
-             tolower(status)
-      )
+      rrq_to_orderly_status(
+        unname(self$queue$task_status(task_id)))
     },
 
     get_task_details = function(task_id) {
@@ -514,6 +513,16 @@ orderly_queue_id <- function(queue_id, worker = FALSE) {
     id <- sprintf("orderly.server:%s", ids::random_id())
   }
   id
+}
+
+
+rrq_to_orderly_status <- function(status) {
+  switch(status,
+         "PENDING" = "queued",
+         "COMPLETE" = "success",
+         "CANCELLED" = "interrupted",
+         "DIED" = "orphan",
+         tolower(status))
 }
 
 

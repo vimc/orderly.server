@@ -10,7 +10,7 @@
                 "properties": {
                     "key": {"type": "string"},
                     "status": {
-                        "enum": ["queued", "running", "success", "error", "orphan", "interrupted", "redirect", "missing"]
+                        "$ref": "TaskStatus.schema.json"
                     },
                     "name": {"type": "string"},
                     "version": {

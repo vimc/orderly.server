@@ -10,14 +10,13 @@ Imports:
     DBI,
     R6,
     docopt (>= 0.7.1),
-    heartbeatr,
     ids,
     jsonlite,
     orderly (>= 1.2.35),
     porcelain (>= 0.1.0),
     processx,
     redux,
-    rrq (>= 0.2.12),
+    rrq (>= 0.3.0),
     webutils,
     yaml,
     zip
@@ -35,4 +34,4 @@ Encoding: UTF-8
 Remotes:
     reside-ic/porcelain,
     ropensci/jsonvalidate,
-    vimc/orderly@fix-gitignore
+    vimc/orderly
