@@ -310,10 +310,7 @@ orderly_runner_ <- R6::R6Class(
       workflow_key <- ids::adjective_animal()
       redis_key <- workflow_redis_key(self$queue$queue_id, workflow_key)
       self$con$SADD(self$keys$key_workflows, workflow_key)
-      task_ids <- vcapply(report_keys, function(report_key) {
-        self$con$HGET(self$keys$key_task_id, report_key)
-      })
-      self$con$SADD(redis_key, task_ids)
+      self$con$SADD(redis_key, report_keys)
       ## Return in same order we received the reports
       ## These will be used by OW to map returned ID to specific report
       return_order <- vnapply(workflow, "[[", "original_order")
@@ -369,6 +366,27 @@ orderly_runner_ <- R6::R6Class(
         version = report_id,
         output = out,
         queue = queued
+      )
+    },
+
+    #' @description
+    #' Get the status of a workflow.
+    #'
+    #' @param key The workflow key.
+    #' @param output If TRUE include the output from each job in the workflow.
+    #'
+    #' @return List containing the workflow_key, status and status of each
+    #' job in the workflow.
+    workflow_status = function(workflow_key, output = FALSE) {
+      redis_key <- workflow_redis_key(self$queue$queue_id, workflow_key)
+      report_keys <- self$con$SMEMBERS(redis_key)
+      reports <- lapply(report_keys, self$status, output)
+      report_status <- lapply(reports, "[[", "status")
+      workflow_status <- workflow_combine_status(report_status)
+      list(
+        workflow_key = workflow_key,
+        status = workflow_status,
+        reports = reports
       )
     },
 

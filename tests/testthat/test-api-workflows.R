@@ -269,3 +269,105 @@ test_that("report can be included in a workflow twice", {
   expect_equal(data_2$expr$ref, ref)
   expect_equal(data_2$expr$poll, 0.1)
 })
+
+test_that("workflow status", {
+  workflow_key <- "workflow-key"
+  workflow_status <- list(workflow_key = workflow_key,
+                          status = "queued",
+                          reports = list(
+                            list(
+                              key = "key1",
+                              status = "queued",
+                              version = NULL,
+                              output = NULL,
+                              queue = list()
+                            )
+                          ))
+
+  runner <- mock_runner(key, workflow_status = workflow_status)
+
+  res <- target_workflow_status(runner, workflow_key)
+  expect_equal(
+    res,
+    list(workflow_key = scalar(workflow_key),
+         status = scalar("queued"),
+         reports = list(
+           list(
+             key = scalar("key1"),
+             status = scalar("queued"),
+             version = NULL,
+             output = NULL,
+             queue = list()
+           )
+         )))
+  mockery::expect_called(runner$workflow_status, 1)
+  expect_equal(mockery::mock_args(runner$workflow_status)[[1]],
+               list(workflow_key, FALSE))
+
+  ## endpoint
+  endpoint <- endpoint_workflow_status(runner)
+  res_endpoint <- endpoint$run(workflow_key)
+  expect_equal(res_endpoint$status_code, 200)
+  expect_equal(res_endpoint$content_type, "application/json")
+  expect_equal(res_endpoint$data, res)
+  mockery::expect_called(runner$workflow_status, 2)
+  expect_equal(mockery::mock_args(runner$workflow_status)[[2]],
+               list(workflow_key, FALSE))
+
+  ## api
+  api <- build_api(runner, "path")
+  res_api <- api$request("GET",
+                         sprintf("/v1/workflow/%s/status/", workflow_key))
+  expect_equal(res_api$status, 200L)
+  expect_equal(res_api$headers[["Content-Type"]], "application/json")
+  expect_equal(res_api$body, as.character(res_endpoint$body))
+  mockery::expect_called(runner$workflow_status, 3)
+  expect_equal(mockery::mock_args(runner$workflow_status)[[3]],
+               list(workflow_key, FALSE))
+})
+
+test_that("workflow status - queued", {
+  workflow_key <- "workflow-key"
+  workflow_status <- list(workflow_key = workflow_key,
+                          status = "queued",
+                          reports = list(
+                            list(
+                              key = "key-2",
+                              status = "queued",
+                              version = NULL,
+                              output = NULL,
+                              queue = list(
+                                list(
+                                  key = "key-1",
+                                  status = "running",
+                                  name = "minimal",
+                                  version = "20210310-123928-fef89bc7"
+                                )))))
+
+  runner <- mock_runner(key, workflow_status = workflow_status)
+
+  res <- target_workflow_status(runner, workflow_key)
+  expect_equal(
+    res,
+    list(workflow_key = scalar(workflow_key),
+         status = scalar("queued"),
+         reports = list(
+           list(
+             key = scalar("key-2"),
+             status = scalar("queued"),
+             version = NULL,
+             output = NULL,
+             queue = list(
+               list(
+                 key = scalar("key-1"),
+                 status = scalar("running"),
+                 name = scalar("minimal"),
+                 version = scalar("20210310-123928-fef89bc7")
+               )
+             )
+           )
+         )))
+  mockery::expect_called(runner$workflow_status, 1)
+  expect_equal(mockery::mock_args(runner$workflow_status)[[1]],
+               list(workflow_key, FALSE))
+})
