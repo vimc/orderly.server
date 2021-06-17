@@ -35,6 +35,9 @@ docker run --rm -d --network=$NAME_NETWORK \
     --mount type=bind,src=$PACKAGE_ROOT/orderly-demo,dst=/demo \
     --name $NAME_SERVER $TAG_SHA --backup-period=0 demo
 
+## Wait for server to start and write worker config
+sleep 1
+
 docker run --rm -d --network=$NAME_NETWORK \
     -e REDIS_URL=redis://redis:6379 \
     --mount type=bind,src=$PACKAGE_ROOT/orderly-demo,dst=/demo \

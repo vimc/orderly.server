@@ -47,8 +47,9 @@ main_worker <- function(args = commandArgs(TRUE)) {
   # nocov start
   args <- main_worker_args(args)
   wait_for_go_signal(NULL, args$go_signal)
-  rrq::rrq_worker(orderly_queue_id(args$queue_id, TRUE),
-                  heartbeat_period = 10)
+  w <- rrq::rrq_worker_from_config(orderly_queue_id(args$queue_id, TRUE))
+  w$loop()
+  invisible(TRUE)
   # nocov end
 }
 
