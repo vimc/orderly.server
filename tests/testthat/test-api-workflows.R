@@ -371,3 +371,26 @@ test_that("workflow status - queued", {
   expect_equal(mockery::mock_args(runner$workflow_status)[[1]],
                list(workflow_key, FALSE))
 })
+
+test_that("git commits endpoint returns valid refs for workflow running", {
+  ## Test for vimc-4822
+  testthat::skip_on_cran()
+  skip_on_windows()
+  skip_if_no_redis()
+  path <- orderly_prepare_orderly_git_example()
+  runner <- orderly_runner(path[["local"]])
+
+  commits <- git_commits("master", root = path[["local"]])
+  expect_equal(nrow(commits), 1)
+
+  expect_no_error(res <- runner$submit_workflow(list(list(name = "global")),
+                                                commits$id))
+  task_id <- get_task_id_key(runner, res$reports)
+  result <- runner$queue$task_wait(task_id)
+
+  commits <- git_commits("master", root = path[["local"]])
+  ## Now 2 commits as we have fetched from remote
+  expect_equal(nrow(commits), 2)
+  expect_no_error(runner$submit_workflow(list(list(name = "global")),
+                                         commits$id[1]))
+})

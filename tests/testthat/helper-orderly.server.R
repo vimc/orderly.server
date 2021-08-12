@@ -169,3 +169,7 @@ append_lines <- function(text, filename) {
   prev <- readLines(filename)
   writeLines(c(prev, text), filename)
 }
+
+expect_no_error <- function(object, ...) {
+  expect_error(object, regexp = NA, ...)
+}
