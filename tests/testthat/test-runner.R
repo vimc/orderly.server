@@ -277,15 +277,15 @@ test_that("run in branch (local)", {
   testthat::skip_on_cran()
   skip_on_windows()
   skip_if_no_redis()
-  path <- orderly_unzip_git_demo()
-  runner <- orderly_runner(path)
+  path <- orderly_prepare_orderly_git_example()
+  runner <- orderly_runner(path[["local"]])
 
   key <- runner$submit_task_report("other", parameters = list(nmin = 0),
                                        ref = "other")
   task_id <- get_task_id_key(runner, key)
   result <- runner$queue$task_wait(task_id)
 
-  d <- orderly::orderly_list_archive(path)
+  d <- orderly::orderly_list_archive(path[["local"]])
   expect_equal(nrow(d), 1L)
   expect_equal(d$name, "other")
   expect_equal(d$id, result$report_id)
