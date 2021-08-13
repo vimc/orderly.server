@@ -73,7 +73,12 @@ git_clone_local <- function(source, destination = NULL) {
     destination <- tempfile()
     dir_create(destination)
   }
-  git_run(c("clone", source, destination), check = TRUE)
+  git_run(c("clone", "--origin=local", source, destination), check = TRUE)
+  remote_url <- git_run(c("config", "--get", "remote.origin.url"),
+                        root = source, check = TRUE)
+  git_run(c("remote", "add", "origin", remote_url$output),
+          root = destination, check = TRUE)
+  git_run(c("fetch", "origin"), root = destination, check = TRUE)
   destination
 }
 
