@@ -29,18 +29,24 @@
 ##' @param backup_period How frequently should backup be run, if NULL backup
 ##' is skipped
 ##'
+##' @param log_level The "lgr" log level to use
+##'
 ##' @export
 server <- function(path, port, host = "0.0.0.0", allow_ref = TRUE,
                    go_signal = NULL, queue_id = NULL, workers = 1,
-                   backup_period = 600, timeout_rate_limit = 2 * 60) {
+                   backup_period = 600, timeout_rate_limit = 2 * 60,
+                   log_level = "info") {
   message("Starting orderly server on port ", port)
   message("Orderly root: ", path)
 
   wait_for_go_signal(path, go_signal)
   runner <- orderly_runner(path, allow_ref, queue_id = queue_id,
                            workers = workers)
-  api <- build_api(runner, runner$root, backup_period,
-                   rate_limit = timeout_rate_limit)
+  logger <- make_logger(log_level)
+  api <- build_api(runner, runner$root,
+                   backup_period = backup_period,
+                   rate_limit = timeout_rate_limit,
+                   logger = logger)
   api$run(host, port)
 
   message("Server exiting")

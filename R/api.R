@@ -1,6 +1,8 @@
-build_api <- function(runner, path, backup_period = NULL, rate_limit = 2 * 60) {
+build_api <- function(runner, path, backup_period = NULL,
+                      rate_limit = 2 * 60,
+                      logger = NULL) {
   force(runner)
-  api <- porcelain::porcelain$new()
+  api <- porcelain::porcelain$new(logger = logger)
   api$handle(endpoint_root())
   api$handle(endpoint_git_status(path))
   api$handle(endpoint_git_fetch(path))
@@ -25,50 +27,7 @@ build_api <- function(runner, path, backup_period = NULL, rate_limit = 2 * 60) {
   backup <- orderly_backup(runner$config, backup_period)
   api$registerHook("preroute", backup$check_backup)
   api$registerHook("preroute", check_timeout(runner, rate_limit))
-  api$registerHook("preroute", api_preroute)
-  api$registerHook("postserialize", api_postserialize)
   api
-}
-
-api_preroute <- function(data, req, res, value) {
-  api_log_start(data, req, res)
-}
-
-api_postserialize <- function(data, req, res, value) {
-  api_log_end(data, req, res, value)
-}
-
-api_log_start <- function(data, req, res) {
-  api_log(sprintf("%s %s", req$REQUEST_METHOD, req$PATH_INFO))
-}
-
-api_log_end <- function(data, req, res, value) {
-  if (is.raw(res$body)) {
-    size <- length(res$body)
-  } else {
-    size <- nchar(res$body)
-  }
-  if (res$status >= 400 &&
-      identical(res$headers[["Content-Type"]], "application/json")) {
-    dat <- jsonlite::parse_json(res$body)
-    for (e in dat$errors) {
-      if (!is.null(e$error)) {
-        api_log(sprintf("error: %s", e$error))
-        api_log(sprintf("error-detail: %s", e$detail))
-        if (!is.null(e$trace)) {
-          trace <- sub("\n", " ", vcapply(e$trace, identity))
-          api_log(sprintf("error-trace: %s", trace))
-        }
-      }
-    }
-  }
-  api_log(sprintf("`--> %d (%d bytes)", res$status, size))
-  value
-}
-
-# We can route this via some check for enabling/disabling logging later
-api_log <- function(msg) {
-  message(paste(sprintf("[%s] %s", Sys.time(), msg), collapse = "\n"))
 }
 
 schema_root <- function() {
