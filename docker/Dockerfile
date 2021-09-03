@@ -12,6 +12,7 @@ RUN install2.r --error \
         --repos https://vimc.github.io/drat \
         callr \
         jsonlite \
+        lgr \
         porcelain \
         processx \
         remotes \
@@ -22,8 +23,6 @@ COPY docker/bin /usr/local/bin/
 RUN install_remote \
   mrc-ide/rrq \
   ropensci/jsonvalidate
-
-RUN Rscript -e 'remotes::install_github("reside-ic/porcelain@22eef9b")'
 
 COPY . /src
 RUN R CMD INSTALL /src
