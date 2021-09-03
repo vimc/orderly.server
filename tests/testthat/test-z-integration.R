@@ -149,7 +149,7 @@ test_that("git error returns valid json", {
 
 
 test_that("run report honours timeout", {
-  server <- start_test_server(log = "err.log")
+  server <- start_test_server()
   on.exit(server$stop())
 
   p <- file.path(server$path, "src", "count", "parameters.json")
