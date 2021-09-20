@@ -73,7 +73,7 @@ Object for managing running jobs on the redis queue" />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">orderly.server</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.15</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.16</span>
       </span>
     </div>
 
@@ -125,6 +125,12 @@ Object for managing running jobs on the redis queue" />
 
 <dt><code>allow_ref</code></dt><dd><p>Allow git to change branch/ref for run</p></dd>
 
+<dt><code>alternative_root</code></dt><dd><p>A copy of Orderly root in some tempdir.
+This is a copy we can safely switch the git ref on for e.g.
+finding report dependencies on a particular branch. This avoids
+changing the checked out branch on the main root, potentially
+causing issues for anything else which relies on global state</p></dd>
+
 <dt><code>con</code></dt><dd><p>Redis connection</p></dd>
 
 <dt><code>cleanup_on_exit</code></dt><dd><p>If TRUE workers are killed on exit</p></dd>
@@ -145,10 +151,12 @@ and task_id</p></dd>
 <ul>
 <li><p><a href='#method-new'><code>orderly_runner_$new()</code></a></p></li>
 <li><p><a href='#method-start_workers'><code>orderly_runner_$start_workers()</code></a></p></li>
+<li><p><a href='#method-assert_ref_switching_allowed'><code>orderly_runner_$assert_ref_switching_allowed()</code></a></p></li>
 <li><p><a href='#method-submit_task_report'><code>orderly_runner_$submit_task_report()</code></a></p></li>
-<li><p><a href='#method-submit_workflow'><code>orderly_runner_$submit_workflow()</code></a></p></li>
 <li><p><a href='#method-submit'><code>orderly_runner_$submit()</code></a></p></li>
+<li><p><a href='#method-submit_workflow'><code>orderly_runner_$submit_workflow()</code></a></p></li>
 <li><p><a href='#method-status'><code>orderly_runner_$status()</code></a></p></li>
+<li><p><a href='#method-workflow_status'><code>orderly_runner_$workflow_status()</code></a></p></li>
 <li><p><a href='#method-queue_status'><code>orderly_runner_$queue_status()</code></a></p></li>
 <li><p><a href='#method-check_timeout'><code>orderly_runner_$check_timeout()</code></a></p></li>
 <li><p><a href='#method-kill'><code>orderly_runner_$kill()</code></a></p></li>
@@ -204,6 +212,20 @@ killed. Expect this is only finite during local testing.</p></dd>
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>TRUE, called for side effects.</p>
 <p><hr>
+<a id="method-assert_ref_switching_allowed"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>assert_ref_switching_allowed()</code></h3>
+<p>Check if ref switching is allowed in this runner. Errors if
+ref is non NULL and ref switching disallowed, otherwise
+does nothing.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>orderly_runner_</span><span class='op'>$</span><span class='fu'>assert_ref_switching_allowed</span><span class='op'>(</span><span class='va'>ref</span><span class='op'>)</span></pre><p></div></p>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
+<dt><code>ref</code></dt><dd><p>Input ref to check</p></dd>
+
+</dl><p></div></p>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
+<p>TRUE, called for side effects.</p>
+<p><hr>
 <a id="method-submit_task_report"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>submit_task_report()</code></h3>
 <p>Queue a job to run an orderly report.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
 <p><div class="r"></p><pre><span class='va'>orderly_runner_</span><span class='op'>$</span><span class='fu'>submit_task_report</span><span class='op'>(</span>
@@ -213,7 +235,8 @@ killed. Expect this is only finite during local testing.</p></dd>
   instance <span class='op'>=</span> <span class='cn'>NULL</span>,
   changelog <span class='op'>=</span> <span class='cn'>NULL</span>,
   poll <span class='op'>=</span> <span class='fl'>0.1</span>,
-  timeout <span class='op'>=</span> <span class='fl'>60</span> <span class='op'>*</span> <span class='fl'>60</span> <span class='op'>*</span> <span class='fl'>3</span>
+  timeout <span class='op'>=</span> <span class='fl'>60</span> <span class='op'>*</span> <span class='fl'>60</span> <span class='op'>*</span> <span class='fl'>3</span>,
+  depends_on <span class='op'>=</span> <span class='cn'>NULL</span>
 <span class='op'>)</span></pre><p></div></p>
 
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
@@ -232,10 +255,26 @@ killed. Expect this is only finite during local testing.</p></dd>
 
 <dt><code>timeout</code></dt><dd><p>Timeout for the report run default 3 hours.</p></dd>
 
+<dt><code>depends_on</code></dt><dd><p>Keys of any tasks which this report depends on</p></dd>
+
 </dl><p></div></p>
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>The key for the job, note this is not the task id. The task id
 can be retrieved from redis using the key.</p>
+<p><hr>
+<a id="method-submit"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>submit()</code></h3>
+<p>Submit an arbitrary job on the queue</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>orderly_runner_</span><span class='op'>$</span><span class='fu'>submit</span><span class='op'>(</span><span class='va'>expr</span>, depends_on <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre><p></div></p>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
+<dt><code>depends_on</code></dt><dd><p>Task ids for any dependencies of this job.</p></dd>
+
+<dt><code>job</code></dt><dd><p>A quoted R expression.</p></dd>
+
+</dl><p></div></p>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
+<p>Task id</p>
 <p><hr>
 <a id="method-submit_workflow"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>submit_workflow()</code></h3>
 <p>Queue a workflow.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
@@ -266,20 +305,6 @@ of the workflow default 3 hours.</p></dd>
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>The key for the workflow and each individual report</p>
 <p><hr>
-<a id="method-submit"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>submit()</code></h3>
-<p>Submit an arbitrary job on the queue</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
-<p><div class="r"></p><pre><span class='va'>orderly_runner_</span><span class='op'>$</span><span class='fu'>submit</span><span class='op'>(</span><span class='va'>job</span>, environment <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/sys.parent.html'>parent.frame</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span></pre><p></div></p>
-
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
-<p><div class="arguments"></p><dl>
-<dt><code>job</code></dt><dd><p>A quoted R expression.</p></dd>
-
-<dt><code>environment</code></dt><dd><p>Environment to run the expression in.</p></dd>
-
-</dl><p></div></p>
-<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
-<p>Task id</p>
-<p><hr>
 <a id="method-status"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>status()</code></h3>
 <p>Get the status of a job</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
 <p><div class="r"></p><pre><span class='va'>orderly_runner_</span><span class='op'>$</span><span class='fu'>status</span><span class='op'>(</span><span class='va'>key</span>, output <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre><p></div></p>
@@ -294,6 +319,21 @@ of the workflow default 3 hours.</p></dd>
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>List containing the key, status, report_id (if available),
 output and the position of the job in the queue.</p>
+<p><hr>
+<a id="method-workflow_status"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>workflow_status()</code></h3>
+<p>Get the status of a workflow.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>orderly_runner_</span><span class='op'>$</span><span class='fu'>workflow_status</span><span class='op'>(</span><span class='va'>workflow_key</span>, output <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre><p></div></p>
+
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
+<dt><code>output</code></dt><dd><p>If TRUE include the output from each job in the workflow.</p></dd>
+
+<dt><code>key</code></dt><dd><p>The workflow key.</p></dd>
+
+</dl><p></div></p>
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
+<p>List containing the workflow_key, status and status of each
+job in the workflow.</p>
 <p><hr>
 <a id="method-queue_status"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>queue_status()</code></h3>
 <p>Get the running and queued tasks in front of key in the queue.</p>

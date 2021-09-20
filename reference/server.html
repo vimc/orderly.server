@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">orderly.server</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.15</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.16</span>
       </span>
     </div>
 
@@ -121,7 +121,8 @@
   queue_id <span class='op'>=</span> <span class='cn'>NULL</span>,
   workers <span class='op'>=</span> <span class='fl'>1</span>,
   backup_period <span class='op'>=</span> <span class='fl'>600</span>,
-  timeout_rate_limit <span class='op'>=</span> <span class='fl'>2</span> <span class='op'>*</span> <span class='fl'>60</span>
+  timeout_rate_limit <span class='op'>=</span> <span class='fl'>2</span> <span class='op'>*</span> <span class='fl'>60</span>,
+  log_level <span class='op'>=</span> <span class='st'>"info"</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -172,6 +173,10 @@ is skipped</p></td>
       <th>timeout_rate_limit</th>
       <td><p>How frequently should the API check for timeouts
 default 2 mins.</p></td>
+    </tr>
+    <tr>
+      <th>log_level</th>
+      <td><p>The "lgr" log level to use</p></td>
     </tr>
     </table>
 
