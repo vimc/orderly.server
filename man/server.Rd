@@ -13,7 +13,8 @@ server(
   queue_id = NULL,
   workers = 1,
   backup_period = 600,
-  timeout_rate_limit = 2 * 60
+  timeout_rate_limit = 2 * 60,
+  log_level = "info"
 )
 }
 \arguments{
@@ -44,6 +45,8 @@ is skipped}
 
 \item{timeout_rate_limit}{How frequently should the API check for timeouts
 default 2 mins.}
+
+\item{log_level}{The "lgr" log level to use}
 }
 \description{
 Run orderly server

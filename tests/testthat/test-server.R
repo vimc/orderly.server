@@ -72,9 +72,13 @@ test_that("run server", {
     list(path, allow_ref, queue_id = NULL, workers = 1))
 
   mockery::expect_called(mock_build_api, 1)
-  expect_equal(
-    mockery::mock_args(mock_build_api)[[1]],
-    list(runner, path, 600, rate_limit = 120))
+  args_build <- mockery::mock_args(mock_build_api)[[1]]
+  expect_length(args_build, 5)
+  expect_identical(args_build[[1]], runner)
+  expect_equal(args_build[[2]], path)
+  expect_equal(args_build$backup_period, 600)
+  expect_equal(args_build$rate_limit, 120)
+  expect_s3_class(args_build$logger, "Logger")
 
   mockery::expect_called(api$run, 1)
   expect_equal(

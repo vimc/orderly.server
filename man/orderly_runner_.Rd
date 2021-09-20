@@ -18,6 +18,12 @@ Object for managing running jobs on the redis queue
 
 \item{\code{allow_ref}}{Allow git to change branch/ref for run}
 
+\item{\code{alternative_root}}{A copy of Orderly root in some tempdir.
+This is a copy we can safely switch the git ref on for e.g.
+finding report dependencies on a particular branch. This avoids
+changing the checked out branch on the main root, potentially
+causing issues for anything else which relies on global state}
+
 \item{\code{con}}{Redis connection}
 
 \item{\code{cleanup_on_exit}}{If TRUE workers are killed on exit}
@@ -36,10 +42,12 @@ and task_id}
 \itemize{
 \item \href{#method-new}{\code{orderly_runner_$new()}}
 \item \href{#method-start_workers}{\code{orderly_runner_$start_workers()}}
+\item \href{#method-assert_ref_switching_allowed}{\code{orderly_runner_$assert_ref_switching_allowed()}}
 \item \href{#method-submit_task_report}{\code{orderly_runner_$submit_task_report()}}
-\item \href{#method-submit_workflow}{\code{orderly_runner_$submit_workflow()}}
 \item \href{#method-submit}{\code{orderly_runner_$submit()}}
+\item \href{#method-submit_workflow}{\code{orderly_runner_$submit_workflow()}}
 \item \href{#method-status}{\code{orderly_runner_$status()}}
+\item \href{#method-workflow_status}{\code{orderly_runner_$workflow_status()}}
 \item \href{#method-queue_status}{\code{orderly_runner_$queue_status()}}
 \item \href{#method-check_timeout}{\code{orderly_runner_$check_timeout()}}
 \item \href{#method-kill}{\code{orderly_runner_$kill()}}
@@ -111,6 +119,28 @@ TRUE, called for side effects.
 }
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-assert_ref_switching_allowed"></a>}}
+\if{latex}{\out{\hypertarget{method-assert_ref_switching_allowed}{}}}
+\subsection{Method \code{assert_ref_switching_allowed()}}{
+Check if ref switching is allowed in this runner. Errors if
+ref is non NULL and ref switching disallowed, otherwise
+does nothing.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{orderly_runner_$assert_ref_switching_allowed(ref)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{ref}}{Input ref to check}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+TRUE, called for side effects.
+}
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-submit_task_report"></a>}}
 \if{latex}{\out{\hypertarget{method-submit_task_report}{}}}
 \subsection{Method \code{submit_task_report()}}{
@@ -123,7 +153,8 @@ Queue a job to run an orderly report.
   instance = NULL,
   changelog = NULL,
   poll = 0.1,
-  timeout = 60 * 60 * 3
+  timeout = 60 * 60 * 3,
+  depends_on = NULL
 )}\if{html}{\out{</div>}}
 }
 
@@ -143,12 +174,36 @@ Queue a job to run an orderly report.
 \item{\code{poll}}{How frequently to poll for the report ID being available.}
 
 \item{\code{timeout}}{Timeout for the report run default 3 hours.}
+
+\item{\code{depends_on}}{Keys of any tasks which this report depends on}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
 The key for the job, note this is not the task id. The task id
 can be retrieved from redis using the key.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-submit"></a>}}
+\if{latex}{\out{\hypertarget{method-submit}{}}}
+\subsection{Method \code{submit()}}{
+Submit an arbitrary job on the queue
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{orderly_runner_$submit(expr, depends_on = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{depends_on}}{Task ids for any dependencies of this job.}
+
+\item{\code{job}}{A quoted R expression.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Task id
 }
 }
 \if{html}{\out{<hr>}}
@@ -189,28 +244,6 @@ The key for the workflow and each individual report
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-submit"></a>}}
-\if{latex}{\out{\hypertarget{method-submit}{}}}
-\subsection{Method \code{submit()}}{
-Submit an arbitrary job on the queue
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{orderly_runner_$submit(job, environment = parent.frame())}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{job}}{A quoted R expression.}
-
-\item{\code{environment}}{Environment to run the expression in.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-Task id
-}
-}
-\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-status"></a>}}
 \if{latex}{\out{\hypertarget{method-status}{}}}
 \subsection{Method \code{status()}}{
@@ -231,6 +264,29 @@ Get the status of a job
 \subsection{Returns}{
 List containing the key, status, report_id (if available),
 output and the position of the job in the queue.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-workflow_status"></a>}}
+\if{latex}{\out{\hypertarget{method-workflow_status}{}}}
+\subsection{Method \code{workflow_status()}}{
+Get the status of a workflow.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{orderly_runner_$workflow_status(workflow_key, output = FALSE)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{output}}{If TRUE include the output from each job in the workflow.}
+
+\item{\code{key}}{The workflow key.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+List containing the workflow_key, status and status of each
+job in the workflow.
 }
 }
 \if{html}{\out{<hr>}}
