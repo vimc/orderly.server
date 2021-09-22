@@ -7,26 +7,25 @@ RUN apt-get update || apt-get update && apt-get install -y \
   libv8-dev \
   openssh-client
 
+COPY docker/bin /usr/local/bin/
+
 RUN install2.r --error \
         --repos https://cloud.r-project.org \
         --repos https://vimc.github.io/drat \
         callr \
         jsonlite \
+        lgr \
         porcelain \
         processx \
         remotes \
         webutils
 
-COPY docker/bin /usr/local/bin/
+COPY . /src
 
 RUN install_remote \
-  mrc-ide/rrq \
-  ropensci/jsonvalidate
-
-RUN Rscript -e 'remotes::install_github("reside-ic/porcelain@22eef9b")'
-
-COPY . /src
-RUN R CMD INSTALL /src
+        mrc-ide/rrq \
+        ropensci/jsonvalidate \
+        && R CMD INSTALL /src
 
 EXPOSE 8321
 ENV ORDERLY_SERVER_QUEUE_ID=orderly.server

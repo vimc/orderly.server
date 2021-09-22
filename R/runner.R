@@ -172,7 +172,7 @@ orderly_runner_ <- R6::R6Class(
       self$con <- redux::hiredis()
       message("Starting queue")
       self$queue_id <- orderly_queue_id(queue_id)
-      self$queue <- rrq::rrq_controller(self$queue_id, self$con)
+      self$queue <- rrq::rrq_controller$new(self$queue_id, self$con)
       self$queue$worker_config_save("localhost", heartbeat_period = 10)
       self$start_workers(workers, worker_timeout)
       self$keys <- orderly_key(self$queue$queue_id)
