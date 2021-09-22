@@ -43,3 +43,9 @@ steps:
     branches: "master"
     build:
       branch: main
+
+  - trigger: "hiv-orderly"
+    label: ":rocket: hiv image (from orderly.server) :reminder_ribbon:"
+    branches: "master"
+    build:
+      branch: main
