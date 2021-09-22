@@ -26,10 +26,10 @@ mkdir -p $PACKAGE_ROOT/orderly-demo/runner/id
 
 docker network create $NAME_NETWORK
 
-docker run --rm  -d --network=$NAME_NETWORK --network-alias=redis \
+docker run --rm -d --network=$NAME_NETWORK --network-alias=redis \
     --name $NAME_REDIS redis
 
-docker run --rm  -d --network=$NAME_NETWORK \
+docker run --rm -d --network=$NAME_NETWORK \
     -e REDIS_URL=redis://redis:6379 \
     -p 8321:8321 \
     --mount type=bind,src=$PACKAGE_ROOT/orderly-demo,dst=/demo \
