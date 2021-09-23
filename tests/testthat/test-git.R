@@ -146,6 +146,50 @@ test_that("can get commit history for a branch", {
   expect_true(commits$id != other_commits$id)
 })
 
+test_that("git commits lists merge commit", {
+  testthat::skip_on_cran()
+  ## If we have a case like
+  ## master  (A)-(B)       #nolint
+  ##          \
+  ## other    (A)-(C)
+  ## And we merge master into other we get
+  ## master  (A)-(B)        #nolint
+  ##          \
+  ## other    (A)-(C)-(B)-(D)
+  ## where (D) is a merge commit
+  ## If we git_commits("other") we want to have all unmerged commits listed
+  ## i.e. C and D
+
+  path <- orderly_prepare_orderly_git_example()
+
+  commits <- git_commits("other", path[["local"]])
+  expect_equal(nrow(commits), 1)
+
+  ## Add a commit to master which is not on other branch
+  git_pull(path[["local"]])
+  writeLines("example", file.path(path[["local"]], "file.txt"))
+  git_run(c("add", "."), root = path[["local"]])
+  git_run(c("commit", "-m", "\"add example\""), root = path[["local"]])
+  ## Can't push as upstream is a non-bare repository, unless we set
+  ## the git config to allow it
+  git_run(c("config", "receive.denyCurrentBranch updateInstead"),
+          root = path[["origin"]])
+  git_run(c("push", "--set-upstream origin master"),
+          root = path[["local"]])
+
+  ## Merge master into other
+  git_checkout_branch("other", root = path[["local"]])
+  git_run(c("merge", "master"), root = path[["local"]])
+  git_run(c("push", "--set-upstream origin other"),
+          root = path[["local"]])
+
+  commits <- git_commits("other", path[["local"]])
+  expect_equal(nrow(commits), 2)
+
+  master_commits <- git_commits("master", path[["local"]])
+  expect_false(any(master_commits$id %in% commits$id))
+})
+
 test_that("can get report list from git", {
   testthat::skip_on_cran()
   path <- orderly_prepare_orderly_git_example()
