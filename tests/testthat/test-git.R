@@ -151,11 +151,11 @@ test_that("git commits lists merge commit", {
   ## If we have a case like
   ## master  (A)-(B)       #nolint
   ##          \
-  ## other    (A)-(C)
+  ## other    (A)-(C)      #nolint
   ## And we merge master into other we get
-  ## master  (A)-(B)        #nolint
+  ## master  (A)-(B)          #nolint
   ##          \
-  ## other    (A)-(C)-(B)-(D)
+  ## other    (A)-(C)-(B)-(D) #nolint
   ## where (D) is a merge commit
   ## If we git_commits("other") we want to have all unmerged commits listed
   ## i.e. C and D
