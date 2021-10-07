@@ -108,12 +108,6 @@ orderly_runner_ <- R6::R6Class(
     config = NULL,
     #' @field allow_ref Allow git to change branch/ref for run
     allow_ref = FALSE,
-    #' @field alternative_root A copy of Orderly root in some tempdir.
-    #' This is a copy we can safely switch the git ref on for e.g.
-    #' finding report dependencies on a particular branch. This avoids
-    #' changing the checked out branch on the main root, potentially
-    #' causing issues for anything else which relies on global state
-    alternative_root = NULL,
 
     #' @field con Redis connection
     con = NULL,
@@ -154,8 +148,6 @@ orderly_runner_ <- R6::R6Class(
       self$allow_ref <- runner_allow_ref(allow_ref, self$config)
       if (!self$allow_ref) {
         message("Disallowing reference switching in runner")
-      } else {
-        self$alternative_root <- git_clone_local(self$root)
       }
 
       ## This ensures that the index will be present, which will be
@@ -255,7 +247,7 @@ orderly_runner_ <- R6::R6Class(
     #' @description
     #' Submit an arbitrary job on the queue
     #'
-    #' @param job A quoted R expression.
+    #' @param expr A quoted R expression.
     #' @param depends_on Task ids for any dependencies of this job.
     #'
     #' @return Task id
@@ -280,15 +272,7 @@ orderly_runner_ <- R6::R6Class(
     submit_workflow = function(reports, ref = NULL, changelog = NULL,
                                poll = 0.1, timeout = 60 * 60 * 3) {
       self$assert_ref_switching_allowed(ref)
-      if (!is.null(ref)) {
-        dependency_root <- self$alternative_root
-        git_fetch(dependency_root)
-        prev <- git_checkout_branch(ref, root = dependency_root)
-        on.exit(git_checkout_branch(prev, root = dependency_root))
-      } else {
-        dependency_root <- self$root
-      }
-      workflow <- build_workflow(self$root, dependency_root, reports)
+      workflow <- build_workflow(self$root, reports, ref)
       ## Build a list of dependencies
       ## report_name : [task_id1, task_id2, ...]
       ## There could be multiple tasks queued with the same name
@@ -372,7 +356,7 @@ orderly_runner_ <- R6::R6Class(
     #' @description
     #' Get the status of a workflow.
     #'
-    #' @param key The workflow key.
+    #' @param workflow_key The workflow key.
     #' @param output If TRUE include the output from each job in the workflow.
     #'
     #' @return List containing the workflow_key, status and status of each

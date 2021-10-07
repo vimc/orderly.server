@@ -2,16 +2,17 @@ context("workflows")
 
 
 test_that("workflow missing dependencies errors if report not found", {
-  path <- orderly_prepare_orderly_example("minimal")
+  path <- orderly_prepare_orderly_example("minimal", git = TRUE)
   reports <- list(
     list(name = "missing_report")
   )
-  expect_error(workflow_missing_dependencies(path, reports),
-               "Report with name 'missing_report' cannot be found.")
+  expect_error(
+    workflow_missing_dependencies(path, reports),
+    "Report with name 'missing_report' at git ref 'HEAD' cannot be found.")
 })
 
 test_that("can get missing dependencies of a workflow", {
-  path <- orderly_prepare_orderly_example("demo")
+  path <- orderly_prepare_orderly_example("demo", git = TRUE)
   reports <- list(
     list(name = "other")
   )
@@ -40,7 +41,7 @@ test_that("can get missing dependencies of a workflow", {
 })
 
 test_that("workflow missing dependencies only looks at depth 1 dependencies", {
-  path <- orderly_prepare_orderly_example("demo")
+  path <- orderly_prepare_orderly_example("demo", git = TRUE)
   reports <- list(
     list(name = "use_dependency_2")
   )
@@ -51,7 +52,7 @@ test_that("workflow missing dependencies only looks at depth 1 dependencies", {
 })
 
 test_that("workflow missing dependencies can handle multiple dependencies", {
-  path <- orderly_prepare_orderly_example("depends", testing = TRUE)
+  path <- orderly_prepare_orderly_example("depends", testing = TRUE, git = TRUE)
 
   reports <- list(
     list(name = "depend4")
@@ -138,7 +139,7 @@ test_that("can work out dependencies graph", {
       instance = "production"
     )
   )
-  path <- orderly_prepare_orderly_example("depends", testing = TRUE)
+  path <- orderly_prepare_orderly_example("depends", testing = TRUE, git = TRUE)
   expect_equal(build_dependencies_graph(path, no_deps), list(depend = NA))
   expect_equal(build_dependencies_graph(path, one_dep),
                list(example = NA,
@@ -186,7 +187,7 @@ test_that("cycled can be detected", {
 })
 
 test_that("workflow representation can be built", {
-  path <- orderly_prepare_orderly_example("depends", testing = TRUE)
+  path <- orderly_prepare_orderly_example("depends", testing = TRUE, git = TRUE)
   no_deps <- list(
     list(
       name = "depend",
@@ -197,7 +198,7 @@ test_that("workflow representation can be built", {
       )
     )
   )
-  workflow <- build_workflow(path, path, no_deps)
+  workflow <- build_workflow(path, no_deps, NULL)
   expect_length(workflow, 1)
   expect_equal(names(workflow[[1]]),
                c("name", "instance", "params", "original_order"))
@@ -218,7 +219,7 @@ test_that("workflow representation can be built", {
       instance = "production"
     )
   )
-  workflow <- build_workflow(path, path, multiple_deps)
+  workflow <- build_workflow(path, multiple_deps, NULL)
   expect_length(workflow, 3)
 
   expect_equal(names(workflow[[1]]), c("name", "instance", "original_order"))
@@ -240,7 +241,7 @@ test_that("workflow representation can be built", {
 })
 
 test_that("workflow with duplicate reports can be built", {
-  path <- orderly_prepare_orderly_example("depends", testing = TRUE)
+  path <- orderly_prepare_orderly_example("depends", testing = TRUE, git = TRUE)
   no_deps <- list(
     list(
       name = "depend"
@@ -249,7 +250,7 @@ test_that("workflow with duplicate reports can be built", {
       name = "depend"
     )
   )
-  workflow <- build_workflow(path, path, no_deps)
+  workflow <- build_workflow(path, no_deps, NULL)
   expect_length(workflow, 2)
   expect_equal(workflow[[1]]$name, "depend")
   expect_equal(workflow[[1]]$original_order, 1)
@@ -413,19 +414,18 @@ test_that("dependencies are resolved using git ref", {
                                     queue_id = NULL, workers = 0)
 
   ## Remove dependencies on branch
-  prev <- git_checkout_branch("test", root = runner$alternative_root,
-                              create = TRUE)
-  depend4_path <- file.path(runner$alternative_root,  "src/depend4/orderly.yml")
+  prev <- git_checkout_branch("test", root = runner$root, create = TRUE)
+  depend4_path <- file.path(runner$root,  "src/depend4/orderly.yml")
   writeLines(c("script: script.R",
                "artefacts:",
                "  staticgraph:",
                "    description: A graph of things",
                "    filenames: mygraph.png"),
              depend4_path)
-  gert::git_add(".", repo = runner$alternative_root)
-  gert::git_commit("Remove dependencies", repo = runner$alternative_root,
+  gert::git_add(".", repo = runner$root)
+  gert::git_commit("Remove dependencies", repo = runner$root,
                    author = "Test User <test.user@example.com>")
-  git_checkout_branch(prev, root = runner$alternative_root)
+  git_checkout_branch(prev, root = runner$root)
 
   multiple_deps <- list(
     list(
@@ -450,10 +450,6 @@ test_that("dependencies are resolved using git ref", {
   expect_equivalent(args[[3]]$depends_on, "1")
   expect_equal(args[[3]][[1]]$ref, "test")
   expect_equal(args[[3]][[1]]$name, "depend2")
-
-  ## Git branch has been restored
-  expect_equal(git_branch_name(root = runner$root), "master")
-  expect_equal(git_branch_name(root = runner$alternative_root), "master")
 })
 
 test_that("workflow status can be calcualted", {
