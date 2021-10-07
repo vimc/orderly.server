@@ -15,7 +15,6 @@ RUN install2.r --error \
         callr \
         jsonlite \
         lgr \
-        porcelain \
         processx \
         remotes \
         webutils
@@ -24,6 +23,7 @@ COPY . /src
 
 RUN install_remote \
         mrc-ide/rrq \
+        reside-ic/porcelain \
         ropensci/jsonvalidate \
         && R CMD INSTALL /src
 

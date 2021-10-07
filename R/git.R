@@ -119,9 +119,15 @@ git_commits <- function(branch, root = NULL) {
     args <- c("log", "--pretty='%h,%cd'", "--date=unix", "--max-count=25",
               sprintf("refs/remotes/origin/%s", branch))
   } else {
+    ## We want to get all unmerged commits including any merge commits
+    ## --cherry-pick A...B omits any commits that introduce the same change
+    ## as another commit on the other side
+    ## --right-only will list only commits on the right side of A...B
+    ## so --cherry-pick --right-only A...B omits commits from B which are on A
     remote_branch <- sprintf("refs/remotes/origin/%s", branch)
     args <- c("log", "--pretty='%h,%cd'", "--date=unix", "--max-count=25",
-              paste0("--cherry refs/remotes/origin/master...", remote_branch),
+              "--right-only", "--cherry-pick",
+              paste0("refs/remotes/origin/master...", remote_branch),
               remote_branch)
   }
   commits <- git_run(args, root = root, check = TRUE)$output

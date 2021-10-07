@@ -14,7 +14,8 @@ Options:
   --go-signal=PATH               Relative path for go signal
   --queue-id=ID                  rrq ID
   --workers=WORKERS              Number of workers to spawn [default: 0]
-  --backup-period=BACKUP_PERIOD  How frequently should backup be run, 0 or negative for no backup [default: 600]"
+  --backup-period=BACKUP_PERIOD  How frequently should backup be run, 0 or negative for no backup [default: 600]
+  --log-level=LEVEL              Detail level of logs info or trace [default: info]"
   res <- docopt_parse(doc, args)
 
   backup_period <- as.integer(res[["backup_period"]])
@@ -29,7 +30,8 @@ Options:
        go_signal = res[["go_signal"]],
        queue_id = res[["queue_id"]],
        workers = as.integer(res[["workers"]]),
-       backup_period = backup_period)
+       backup_period = backup_period,
+       log_level = res[["log_level"]])
 }
 
 main_worker_args <- function(args = commandArgs(TRUE)) {
@@ -47,7 +49,8 @@ main_worker <- function(args = commandArgs(TRUE)) {
   # nocov start
   args <- main_worker_args(args)
   wait_for_go_signal(NULL, args$go_signal)
-  w <- rrq::rrq_worker_from_config(orderly_queue_id(args$queue_id, TRUE))
+  w <- rrq::rrq_worker_from_config(orderly_queue_id(args$queue_id, TRUE),
+                                   timeout = 30)
   w$loop()
   invisible(TRUE)
   # nocov end
