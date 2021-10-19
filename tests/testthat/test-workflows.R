@@ -8,7 +8,7 @@ test_that("workflow missing dependencies errors if report not found", {
   )
   expect_error(
     workflow_missing_dependencies(path, reports),
-    "Path 'src/missing_report/orderly.yml' does not exist in 'HEAD'")
+    "[pP]ath 'src/missing_report/orderly.yml' does not exist in 'HEAD'")
 })
 
 test_that("can get missing dependencies of a workflow", {
