@@ -73,7 +73,7 @@ Object for managing running jobs on the redis queue" />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">orderly.server</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.18</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.19</span>
       </span>
     </div>
 
@@ -124,12 +124,6 @@ Object for managing running jobs on the redis queue" />
 <dt><code>config</code></dt><dd><p>Orderly config</p></dd>
 
 <dt><code>allow_ref</code></dt><dd><p>Allow git to change branch/ref for run</p></dd>
-
-<dt><code>alternative_root</code></dt><dd><p>A copy of Orderly root in some tempdir.
-This is a copy we can safely switch the git ref on for e.g.
-finding report dependencies on a particular branch. This avoids
-changing the checked out branch on the main root, potentially
-causing issues for anything else which relies on global state</p></dd>
 
 <dt><code>con</code></dt><dd><p>Redis connection</p></dd>
 
@@ -268,9 +262,9 @@ can be retrieved from redis using the key.</p>
 
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
-<dt><code>depends_on</code></dt><dd><p>Task ids for any dependencies of this job.</p></dd>
+<dt><code>expr</code></dt><dd><p>A quoted R expression.</p></dd>
 
-<dt><code>job</code></dt><dd><p>A quoted R expression.</p></dd>
+<dt><code>depends_on</code></dt><dd><p>Task ids for any dependencies of this job.</p></dd>
 
 </dl><p></div></p>
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
@@ -326,9 +320,9 @@ output and the position of the job in the queue.</p>
 
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
-<dt><code>output</code></dt><dd><p>If TRUE include the output from each job in the workflow.</p></dd>
+<dt><code>workflow_key</code></dt><dd><p>The workflow key.</p></dd>
 
-<dt><code>key</code></dt><dd><p>The workflow key.</p></dd>
+<dt><code>output</code></dt><dd><p>If TRUE include the output from each job in the workflow.</p></dd>
 
 </dl><p></div></p>
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
