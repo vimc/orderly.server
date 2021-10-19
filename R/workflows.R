@@ -16,9 +16,8 @@
 workflow_missing_dependencies <- function(path, reports, ref = NULL) {
   report_names <- vcapply(reports, function(report) report$name,
                           USE.NAMES = FALSE)
-  dependencies <- orderly::orderly_dependencies(report_names, root = path,
-                                                ref = ref,
-                                                direction = "upstream")
+  dependencies <- orderly_upstream_dependencies(report_names, root = path,
+                                                ref = ref)
   missing_deps <- lapply(report_names, function(report) {
     report_deps <- dependencies[[report]]
     if (is.null(report_deps)) {
@@ -38,9 +37,8 @@ workflow_missing_dependencies <- function(path, reports, ref = NULL) {
 ## means A & C have no dependencies, B depends on C, D depends on A & B
 build_dependencies_graph <- function(path, reports, ref = NULL) {
   report_names <- unique(vcapply(reports, function(report) report$name))
-  dependencies <- orderly::orderly_dependencies(report_names, root = path,
-                                                ref = ref,
-                                                direction = "upstream")
+  dependencies <- orderly_upstream_dependencies(report_names, root = path,
+                                                ref = ref)
   get_present_dependencies <- function(report) {
     present_deps <- report_names[report_names %in% dependencies[[report]]]
     if (length(present_deps) == 0) {
@@ -126,4 +124,32 @@ workflow_combine_status <- function(report_status) {
     workflow_status <- "error"
   }
   workflow_status
+}
+
+orderly_upstream_dependencies <- function(reports, root = NULL, locate = TRUE,
+                                 ref = NULL) {
+  assert_character(reports)
+  if (!is.null(ref)) {
+    assert_scalar_character(ref)
+  }
+  config <- orderly::orderly_config(root, locate)
+  get_upstream_dependencies(reports, ref, config)
+}
+
+get_upstream_dependencies <- function(reports, ref, config) {
+  setNames(lapply(reports, report_dependencies, ref, config), reports)
+}
+
+report_dependencies <- function(name, ref, config) {
+  path <- file.path("src", name, "orderly.yml")
+  lines <- git_show(path, ref = ref, root = config$root)
+  depends <- yaml_load(lines$output)$depends
+  if (is.null(depends)) {
+    return(NULL)
+  }
+  ## Deal with yaml weirdness:
+  if (is.null(names(depends))) {
+    depends <- ordered_map_to_list(depends)
+  }
+  unique(names(depends))
 }

@@ -8,7 +8,7 @@ test_that("workflow missing dependencies errors if report not found", {
   )
   expect_error(
     workflow_missing_dependencies(path, reports),
-    "Report with name 'missing_report' at git ref 'HEAD' cannot be found.")
+    "Path 'src/missing_report/orderly.yml' does not exist in 'HEAD'")
 })
 
 test_that("can get missing dependencies of a workflow", {
@@ -526,4 +526,16 @@ test_that("can get status of a worfklow", {
                all = FALSE)
   expect_match(status$reports[[3]]$output, "\\[ success +\\]  :)",
                all = FALSE)
+})
+
+test_that("can get upstream dependencies", {
+  path <- orderly_prepare_orderly_example("depends", testing = TRUE, git = TRUE)
+
+  deps <- orderly_upstream_dependencies(c("example", "depend", "depend2"),
+                                        root = path)
+  expect_equal(deps, list(
+    example = NULL,
+    depend = "example",
+    depend2 = "example"
+  ))
 })

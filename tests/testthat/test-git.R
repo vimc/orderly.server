@@ -409,3 +409,22 @@ test_that("can clone a local repo", {
                              root = destination, check = TRUE)
   expect_equal(original_remote, cloned_remote)
 })
+
+test_that("git show", {
+  path <- orderly_unzip_git_demo()
+  yml <- file.path("src/minimal/orderly.yml")
+  out <- git_show(yml, root = path)
+  expect_equal(out$output, readLines(file.path(path, yml)))
+
+  ## Reading from another branch
+  master <- git_checkout_branch("example", root = path, create = TRUE)
+  writeLines("test new line", file.path(path, yml))
+  git_run(c("add", "."), root = path, check = TRUE)
+  git_run(c("commit", "-m", "'add line'"), root = path, check = TRUE)
+  hash <- git_run(c("rev-parse", "--short", "HEAD"), root = path, check = TRUE)
+  contents <- readLines(file.path(path, yml))
+  git_checkout_branch(master, root = path)
+
+  out <- git_show(yml, ref = hash$output, root = path)
+  expect_equal(out$output, contents)
+})
