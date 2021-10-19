@@ -4,7 +4,7 @@
 \alias{workflow_missing_dependencies}
 \title{Get missing dependencies for list of reports.}
 \usage{
-workflow_missing_dependencies(path, reports)
+workflow_missing_dependencies(path, reports, ref = NULL)
 }
 \arguments{
 \item{path}{Path to orderly root.}

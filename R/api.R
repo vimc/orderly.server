@@ -375,16 +375,10 @@ endpoint_run_metadata <- function(runner) {
 
 target_workflow_missing_dependencies <- function(runner, body) {
   body <- jsonlite::fromJSON(body, simplifyDataFrame = FALSE)
-  if (is.null(body$ref)) {
-    root <- runner$root
-  } else {
+  if (!is.null(body$ref)) {
     runner$assert_ref_switching_allowed(body$ref)
-    root <- runner$alternative_root
-    git_fetch(root)
-    prev <- git_checkout_branch(body$ref, root = root)
-    on.exit(git_checkout_branch(prev, root = root))
   }
-  workflow_missing_dependencies(root, body$reports)
+  workflow_missing_dependencies(runner$root, body$reports, body$ref)
 }
 
 endpoint_workflow_missing_dependencies <- function(runner) {

@@ -789,18 +789,6 @@ test_that("queue_status", {
         version = NULL))))
 })
 
-test_that("runner creates copy of root with git available", {
-  testthat::skip_on_cran()
-  skip_on_windows()
-  skip_if_no_redis()
-  path <- orderly_git_example("minimal")
-  runner <- orderly_runner(path)
-  expect_true(!is.null(runner$alternative_root))
-  expect_true(file.exists(runner$alternative_root))
-  expect_setequal(list.files(runner$alternative_root),
-               c("demo.yml", "orderly_config.yml", "README.md", "src"))
-  expect_true(file.exists(file.path(runner$alternative_root, ".git")))
-})
 
 test_that("submit_task_report can queue items with dependencies", {
   testthat::skip_on_cran()

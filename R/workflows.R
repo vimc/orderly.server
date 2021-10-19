@@ -13,32 +13,21 @@
 ##' @return List with key report name and value is any missing dependencies.
 ##'
 ##' @keywords internal
-workflow_missing_dependencies <- function(path, reports) {
-  all_reports <- orderly::orderly_list(root = path)
-  report_names <- lapply(reports, function(report) report$name)
-  missing_deps <- lapply(reports, function(report) {
-    if (!(report$name %in% all_reports)) {
-      stop(sprintf("Report with name '%s' cannot be found.", report$name))
+workflow_missing_dependencies <- function(path, reports, ref = NULL) {
+  report_names <- vcapply(reports, function(report) report$name,
+                          USE.NAMES = FALSE)
+  dependencies <- orderly_upstream_dependencies(report_names, root = path,
+                                                ref = ref)
+  missing_deps <- lapply(report_names, function(report) {
+    report_deps <- dependencies[[report]]
+    if (is.null(report_deps)) {
+      return(list())
     }
-    get_missing_dependencies(report$name, path, report_names)
+    recursive_scalar(
+      report_deps[!(report_deps %in% report_names)])
   })
   list(missing_dependencies = stats::setNames(missing_deps, report_names))
 }
-
-get_missing_dependencies <- function(report_name, path, report_names) {
-  dependencies <- get_report_dependencies(report_name, path)
-  deps <- dependencies[!(dependencies %in% report_names)]
-}
-
-get_report_dependencies <- function(report_name, path) {
-  graph <- orderly::orderly_graph(report_name, root = path,
-                                  direction = "upstream",
-                                  use = "src", max_depth = 1)
-  lapply(graph$root$children, function(vertex) {
-    scalar(vertex$name)
-  })
-}
-
 
 ## Build a representation like
 ## > - reportA = NA
@@ -46,11 +35,12 @@ get_report_dependencies <- function(report_name, path) {
 ## > - reportC = NA
 ## > - reportD = c(reportA, reportB)
 ## means A & C have no dependencies, B depends on C, D depends on A & B
-build_dependencies_graph <- function(path, reports) {
+build_dependencies_graph <- function(path, reports, ref = NULL) {
   report_names <- unique(vcapply(reports, function(report) report$name))
+  dependencies <- orderly_upstream_dependencies(report_names, root = path,
+                                                ref = ref)
   get_present_dependencies <- function(report) {
-    dependencies <- unique(unlist(get_report_dependencies(report, path)))
-    present_deps <- report_names[report_names %in% dependencies]
+    present_deps <- report_names[report_names %in% dependencies[[report]]]
     if (length(present_deps) == 0) {
       present_deps <- NA
     }
@@ -61,8 +51,8 @@ build_dependencies_graph <- function(path, reports) {
   deps_graph
 }
 
-build_workflow <- function(root, alternative_root, reports) {
-  dependencies_graph <- build_dependencies_graph(alternative_root, reports)
+build_workflow <- function(root, reports, ref) {
+  dependencies_graph <- build_dependencies_graph(root, reports, ref)
   order <- topological_sort(dependencies_graph)
   ## We want to return in order which this workflow run was requested
   ## preserve this now for ordering the result before return

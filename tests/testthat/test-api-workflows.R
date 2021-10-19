@@ -394,3 +394,59 @@ test_that("git commits endpoint returns valid refs for workflow running", {
   expect_no_error(runner$submit_workflow(list(list(name = "global")),
                                          commits$id[1]))
 })
+
+
+test_that("mrc-2626: workflow can be queued on new branch", {
+  testthat::skip_on_cran()
+  skip_on_windows()
+  skip_if_no_redis()
+  path <- orderly_prepare_orderly_example(name = "depends", testing = TRUE,
+                                          git = TRUE)
+  runner <- orderly_runner(path)
+
+  ## Make a change to origin to represent someone updating remote
+  ## e.g. merging a new PR
+  ## Setup another report on a branch to check works with different ref
+  master <- git_checkout_branch("example", root = path, create = TRUE)
+  new_report <- file.path(path, "src/depend5")
+  dir.create(new_report)
+  file.copy(list.files(file.path(path, "src/depend2"), full.names = TRUE),
+            file.path(path, "src/depend5"), recursive = TRUE)
+  git_run(c("add", "."), root = path, check = TRUE)
+  gert::git_commit("Add depend5 report", repo = path,
+                   author = "Test User <test.user@example.com>")
+  hash <- git_run(c("rev-parse", "--short", "HEAD"), root = path, check = TRUE)
+  git_checkout_branch(master, root = path)
+
+  ## Pull to represent someone hitting "refresh git" button in OW
+  target_git_pull(path)
+
+  ## Get commits
+  commits <- target_git_commits(path, "example")
+  expect_equal(nrow(commits), 1)
+
+  multiple_deps <- list(
+    list(
+      name = "example"
+    ),
+    list(
+      name = "depend5"
+    ),
+    list(
+      name = "depend2"
+    )
+  )
+  res <- runner$submit_workflow(multiple_deps, ref = commits$id)
+  testthat::try_again(5, {
+    Sys.sleep(0.5)
+    tasks <- runner$queue$task_list()
+    expect_length(tasks, 3)
+  })
+  expect_equal(names(res), c("workflow_key", "reports"))
+  expect_true(!is.null(res$workflow_key))
+  redis_key <- workflow_redis_key(runner$queue$queue_id, res$workflow_key)
+  expect_setequal(runner$con$SMEMBERS(redis_key), res$reports)
+  expect_length(res$reports, 3)
+  task_ids <- vcapply(res$reports, function(id) get_task_id_key(runner, id))
+  expect_setequal(tasks, task_ids)
+})

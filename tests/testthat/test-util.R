@@ -161,3 +161,17 @@ test_that("collector", {
   expect_equal(collection$get(c("foo", "test")),
                               c("A", "B", "new item", "item2"))
 })
+
+test_that("ordered_map_to_list", {
+  expect_equal(ordered_map_to_list(yaml_load("- a: 1\n- b: 2")),
+               list(a = 1, b = 2))
+
+  ## The yaml parser will catch this sort of thing
+  expect_error(yaml_load("- a: 1\n- b: 2\n c: 3"))
+
+  ## but if it came through it would be as
+  d <- list(list(a = 1), list(b = 2, c = 3))
+  expect_error(ordered_map_to_list(d),
+               "Corrupt ordered map (this should never happen)",
+               fixed = TRUE)
+})

@@ -18,12 +18,6 @@ Object for managing running jobs on the redis queue
 
 \item{\code{allow_ref}}{Allow git to change branch/ref for run}
 
-\item{\code{alternative_root}}{A copy of Orderly root in some tempdir.
-This is a copy we can safely switch the git ref on for e.g.
-finding report dependencies on a particular branch. This avoids
-changing the checked out branch on the main root, potentially
-causing issues for anything else which relies on global state}
-
 \item{\code{con}}{Redis connection}
 
 \item{\code{cleanup_on_exit}}{If TRUE workers are killed on exit}
@@ -196,9 +190,9 @@ Submit an arbitrary job on the queue
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{depends_on}}{Task ids for any dependencies of this job.}
+\item{\code{expr}}{A quoted R expression.}
 
-\item{\code{job}}{A quoted R expression.}
+\item{\code{depends_on}}{Task ids for any dependencies of this job.}
 }
 \if{html}{\out{</div>}}
 }
@@ -278,9 +272,9 @@ Get the status of a workflow.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{output}}{If TRUE include the output from each job in the workflow.}
+\item{\code{workflow_key}}{The workflow key.}
 
-\item{\code{key}}{The workflow key.}
+\item{\code{output}}{If TRUE include the output from each job in the workflow.}
 }
 \if{html}{\out{</div>}}
 }
