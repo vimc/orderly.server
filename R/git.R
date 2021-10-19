@@ -202,11 +202,3 @@ get_report_parameters <- function(report, commit, root) {
   )
   report_cfg$parameters
 }
-
-git_show <- function(path, ref = NULL, root = NULL) {
-  if (is.null(ref)) {
-    ref <- "HEAD"
-  }
-  path <- sprintf("%s:%s", ref, path)
-  git_run(c("show", path), root = root, check = TRUE)
-}

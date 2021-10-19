@@ -181,24 +181,3 @@ key_value_collector <- function(init = list()) {
        get_all = function() env$res,
        get = function(keys) unlist(lapply(keys, get), recursive = FALSE))
 }
-
-ordered_map_to_list <- function(x) {
-  ## This should not happen, but this is what would happen if we had
-  ## a corrupted ordered map.  I think that the yaml parsers will
-  ## fix that for us though.
-  if (!all(lengths(x) == 1L)) {
-    stop("Corrupt ordered map (this should never happen)")
-  }
-  stopifnot(vlapply(x, function(el) !is.null(names(el))))
-  set_names(lapply(x, function(x) x[[1]]),
-            vcapply(x, names))
-}
-
-vlapply <- function(X, FUN, ...) { # nolint
-  vapply(X, FUN, logical(1), ...)
-}
-
-set_names <- function(x, nms) {
-  names(x) <- nms
-  x
-}

@@ -125,27 +125,3 @@ workflow_combine_status <- function(report_status) {
   }
   workflow_status
 }
-
-orderly_upstream_dependencies <- function(reports, root = NULL, locate = TRUE,
-                                 ref = NULL) {
-  assert_character(reports)
-  if (!is.null(ref)) {
-    assert_scalar_character(ref)
-  }
-  config <- orderly::orderly_config(root, locate)
-  setNames(lapply(reports, report_dependencies, ref, config), reports)
-}
-
-report_dependencies <- function(name, ref, config) {
-  path <- file.path("src", name, "orderly.yml")
-  lines <- git_show(path, ref = ref, root = config$root)
-  depends <- yaml_load(lines$output)$depends
-  if (is.null(depends)) {
-    return(NULL)
-  }
-  ## Deal with yaml weirdness:
-  if (is.null(names(depends))) {
-    depends <- ordered_map_to_list(depends)
-  }
-  unique(names(depends))
-}
