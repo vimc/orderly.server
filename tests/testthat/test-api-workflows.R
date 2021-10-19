@@ -413,7 +413,8 @@ test_that("mrc-2626: workflow can be queued on new branch", {
   file.copy(list.files(file.path(path, "src/depend2"), full.names = TRUE),
             file.path(path, "src/depend5"), recursive = TRUE)
   git_run(c("add", "."), root = path, check = TRUE)
-  git_run(c("commit", "-m", "'Add depend5 report'"), root = path, check = TRUE)
+  gert::git_commit("Add depend5 report", repo = path,
+                   author = "Test User <test.user@example.com>")
   hash <- git_run(c("rev-parse", "--short", "HEAD"), root = path, check = TRUE)
   git_checkout_branch(master, root = path)
 
