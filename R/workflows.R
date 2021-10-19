@@ -133,10 +133,6 @@ orderly_upstream_dependencies <- function(reports, root = NULL, locate = TRUE,
     assert_scalar_character(ref)
   }
   config <- orderly::orderly_config(root, locate)
-  get_upstream_dependencies(reports, ref, config)
-}
-
-get_upstream_dependencies <- function(reports, ref, config) {
   setNames(lapply(reports, report_dependencies, ref, config), reports)
 }
 
