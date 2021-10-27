@@ -326,7 +326,7 @@ test_that("check_timeout kills timed out reports", {
   key1 <- runner$submit_task_report("minimal", timeout = 0)
   key2 <- runner$submit_task_report("slow10", timeout = 0)
   ## Sleep for a bit to allow "minimal" report to post TASK_COMPLETE message
-  Sys.sleep(3)
+  Sys.sleep(5)
   msg <- capture_messages(killed <- runner$check_timeout())
   task2 <- get_task_id_key(runner, key2)
   expect_equal(killed, task2)
