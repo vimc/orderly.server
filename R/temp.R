@@ -5,7 +5,7 @@ orderly_upstream_dependencies <- function(reports, root = NULL, locate = TRUE,
     assert_scalar_character(ref)
   }
   config <- orderly::orderly_config(root, locate)
-  setNames(lapply(reports, report_dependencies, ref, config), reports)
+  stats::setNames(lapply(reports, report_dependencies, ref, config), reports)
 }
 
 report_dependencies <- function(name, ref, config) {
