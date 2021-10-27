@@ -468,19 +468,23 @@ test_that("workflow submit response lists reports in same order as request", {
     )
   )
   res <- runner$submit_workflow(reports)
-  testthat::try_again(5, {
+  testthat::try_again(10, {
     Sys.sleep(0.5)
     status <- runner$workflow_status(res$workflow_key)
     result <- lapply(status$reports, "[[", "status")
     expect_true(all(result == "success"))
   })
 
+  status_keys <- vcapply(status$reports, "[[", "key")
+  expect_setequal(status_keys, res$reports)
   ## If `orderly_info` can find reports when we specify their name and id
   ## then we know response has been returned in same order as input
-  check_same <- function(report, status) {
-    expect_no_error(orderly::orderly_info(id = status$version,
+  check_same <- function(report, key) {
+    status <- status$reports[status_keys == key]
+    expect_length(status, 1)
+    expect_no_error(orderly::orderly_info(id = status[[1]]$version,
                                           name = report$name,
                                           root = path))
   }
-  Map(check_same, reports, status$reports)
+  Map(check_same, reports, res$reports)
 })
