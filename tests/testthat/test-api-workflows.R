@@ -453,6 +453,7 @@ test_that("mrc-2626: workflow can be queued on new branch", {
 
 test_that("workflow submit response lists reports in same order as request", {
   skip_if_no_redis()
+  skip_on_covr()
   path <- orderly_prepare_orderly_example(name = "depends", testing = TRUE,
                                           git = TRUE)
   runner <- orderly_runner(path)
@@ -474,19 +475,10 @@ test_that("workflow submit response lists reports in same order as request", {
     ),
     list(
       name = "example"
-    ),
-    list(
-      name = "depend3"
-    ),
-    list(
-      name = "depend2"
-    ),
-    list(
-      name = "example"
     )
   )
   res <- runner$submit_workflow(reports)
-  testthat::try_again(50, {
+  testthat::try_again(30, {
     Sys.sleep(0.5)
     status <- runner$workflow_status(res$workflow_key)
     result <- lapply(status$reports, "[[", "status")
