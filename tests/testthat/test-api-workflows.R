@@ -465,10 +465,28 @@ test_that("workflow submit response lists reports in same order as request", {
     ),
     list(
       name = "example"
+    ),
+    list(
+      name = "depend3"
+    ),
+    list(
+      name = "depend2"
+    ),
+    list(
+      name = "example"
+    ),
+    list(
+      name = "depend3"
+    ),
+    list(
+      name = "depend2"
+    ),
+    list(
+      name = "example"
     )
   )
   res <- runner$submit_workflow(reports)
-  testthat::try_again(15, {
+  testthat::try_again(50, {
     Sys.sleep(0.5)
     status <- runner$workflow_status(res$workflow_key)
     result <- lapply(status$reports, "[[", "status")
