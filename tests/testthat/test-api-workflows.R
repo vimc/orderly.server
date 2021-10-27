@@ -468,7 +468,7 @@ test_that("workflow submit response lists reports in same order as request", {
     )
   )
   res <- runner$submit_workflow(reports)
-  testthat::try_again(10, {
+  testthat::try_again(15, {
     Sys.sleep(0.5)
     status <- runner$workflow_status(res$workflow_key)
     result <- lapply(status$reports, "[[", "status")
