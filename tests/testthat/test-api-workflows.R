@@ -450,3 +450,51 @@ test_that("mrc-2626: workflow can be queued on new branch", {
   task_ids <- vcapply(res$reports, function(id) get_task_id_key(runner, id))
   expect_setequal(tasks, task_ids)
 })
+
+test_that("workflow submit response lists reports in same order as request", {
+  skip_if_no_redis()
+  skip_on_covr()
+  path <- orderly_prepare_orderly_example(name = "depends", testing = TRUE,
+                                          git = TRUE)
+  runner <- orderly_runner(path)
+  reports <- list(
+    list(
+      name = "depend3"
+    ),
+    list(
+      name = "depend2"
+    ),
+    list(
+      name = "example"
+    ),
+    list(
+      name = "depend3"
+    ),
+    list(
+      name = "depend2"
+    ),
+    list(
+      name = "example"
+    )
+  )
+  res <- runner$submit_workflow(reports)
+  testthat::try_again(30, {
+    Sys.sleep(0.5)
+    status <- runner$workflow_status(res$workflow_key)
+    result <- lapply(status$reports, "[[", "status")
+    expect_true(all(result == "success"))
+  })
+
+  status_keys <- vcapply(status$reports, "[[", "key")
+  expect_setequal(status_keys, res$reports)
+  ## If `orderly_info` can find reports when we specify their name and id
+  ## then we know response has been returned in same order as input
+  check_same <- function(report, key) {
+    status <- status$reports[status_keys == key]
+    expect_length(status, 1)
+    expect_no_error(orderly::orderly_info(id = status[[1]]$version,
+                                          name = report$name,
+                                          root = path))
+  }
+  Map(check_same, reports, res$reports)
+})

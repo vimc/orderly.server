@@ -298,7 +298,7 @@ orderly_runner_ <- R6::R6Class(
       ## Return in same order we received the reports
       ## These will be used by OW to map returned ID to specific report
       return_order <- vnapply(workflow, "[[", "original_order")
-      report_keys <- report_keys[return_order]
+      report_keys <- report_keys[order(return_order)]
       list(
         workflow_key = workflow_key,
         reports = report_keys
