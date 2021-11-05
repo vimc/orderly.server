@@ -4,7 +4,13 @@
     "type": "object",
     "properties": {
         "missing_dependencies": {
-            "type": "object"
+            "type": "object",
+            "additionalProperties": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            }
         }
     },
     "required": ["missing_dependencies"],
