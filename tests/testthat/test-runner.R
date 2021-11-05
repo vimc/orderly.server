@@ -323,17 +323,15 @@ test_that("check_timeout kills timed out reports", {
   path <- orderly_git_example("demo")
   runner <- orderly_runner(path, workers = 2)
 
-  key1 <- runner$submit_task_report("minimal", timeout = 0)
+  key1 <- runner$submit_task_report("minimal", timeout = 5)
   key2 <- runner$submit_task_report("slow10", timeout = 0)
   ## Sleep for a bit to allow "minimal" report to post TASK_COMPLETE message
-  testthat::try_again(10, {
-    Sys.sleep(1)
-    msg <- capture_messages(killed <- runner$check_timeout())
-    task2 <- get_task_id_key(runner, key2)
-    expect_equal(killed, task2)
-    expect_equal(msg, sprintf("Successfully killed '%s', exceeded timeout of 0\n",
-                              task2))
-  })
+  Sys.sleep(5)
+  msg <- capture_messages(killed <- runner$check_timeout())
+  task2 <- get_task_id_key(runner, key2)
+  expect_equal(killed, task2)
+  expect_equal(msg, sprintf(
+    "Successfully killed '%s', exceeded timeout of 0\n", task2))
 })
 
 test_that("check_timeout doesn't kill reports with long timeout", {
