@@ -324,7 +324,7 @@ test_that("check_timeout kills timed out reports", {
   runner <- orderly_runner(path, workers = 2)
 
   key <- runner$submit_task_report("slow10", timeout = 0)
-  Sys.sleep(2) ## Sleep to let runner pick up tasks
+  wait_for_id(runner, key)
   msg <- capture_messages(killed <- runner$check_timeout())
   task <- get_task_id_key(runner, key)
   expect_equal(killed, task)
