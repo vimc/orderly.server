@@ -1,6 +1,6 @@
 context("api-workflows")
 
-test_that("can identify missing dependencies of a workflow", {
+test_that("can get workflow summary", {
   testthat::skip_on_cran()
   skip_on_windows()
   skip_if_no_redis()
@@ -31,41 +31,60 @@ test_that("can identify missing dependencies of a workflow", {
   )), t)
 
   output <- list(
+    reports = list(
+      list(
+        name = scalar("preprocess"),
+        instance = scalar("production"),
+        params = list(
+          nmin = scalar(0.5),
+          nmax = scalar(2)
+        ),
+        depends_on = list()
+      ),
+      list(
+        name = scalar("process"),
+        instance = scalar("production"),
+        depends_on = list(scalar("preprocess"))
+      ),
+      list(
+        name = scalar("postprocess"),
+        instance = scalar("production"),
+        depends_on = list(scalar("preprocess"), scalar("process"))
+      )
+    ),
+    ref = scalar("123"),
     missing_dependencies = list(
       preprocess = "",
       process = "",
       postprocess = ""
     )
   )
-  mock_missing_dependencies <- mockery::mock(output, cycle = TRUE)
-  with_mock("orderly.server:::workflow_missing_dependencies" =
-              mock_missing_dependencies, {
-    res <- target_workflow_missing_dependencies(runner, t)
+  mock_workflow_summary <- mockery::mock(output, cycle = TRUE)
+  with_mock("orderly.server:::workflow_summary" = mock_workflow_summary, {
+    res <- target_workflow_summary(runner, t)
   })
-  mockery::expect_called(mock_missing_dependencies, 1)
+  mockery::expect_called(mock_workflow_summary, 1)
   expect_equal(res, output)
 
   ## endpoint
-  with_mock("orderly.server:::workflow_missing_dependencies" =
-              mock_missing_dependencies, {
-    endpoint <- endpoint_workflow_missing_dependencies(runner)
+  with_mock("orderly.server:::workflow_summary" = mock_workflow_summary, {
+    endpoint <- endpoint_workflow_summary(runner)
     res_endpoint <- endpoint$run(t)
   })
   expect_equal(res_endpoint$status_code, 200)
   expect_equal(res_endpoint$data, res)
-  mockery::expect_called(mock_missing_dependencies, 2)
+  mockery::expect_called(mock_workflow_summary, 2)
 
   ## api
-  with_mock("orderly.server:::workflow_missing_dependencies" =
-              mock_missing_dependencies, {
+  with_mock("orderly.server:::workflow_summary" = mock_workflow_summary, {
     api <- build_api(runner, path)
-    res_api <- api$request("POST", "/v1/workflow/missing-dependencies/",
+    res_api <- api$request("POST", "/v1/workflow/summary/",
                            body = readLines(t))
   })
   expect_equal(res_api$status, 200L)
   expect_equal(res_api$headers[["Content-Type"]], "application/json")
   expect_equal(res_api$body, as.character(res_endpoint$body))
-  mockery::expect_called(mock_missing_dependencies, 3)
+  mockery::expect_called(mock_workflow_summary, 3)
 })
 
 test_that("workflow job can be submitted", {

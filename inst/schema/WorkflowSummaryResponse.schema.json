@@ -1,8 +1,10 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
-    "id": "WorkflowMissingDependenciesResponse",
+    "id": "WorkflowSummaryResponse",
     "type": "object",
     "properties": {
+        "reports": { "$ref": "WorkflowReports.schema.json" },
+        "ref": { "type": "string" },
         "missing_dependencies": {
             "type": "object",
             "additionalProperties": {
@@ -13,6 +15,6 @@
             }
         }
     },
-    "required": ["missing_dependencies"],
+    "required": ["reports", "ref", "missing_dependencies"],
     "additionalProperties": false
 }
