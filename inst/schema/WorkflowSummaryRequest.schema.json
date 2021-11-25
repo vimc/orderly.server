@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
-    "id": "WorkflowMissingDependenciesRequest",
+    "id": "WorkflowSummaryRequest",
     "type": "object",
     "properties": {
         "reports": { "$ref": "WorkflowReports.schema.json" },

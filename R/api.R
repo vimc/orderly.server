@@ -20,7 +20,7 @@ build_api <- function(runner, path, backup_period = NULL,
   api$handle(endpoint_kill(runner))
   api$handle(endpoint_dependencies(path))
   api$handle(endpoint_run_metadata(runner))
-  api$handle(endpoint_workflow_missing_dependencies(runner))
+  api$handle(endpoint_workflow_summary(runner))
   api$handle(endpoint_workflow_run(runner))
   api$handle(endpoint_workflow_status(runner))
   api$setDocs(FALSE)
@@ -373,24 +373,22 @@ endpoint_run_metadata <- function(runner) {
  )
 }
 
-target_workflow_missing_dependencies <- function(runner, body) {
+target_workflow_summary <- function(runner, body) {
   body <- jsonlite::fromJSON(body, simplifyDataFrame = FALSE)
   if (!is.null(body$ref)) {
     runner$assert_ref_switching_allowed(body$ref)
   }
-  workflow_missing_dependencies(runner$root, body$reports, body$ref)
+  workflow_summary(runner$root, body$reports, body$ref)
 }
 
-endpoint_workflow_missing_dependencies <- function(runner) {
+endpoint_workflow_summary <- function(runner) {
   porcelain::porcelain_endpoint$new(
-    "POST", "/v1/workflow/missing-dependencies/",
-    target_workflow_missing_dependencies,
+    "POST", "/v1/workflow/summary/",
+    target_workflow_summary,
     porcelain::porcelain_input_body_json(
-      "body",
-      "WorkflowMissingDependenciesRequest.schema",
-      schema_root()),
+      "body", "WorkflowSummaryRequest.schema", schema_root()),
     porcelain::porcelain_state(runner = runner),
-    returning = returning_json("WorkflowMissingDependenciesResponse.schema"))
+    returning = returning_json("WorkflowSummaryResponse.schema"))
 }
 
 target_workflow_run <- function(runner, body) {

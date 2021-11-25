@@ -280,13 +280,13 @@ orderly_runner_ <- R6::R6Class(
       queue_task <- function(report) {
         depends_on <- dependencies$get(report$depends_on)
         key <- self$submit_task_report(name = report$name,
-                                           parameters = report$params,
-                                           ref = ref,
-                                           instance = report$instance,
-                                           changelog = changelog,
-                                           poll = poll,
-                                           timeout = timeout,
-                                           depends_on = depends_on)
+                                       parameters = report$params,
+                                       ref = ref,
+                                       instance = report$instance,
+                                       changelog = changelog,
+                                       poll = poll,
+                                       timeout = timeout,
+                                       depends_on = depends_on)
         dependencies$add(report$name, key)
         key
       }

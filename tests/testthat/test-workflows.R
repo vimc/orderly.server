@@ -1,31 +1,39 @@
 context("workflows")
 
 
-test_that("workflow missing dependencies errors if report not found", {
+test_that("workflow summary errors if report not found", {
   path <- orderly_prepare_orderly_example("minimal", git = TRUE)
   reports <- list(
     list(name = "missing_report")
   )
   expect_error(
-    workflow_missing_dependencies(path, reports),
+    workflow_summary(path, reports),
     "[pP]ath 'src/missing_report/orderly.yml' does not exist in 'HEAD'")
 })
 
-test_that("can get missing dependencies of a workflow", {
+test_that("can get summary of a workflow", {
   path <- orderly_prepare_orderly_example("demo", git = TRUE)
   reports <- list(
     list(name = "other")
   )
-  expect_equal(workflow_missing_dependencies(path, reports),
-               list(missing_dependencies = list(
+  expect_equal(workflow_summary(path, reports),
+               list(reports = list(
+                 list(name = scalar("other"))
+               ),
+               ref = NULL,
+               missing_dependencies = list(
                  other = list()
                )))
 
   reports <- list(
     list(name = "use_dependency")
   )
-  expect_equal(workflow_missing_dependencies(path, reports),
-               list(missing_dependencies = list(
+  expect_equal(workflow_summary(path, reports),
+               list(reports = list(
+                  list(name = scalar("use_dependency"))
+                ),
+                ref = NULL,
+                missing_dependencies = list(
                  use_dependency = list(scalar("other"))
                )))
 
@@ -33,32 +41,47 @@ test_that("can get missing dependencies of a workflow", {
     list(name = "use_dependency"),
     list(name = "other")
   )
-  expect_equal(workflow_missing_dependencies(path, reports),
-               list(missing_dependencies = list(
+  expect_equal(workflow_summary(path, reports),
+               list(reports = list(
+                 list(name = scalar("other")),
+                 list(name = scalar("use_dependency"),
+                      depends_on = "other")
+               ),
+               ref = NULL,
+               missing_dependencies = list(
                  use_dependency = list(),
                  other = list()
                )))
 })
 
-test_that("workflow missing dependencies only looks at depth 1 dependencies", {
+test_that("workflow summary only looks at depth 1 dependencies", {
   path <- orderly_prepare_orderly_example("demo", git = TRUE)
   reports <- list(
     list(name = "use_dependency_2")
   )
-  expect_equal(workflow_missing_dependencies(path, reports),
-               list(missing_dependencies = list(
+  expect_equal(workflow_summary(path, reports),
+               list(
+                 reports = list(
+                   list(name = scalar("use_dependency_2"))
+                 ),
+                 ref = NULL,
+                 missing_dependencies = list(
                  use_dependency_2 = list(scalar("use_dependency"))
                )))
 })
 
-test_that("workflow missing dependencies can handle multiple dependencies", {
+test_that("workflow summary can handle multiple dependencies", {
   path <- orderly_prepare_orderly_example("depends", testing = TRUE, git = TRUE)
 
   reports <- list(
     list(name = "depend4")
   )
-  expect_equal(workflow_missing_dependencies(path, reports),
-               list(missing_dependencies = list(
+  expect_equal(workflow_summary(path, reports),
+               list(reports = list(
+                 list(name = scalar("depend4"))
+               ),
+               ref = NULL,
+               missing_dependencies = list(
                  depend4 = list(scalar("example"), scalar("depend2")))
                ))
 
@@ -66,89 +89,104 @@ test_that("workflow missing dependencies can handle multiple dependencies", {
     list(name = "depend4"),
     list(name = "depend2")
   )
-  expect_equal(workflow_missing_dependencies(path, reports),
-               list(missing_dependencies = list(
+  expect_equal(workflow_summary(path, reports),
+               list(reports = list(
+                 list(name = scalar("depend2")),
+                 list(name = scalar("depend4"),
+                      depends_on = "depend2")
+               ),
+               ref = NULL,
+               missing_dependencies = list(
                  depend4 = list(scalar("example")),
                  depend2 =  list(scalar("example")))
+               ))
+
+  reports <- list(
+    list(name = "depend4"),
+    list(name = "depend2"),
+    list(name = "example")
+  )
+  expect_equal(workflow_summary(path, reports),
+               list(reports = list(
+                 list(name = scalar("example")),
+                 list(name = scalar("depend2"),
+                      depends_on = "example"),
+                 list(name = scalar("depend4"),
+                      depends_on = c("depend2", "example"))
+               ),
+               ref = NULL,
+               missing_dependencies = list(
+                 depend4 = list(),
+                 depend2 = list(),
+                 example =  list())
                ))
 
 
   reports <- list(
     list(name = "depend2")
   )
-  expect_equal(workflow_missing_dependencies(path, reports),
-               list(missing_dependencies = list(
+  expect_equal(workflow_summary(path, reports),
+               list(reports = list(
+                 list(name = scalar("depend2"))
+               ),
+               ref = NULL,
+               missing_dependencies = list(
                  depend2 = list(scalar("example"))
                )))
 })
 
-test_that("can work out dependencies graph", {
-  no_deps <- list(
-    list(
-      name = "depend",
-      instance = "production",
-      params = list(
-        nmin = 0.5,
-        nmax = 1
-      )
-    )
-  )
-  one_dep <- list(
-    list(
-      name = "example",
-      instance = "production",
-      params = list(
-        nmin = 0.5,
-        nmax = 1
-      )
-    ),
-    list(
-      name = "depend",
-      instance = "production"
-    )
-  )
-  two_deps <- list(
-   list(
-      name = "example",
-      instance = "production",
-      params = list(
-        nmin = 0.5,
-        nmax = 1
-      )
-    ),
-    list(
-      name = "depend",
-      instance = "production"
-    ),
-    list(
-      name = "depend2",
-      instance = "production"
-    )
-  )
-  multiple_deps <- list(
-    list(
-      name = "example",
-      instance = "production"
-    ),
-    list(
-      name = "depend2",
-      instance = "production"
-    ),
-    list(
-      name = "depend4",
-      instance = "production"
-    )
-  )
+test_that("workflow summary returns ref, instance and parameters", {
   path <- orderly_prepare_orderly_example("depends", testing = TRUE, git = TRUE)
-  expect_equal(build_dependencies_graph(path, no_deps), list(depend = NA))
-  expect_equal(build_dependencies_graph(path, one_dep),
-               list(example = NA,
-                    depend = "example"))
-  expect_equal(build_dependencies_graph(path, two_deps),
+  commits <- git_commits(branch = "master", root = path)
+
+  reports <- list(
+    list(name = "depend4",
+         instance = "production",
+         parameters = list(nmin = 0.5, another_param = "test"))
+  )
+  expect_equal(workflow_summary(path, reports, commits$id),
+               list(reports = list(
+                 list(name = scalar("depend4"),
+                      instance = scalar("production"),
+                      parameters = list(
+                        nmin = scalar(0.5),
+                        another_param = scalar("test")
+                      ))
+               ),
+               ref = scalar(commits$id),
+               missing_dependencies = list(
+                 depend4 = list(scalar("example"), scalar("depend2")))
+               ))
+})
+
+test_that("can work out dependencies graph", {
+  path <- orderly_prepare_orderly_example("depends", testing = TRUE, git = TRUE)
+
+  no_deps_names <- "depend"
+  no_deps_dependencies <- orderly_upstream_dependencies(no_deps_names,
+                                                        root = path)
+  expect_equal(workflow_dependencies(no_deps_names, no_deps_dependencies),
+               list(depend = NA))
+
+  one_dep_names <- c("example", "depend")
+  one_dep_dependencies <- orderly_upstream_dependencies(one_dep_names,
+                                                        root = path)
+  expect_equal(workflow_dependencies(one_dep_names, one_dep_dependencies),
+               list(example = NA, depend = "example"))
+
+  two_deps_names <- c("example", "depend", "depend2")
+  two_deps_dependencies <- orderly_upstream_dependencies(two_deps_names,
+                                                         root = path)
+  expect_equal(workflow_dependencies(two_deps_names, two_deps_dependencies),
                list(example = NA,
                     depend = "example",
                     depend2 = "example"))
-  expect_equal(build_dependencies_graph(path, multiple_deps),
+
+  multiple_deps_names <- c("example", "depend2", "depend4")
+  multiple_deps_dependencies <- orderly_upstream_dependencies(
+    multiple_deps_names, root = path)
+  expect_equal(workflow_dependencies(multiple_deps_names,
+                                     multiple_deps_dependencies),
                list(example = NA,
                     depend2 = "example",
                     depend4 = c("example", "depend2")))

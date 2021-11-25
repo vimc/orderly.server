@@ -6,7 +6,11 @@
             "properties": {
                 "name": { "type": "string" },
                 "instance": { "type": "string" },
-                "params": { "$ref": "Parameters.schema.json" }
+                "params": { "$ref": "Parameters.schema.json" },
+                "depends_on": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                }
             },
             "required": [ "name" ],
             "additionalProperties": false
