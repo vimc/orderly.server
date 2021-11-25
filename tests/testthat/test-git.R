@@ -278,7 +278,7 @@ test_that("get_reports only shows one sided changes", {
   other_commits <- git_commits("other", path[["local"]])
   expect_equal(nrow(other_commits), 1)
   other_reports <- get_reports("other", other_commits$id, path[["local"]])
-  expect_equal("other" %in% other_reports)
+  expect_true("other" %in% other_reports)
 })
 
 test_that("can get parameters from a report", {
