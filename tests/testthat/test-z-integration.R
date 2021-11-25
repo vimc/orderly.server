@@ -344,7 +344,7 @@ test_that("can get available reports", {
   url <- paste0("/reports/source?branch=other&commit=", other_r$data[[1]]$id)
   other_reports <- content(httr::GET(server$api_url(url)))
   expect_equal(other_reports$status, "success")
-  expect_equal(other_reports$data, "other")
+  expect_true("other" %in% other_reports$data)
 })
 
 test_that("can get available reports without parameters", {

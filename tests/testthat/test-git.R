@@ -202,7 +202,7 @@ test_that("can get report list from git", {
   other_commits <- git_commits("other", path[["local"]])
   expect_equal(nrow(other_commits), 1)
   other_reports <- get_reports("other", other_commits$id, path[["local"]])
-  expect_equal(other_reports, "other")
+  expect_true("other" %in% other_reports)
 
   ## git_commits works with NULL branch and commit
   default_reports <- get_reports(NULL, NULL, path[["local"]])
@@ -227,7 +227,7 @@ test_that("report only shows when pushed to remote", {
   other_commits <- git_commits("other", path[["local"]])
   expect_equal(nrow(other_commits), 1)
   other_reports <- get_reports("other", other_commits$id, path[["local"]])
-  expect_equal(other_reports, "other")
+  expect_true("other" %in% other_reports)
 
   ## Push to remote
   invisible(git_run(c("push", "--set-upstream origin other"),
@@ -236,7 +236,7 @@ test_that("report only shows when pushed to remote", {
   other_commits <- git_commits("other", path[["local"]])
   expect_equal(nrow(other_commits), 2)
   other_reports <- get_reports("other", other_commits$id[[1]], path[["local"]])
-  expect_equal(other_reports, c("new-report", "other"))
+  expect_true(all(c("other", "new-report") %in% other_reports))
 })
 
 test_that("get_reports only shows one sided changes", {
@@ -278,7 +278,7 @@ test_that("get_reports only shows one sided changes", {
   other_commits <- git_commits("other", path[["local"]])
   expect_equal(nrow(other_commits), 1)
   other_reports <- get_reports("other", other_commits$id, path[["local"]])
-  expect_equal(other_reports, "other")
+  expect_true("other" %in% other_reports)
 })
 
 test_that("can get parameters from a report", {
