@@ -293,11 +293,12 @@ test_that("get reports can show all reports on a branch", {
   other_commits <- git_commits("other", path[["local"]])
   expect_equal(nrow(other_commits), 1)
   other_reports <- get_reports("other", other_commits$id, TRUE, path[["local"]])
-  expect_equal(other_reports, c("global", "minimal", "other"))
+  expect_true(all(c("global", "minimal", "other") %in% other_reports))
 
   other_reports <- get_reports("other", other_commits$id, FALSE,
                                path[["local"]])
-  expect_equal(other_reports, "other")
+  expect_true("other" %in% other_reports)
+  expect_true(!any(c("global", "minimal") %in% other_reports))
 })
 
 test_that("get reports can show all reports on a branch without a commit", {
@@ -306,7 +307,7 @@ test_that("get reports can show all reports on a branch without a commit", {
 
   ## with a commit & a branch
   other_reports <- get_reports("other", NULL, TRUE, path[["local"]])
-  expect_equal(other_reports, c("global", "minimal", "other"))
+  expect_true(all(c("global", "minimal", "other") %in% other_reports))
 })
 
 test_that("can get parameters from a report", {
