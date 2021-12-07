@@ -344,13 +344,8 @@ test_that("can get available reports", {
   url <- paste0("/reports/source?branch=other&commit=", other_r$data[[1]]$id)
   other_reports <- content(httr::GET(server$api_url(url)))
   expect_equal(other_reports$status, "success")
-  expect_equal(other_reports$data, "other")
-
-  url <- paste0("/reports/source?branch=other&show_all=true&commit=",
-                other_r$data[[1]]$id)
-  other_reports <- content(httr::GET(server$api_url(url)))
-  expect_equal(other_reports$status, "success")
   expect_true("other" %in% other_reports$data)
+  expect_true(!(any(c("global", "minimal") %in% other_reports$data)))
 })
 
 test_that("can get all reports on a branch", {
@@ -365,13 +360,13 @@ test_that("can get all reports on a branch", {
                 other_r$data[[1]]$id)
   other_reports <- content(httr::GET(server$api_url(url)))
   expect_equal(other_reports$status, "success")
-  expect_setequal(other_reports$data, c("global", "minimal", "other"))
+  expect_true(all(c("global", "minimal", "other") %in% other_reports$data))
 
   ## Without a commit
   url <- paste0("/reports/source?branch=other&show_all=true")
   other_reports <- content(httr::GET(server$api_url(url)))
   expect_equal(other_reports$status, "success")
-  expect_setequal(other_reports$data, c("global", "minimal", "other"))
+  expect_true(all(c("global", "minimal", "other") %in% other_reports$data))
 })
 
 test_that("can get available reports without parameters", {
@@ -381,7 +376,7 @@ test_that("can get available reports without parameters", {
 
   reports <- content(httr::GET(server$api_url("/reports/source")))
   expect_equal(reports$status, "success")
-  expect_equal(reports$data, c("global", "minimal"))
+  expect_true(all(c("global", "minimal") %in% reports$data))
 })
 
 test_that("can get report parameters", {
