@@ -143,17 +143,17 @@ git_commits <- function(branch, root = NULL) {
   commits
 }
 
-git_latest_commit <- function(root = NULL) {
-  args <- c("log", "--pretty='%h'", "-n", "1")
+git_latest_commit <- function(branch = "master", root = NULL) {
+  args <- c("log", "--pretty='%h'", "-n", "1", branch)
   git_run(args, root = root, check = TRUE)$output
 }
 
-get_reports <- function(branch, commit, root) {
-  if (identical(branch, "master") || is.null(branch)) {
-    ## Get all reports in commit if on master branch and default to latest
-    ## if commit is missing
+get_reports <- function(branch, commit, show_all, root) {
+  list_all <- identical(branch, "master") || is.null(branch) ||
+    identical(show_all, "true")
+  if (list_all) {
     if (is.null(commit)) {
-      commit <- git_latest_commit(root = root)
+        commit <- git_latest_commit(branch, root = root)
     }
     reports <- git_run(c("ls-tree", "--name-only", "-d",
                          sprintf("%s:src/", commit)),

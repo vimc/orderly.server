@@ -120,8 +120,9 @@ endpoint_git_commits <- function(path) {
     returning = returning_json("GitCommits.schema"))
 }
 
-target_available_reports <- function(path, branch = NULL, commit = NULL) {
-  get_reports(branch, commit, path)
+target_available_reports <- function(path, branch = NULL, commit = NULL,
+                                     show_all = NULL) {
+  get_reports(branch, commit, show_all, path)
 }
 
 endpoint_available_reports <- function(path) {
@@ -129,6 +130,7 @@ endpoint_available_reports <- function(path) {
     "GET", "/reports/source", target_available_reports,
     porcelain::porcelain_input_query(branch = "string"),
     porcelain::porcelain_input_query(commit = "string"),
+    porcelain::porcelain_input_query(show_all = "string"),
     porcelain::porcelain_state(path = path),
     returning = returning_json("AvailableReports.schema")
   )
