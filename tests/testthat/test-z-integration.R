@@ -411,16 +411,18 @@ test_that("can get report parameters", {
 })
 
 test_that("can get report parameters with no commit ID", {
-  path <- orderly_prepare_orderly_git_example()
-  ## Checkout a branch with a report with parameters
-  orderly_git_checkout_branch("other", root = path[["local"]])
-  server <- start_test_server(path[["local"]])
+  path <- orderly_prepare_orderly_example("interactive", testing = TRUE,
+                                          git = TRUE)
+  server <- start_test_server(path)
   on.exit(server$stop())
 
-  params <- content(httr::GET(server$api_url("/reports/other/parameters")))
+  params <- content(httr::GET(server$api_url(
+    "/reports/count_param/parameters")))
   expect_equal(params$status, "success")
   expect_equal(params$data, list(
-    list(name = "nmin",
+    list(name = "time",
+         value = NULL),
+    list(name = "poll",
          value = NULL)
   ))
 })

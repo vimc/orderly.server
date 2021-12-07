@@ -149,8 +149,7 @@ git_latest_commit <- function(branch = "master", root = NULL) {
 }
 
 get_reports <- function(branch, commit, show_all, root) {
-  list_all <- identical(branch, "master") || is.null(branch) ||
-    identical(show_all, "true")
+  list_all <- show_all || identical(branch, "master") || is.null(branch)
   if (list_all) {
     if (is.null(commit)) {
         commit <- git_latest_commit(branch, root = root)
@@ -177,7 +176,7 @@ get_reports <- function(branch, commit, show_all, root) {
 
 get_report_parameters <- function(report, commit, root) {
   tryCatch({
-    ## Default to latest commit if missing
+    ## Default to latest commit from master if missing
     if (is.null(commit)) {
       commit <- git_latest_commit(root = root)
     }
