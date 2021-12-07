@@ -152,7 +152,7 @@ get_reports <- function(branch, commit, show_all, root) {
   list_all <- show_all || identical(branch, "master") || is.null(branch)
   if (list_all) {
     if (is.null(commit)) {
-        commit <- git_latest_commit(branch, root = root)
+      commit <- git_latest_commit(branch, root = root)
     }
     reports <- git_run(c("ls-tree", "--name-only", "-d",
                          sprintf("%s:src/", commit)),
