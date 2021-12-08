@@ -345,6 +345,28 @@ test_that("can get available reports", {
   other_reports <- content(httr::GET(server$api_url(url)))
   expect_equal(other_reports$status, "success")
   expect_true("other" %in% other_reports$data)
+  expect_true(!(any(c("global", "minimal") %in% other_reports$data)))
+})
+
+test_that("can get all reports on a branch", {
+  path <- orderly_prepare_orderly_git_example()
+  server <- start_test_server(path[["local"]])
+  on.exit(server$stop())
+
+  other_r <- content(httr::GET(server$api_url("/git/commits?branch=other")))
+  expect_equal(other_r$status, "success")
+
+  url <- paste0("/reports/source?branch=other&show_all=true&commit=",
+                other_r$data[[1]]$id)
+  other_reports <- content(httr::GET(server$api_url(url)))
+  expect_equal(other_reports$status, "success")
+  expect_true(all(c("global", "minimal", "other") %in% other_reports$data))
+
+  ## Without a commit
+  url <- paste0("/reports/source?branch=other&show_all=true")
+  other_reports <- content(httr::GET(server$api_url(url)))
+  expect_equal(other_reports$status, "success")
+  expect_true(all(c("global", "minimal", "other") %in% other_reports$data))
 })
 
 test_that("can get available reports without parameters", {
@@ -354,7 +376,7 @@ test_that("can get available reports without parameters", {
 
   reports <- content(httr::GET(server$api_url("/reports/source")))
   expect_equal(reports$status, "success")
-  expect_equal(reports$data, c("global", "minimal"))
+  expect_true(all(c("global", "minimal") %in% reports$data))
 })
 
 test_that("can get report parameters", {
@@ -384,16 +406,18 @@ test_that("can get report parameters", {
 })
 
 test_that("can get report parameters with no commit ID", {
-  path <- orderly_prepare_orderly_git_example()
-  ## Checkout a branch with a report with parameters
-  orderly_git_checkout_branch("other", root = path[["local"]])
-  server <- start_test_server(path[["local"]])
+  path <- orderly_prepare_orderly_example("interactive", testing = TRUE,
+                                          git = TRUE)
+  server <- start_test_server(path)
   on.exit(server$stop())
 
-  params <- content(httr::GET(server$api_url("/reports/other/parameters")))
+  params <- content(httr::GET(server$api_url(
+    "/reports/count_param/parameters")))
   expect_equal(params$status, "success")
   expect_equal(params$data, list(
-    list(name = "nmin",
+    list(name = "time",
+         value = NULL),
+    list(name = "poll",
          value = NULL)
   ))
 })

@@ -263,6 +263,7 @@ List reports which can be run by Orderly Web.
 Reports can be listed
 * With no branch or commit - lists all reports in src dir on latest commit on master branch
 * With a branch other than master & unmerged commit - lists all reports which have changes in them from this commit compared with master branch 
+* With a branch other than master (& optionally a commit) and param `show_all=true` to list all reports available on a branch for a certain commit. If commit is empty then this will use the most recent commit
 * With master branch and a commit - lists all reports in src dir on this commit
 
 ## Example
