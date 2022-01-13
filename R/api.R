@@ -380,7 +380,8 @@ target_workflow_summary <- function(runner, body) {
   if (!is.null(body$ref)) {
     runner$assert_ref_switching_allowed(body$ref)
   }
-  workflow_summary(runner$root, body$reports, body$ref)
+  summary <- workflow_summary(runner$root, body$reports, body$ref)
+  serialize_workflow_summary(summary)
 }
 
 endpoint_workflow_summary <- function(runner) {

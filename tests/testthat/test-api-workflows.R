@@ -30,41 +30,66 @@ test_that("can get workflow summary", {
     ref = scalar(ref)
   )), t)
 
-  output <- list(
+  workflow <- list(
     reports = list(
       list(
-        name = scalar("preprocess"),
-        instance = scalar("production"),
+        name = "preprocess",
+        instance = "production",
         params = list(
-          nmin = scalar(0.5),
-          nmax = scalar(2)
+          nmin = 0.5,
+          nmax = 2
         ),
-        depends_on = list()
+        depends_on = c()
       ),
       list(
-        name = scalar("process"),
-        instance = scalar("production"),
-        depends_on = list(scalar("preprocess"))
+        name = "process",
+        instance = "production",
+        depends_on = c("preprocess")
       ),
       list(
-        name = scalar("postprocess"),
-        instance = scalar("production"),
-        depends_on = list(scalar("preprocess"), scalar("process"))
+        name = "postprocess",
+        instance = "production",
+        depends_on = c("preprocess", "process")
       )
     ),
-    ref = scalar("123"),
+    ref = "123",
     missing_dependencies = list(
-      preprocess = "",
-      process = "",
-      postprocess = ""
+      preprocess = list(),
+      process = list(),
+      postprocess = list()
     )
   )
-  mock_workflow_summary <- mockery::mock(output, cycle = TRUE)
+  mock_workflow_summary <- mockery::mock(workflow, cycle = TRUE)
   with_mock("orderly.server:::workflow_summary" = mock_workflow_summary, {
     res <- target_workflow_summary(runner, t)
   })
   mockery::expect_called(mock_workflow_summary, 1)
-  expect_equal(res, output)
+  expect_equal(res$reports, list(
+    list(
+      name = scalar("preprocess"),
+      instance = scalar("production"),
+      params = list(
+        nmin = scalar(0.5),
+        nmax = scalar(2)
+      )
+    ),
+    list(
+      name = scalar("process"),
+      instance = scalar("production"),
+      depends_on = c("preprocess")
+    ),
+    list(
+      name = scalar("postprocess"),
+      instance = scalar("production"),
+      depends_on = c("preprocess", "process")
+    )
+  ))
+  expect_equal(res$ref, scalar("123"))
+  expect_equal(res$missing_dependencies, list(
+    preprocess = list(),
+    process = list(),
+    postprocess = list()
+  ))
 
   ## endpoint
   with_mock("orderly.server:::workflow_summary" = mock_workflow_summary, {

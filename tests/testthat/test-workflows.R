@@ -18,7 +18,7 @@ test_that("can get summary of a workflow", {
   )
   expect_equal(workflow_summary(path, reports),
                list(reports = list(
-                 list(name = scalar("other"))
+                 list(name = "other")
                ),
                ref = NULL,
                missing_dependencies = list(
@@ -30,11 +30,11 @@ test_that("can get summary of a workflow", {
   )
   expect_equal(workflow_summary(path, reports),
                list(reports = list(
-                  list(name = scalar("use_dependency"))
+                  list(name = "use_dependency")
                 ),
                 ref = NULL,
                 missing_dependencies = list(
-                 use_dependency = list(scalar("other"))
+                 use_dependency = list("other")
                )))
 
   reports <- list(
@@ -43,8 +43,8 @@ test_that("can get summary of a workflow", {
   )
   expect_equal(workflow_summary(path, reports),
                list(reports = list(
-                 list(name = scalar("other")),
-                 list(name = scalar("use_dependency"),
+                 list(name = "other"),
+                 list(name = "use_dependency",
                       depends_on = "other")
                ),
                ref = NULL,
@@ -62,11 +62,11 @@ test_that("workflow summary only looks at depth 1 dependencies", {
   expect_equal(workflow_summary(path, reports),
                list(
                  reports = list(
-                   list(name = scalar("use_dependency_2"))
+                   list(name = "use_dependency_2")
                  ),
                  ref = NULL,
                  missing_dependencies = list(
-                 use_dependency_2 = list(scalar("use_dependency"))
+                 use_dependency_2 = list("use_dependency")
                )))
 })
 
@@ -78,11 +78,11 @@ test_that("workflow summary can handle multiple dependencies", {
   )
   expect_equal(workflow_summary(path, reports),
                list(reports = list(
-                 list(name = scalar("depend4"))
+                 list(name = "depend4")
                ),
                ref = NULL,
                missing_dependencies = list(
-                 depend4 = list(scalar("example"), scalar("depend2")))
+                 depend4 = list("example", "depend2"))
                ))
 
   reports <- list(
@@ -91,14 +91,14 @@ test_that("workflow summary can handle multiple dependencies", {
   )
   expect_equal(workflow_summary(path, reports),
                list(reports = list(
-                 list(name = scalar("depend2")),
-                 list(name = scalar("depend4"),
+                 list(name = "depend2"),
+                 list(name = "depend4",
                       depends_on = "depend2")
                ),
                ref = NULL,
                missing_dependencies = list(
-                 depend4 = list(scalar("example")),
-                 depend2 =  list(scalar("example")))
+                 depend4 = list("example"),
+                 depend2 =  list("example"))
                ))
 
   reports <- list(
@@ -108,10 +108,10 @@ test_that("workflow summary can handle multiple dependencies", {
   )
   expect_equal(workflow_summary(path, reports),
                list(reports = list(
-                 list(name = scalar("example")),
-                 list(name = scalar("depend2"),
+                 list(name = "example"),
+                 list(name = "depend2",
                       depends_on = "example"),
-                 list(name = scalar("depend4"),
+                 list(name = "depend4",
                       depends_on = c("depend2", "example"))
                ),
                ref = NULL,
@@ -127,11 +127,11 @@ test_that("workflow summary can handle multiple dependencies", {
   )
   expect_equal(workflow_summary(path, reports),
                list(reports = list(
-                 list(name = scalar("depend2"))
+                 list(name = "depend2")
                ),
                ref = NULL,
                missing_dependencies = list(
-                 depend2 = list(scalar("example"))
+                 depend2 = list("example")
                )))
 })
 
@@ -146,16 +146,16 @@ test_that("workflow summary returns ref, instance and parameters", {
   )
   expect_equal(workflow_summary(path, reports, commits$id),
                list(reports = list(
-                 list(name = scalar("depend4"),
-                      instance = scalar("production"),
+                 list(name = "depend4",
+                      instance = "production",
                       params = list(
-                        nmin = scalar(0.5),
-                        another_param = scalar("test")
+                        nmin = 0.5,
+                        another_param = "test"
                       ))
                ),
-               ref = scalar(commits$id),
+               ref = commits$id,
                missing_dependencies = list(
-                 depend4 = list(scalar("example"), scalar("depend2")))
+                 depend4 = list("example", "depend2"))
                ))
 })
 
