@@ -167,7 +167,7 @@ serialize_workflow <- function(workflow) {
       name = scalar(single_report$name)
     )
     item$instance <- scalar(single_report$instance)
-    item$parameters <- recursive_scalar(single_report$parameters)
+    item$params <- recursive_scalar(single_report$params)
     item$depends_on <- single_report$depends_on
     item
   })

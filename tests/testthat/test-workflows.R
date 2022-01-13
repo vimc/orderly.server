@@ -142,13 +142,13 @@ test_that("workflow summary returns ref, instance and parameters", {
   reports <- list(
     list(name = "depend4",
          instance = "production",
-         parameters = list(nmin = 0.5, another_param = "test"))
+         params = list(nmin = 0.5, another_param = "test"))
   )
   expect_equal(workflow_summary(path, reports, commits$id),
                list(reports = list(
                  list(name = scalar("depend4"),
                       instance = scalar("production"),
-                      parameters = list(
+                      params = list(
                         nmin = scalar(0.5),
                         another_param = scalar("test")
                       ))
