@@ -25,9 +25,8 @@ workflow_summary <- function(path, reports, ref = NULL) {
   dependencies <- orderly_upstream_dependencies(report_names, root = path,
                                                 ref = ref)
   list(
-    reports = serialize_workflow(
-      construct_workflow(reports, report_names, dependencies)),
-    ref = scalar(ref),
+    reports = construct_workflow(reports, report_names, dependencies),
+    ref = ref,
     missing_dependencies = missing_dependencies(report_names, dependencies)
   )
 }
@@ -48,11 +47,10 @@ workflow_summary <- function(path, reports, ref = NULL) {
 missing_dependencies <- function(report_names, dependencies) {
   missing_deps <- lapply(report_names, function(report) {
     report_deps <- dependencies[[report]]
-    if (is.null(report_deps)) {
+    if (is.null(report_deps) || all(report_deps %in% report_names)) {
       return(list())
     }
-    recursive_scalar(
-      report_deps[!(report_deps %in% report_names)])
+    as.list(report_deps[!(report_deps %in% report_names)])
   })
   stats::setNames(missing_deps, report_names)
 }
@@ -158,17 +156,23 @@ workflow_combine_status <- function(report_status) {
   workflow_status
 }
 
-## Has format matching WorkflowReports schema
+## Has format matching WorkflowSummaryResponse schema
 ## but we need to be careful with tagging items as scalar so it
 ## serializes properly
-serialize_workflow <- function(workflow) {
-  lapply(workflow, function(single_report) {
+serialize_workflow_summary <- function(workflow) {
+  serialize_report <- function(single_report) {
     item <- list(
       name = scalar(single_report$name)
     )
     item$instance <- scalar(single_report$instance)
-    item$parameters <- recursive_scalar(single_report$parameters)
+    item$params <- recursive_scalar(single_report$params)
     item$depends_on <- single_report$depends_on
     item
-  })
+  }
+
+  list(
+    reports = lapply(workflow$reports, serialize_report),
+    ref = scalar(workflow$ref),
+    missing_dependencies = recursive_scalar(workflow$missing_dependencies)
+  )
 }

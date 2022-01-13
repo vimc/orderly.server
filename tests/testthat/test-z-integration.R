@@ -543,6 +543,12 @@ test_that("can get missing dependencies of a workflow", {
                     list(
                       name = scalar("depend"),
                       instance = scalar("production")
+                    ),
+                    list(
+                      name = scalar("count_param"),
+                      params = list(
+                        time = scalar(1)
+                      )
                     )
                   ),
                   ref = scalar(sha)),
@@ -554,11 +560,18 @@ test_that("can get missing dependencies of a workflow", {
   expect_equal(dat$data, list(
     reports = list(
       list(name = "depend",
-           instance = "production")
+           instance = "production"),
+      list(
+        name = "count_param",
+        params = list(
+          time = 1
+        )
+      )
     ),
     ref = sha,
     missing_dependencies = list(
-      depend = "example"
+      depend = "example",
+      count_param = list()
     )
   ))
 })
