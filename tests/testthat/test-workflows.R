@@ -589,6 +589,10 @@ test_that("orderly workflow works with running a report twice", {
          params = list(nmin = 1, another_param = "test"))
   )
 
-  summary <- workflow_summary(path, reports, NULL)
-  expect_equal(length(summary$reports), 2)
+  summary <- workflow_summary(path, reports, "master")
+  expect_equal(summary$reports, reports)
+  expect_equal(summary$ref, "master")
+  expect_equal(summary$missing_dependencies, list(
+    depend4 = list("example", "depend2")
+  ))
 })
