@@ -264,6 +264,7 @@ target_status <- function(runner, key, output = FALSE) {
     key = scalar(res$key),
     status = scalar(res$status),
     version = scalar(res$version),
+    start_time = scalar(res$start_time),
     output = res$output,
     queue = lapply(res$queue, function(item) {
       lapply(item, scalar)

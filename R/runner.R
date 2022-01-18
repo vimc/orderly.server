@@ -320,6 +320,7 @@ orderly_runner_ <- R6::R6Class(
           key = key,
           status = "missing",
           version = NULL,
+          start_time = NULL,
           output = NULL,
           queue = list()
         ))
@@ -331,6 +332,17 @@ orderly_runner_ <- R6::R6Class(
         queued <- list()
       }
       report_id <- self$con$HGET(self$keys$key_report_id, key)
+      start_time <- NULL
+      ## Start time only available for tasks which have started
+      ## running or completed running
+      if (out_status %in% c("running", "success", "error", "interrupted")) {
+        ## Choice of 5000 is totally arbitrary, really we want to
+        ## look at all logs
+        log <- self$queue$worker_log_tail(n = 5000)
+        start_time <- log[log$message == task_id & log$command == "TASK_START",
+                          "time"]
+        start_time <- double_to_date_string(start_time)
+      }
       if (output) {
         out <- readlines_if_exists(path_stderr(self$root, key), NULL)
       } else {
@@ -348,6 +360,7 @@ orderly_runner_ <- R6::R6Class(
         key = key,
         status = out_status,
         version = report_id,
+        start_time = start_time,
         output = out,
         queue = queued
       )

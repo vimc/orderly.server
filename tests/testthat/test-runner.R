@@ -196,8 +196,8 @@ test_that("run: success", {
   testthat::try_again(5, {
     Sys.sleep(0.5)
     status <- runner$status(key)
-    expect_equal(names(status), c("key", "status", "version", "output",
-                                  "queue"))
+    expect_setequal(names(status), c("key", "status", "version", "start_time",
+                                     "output", "queue"))
     expect_equal(status$key, key)
     expect_equal(status$status, "running")
     expect_true(!is.null(status$version))
@@ -215,6 +215,8 @@ test_that("run: success", {
   expect_equal(status$key, key)
   expect_equal(status$status, "success")
   expect_equal(status$version, report_id)
+  expect_true(status$start_time < Sys.time())
+  expect_true(status$start_time > Sys.time() - 10)
   expect_match(status$output, paste0("\\[ id +\\]  ", report_id),
                all = FALSE)
   expect_equal(status$queue, list())
@@ -541,6 +543,8 @@ test_that("runner can set instance", {
   expect_equal(status$key, key)
   expect_equal(status$status, "success")
   expect_equal(status$version, report_id)
+  expect_true(status$start_time < Sys.time())
+  expect_true(status$start_time > Sys.time() - 10)
   ## Data in alternative db extracts only 10 rows
   expect_match(status$output, "\\[ data +\\]  source => dat: 10 x 2",
                all = FALSE)
@@ -557,6 +561,8 @@ test_that("runner can set instance", {
   expect_equal(status_default$key, key_default)
   expect_equal(status_default$status, "success")
   expect_equal(status_default$version, report_id_default)
+  expect_true(status_default$start_time < Sys.time())
+  expect_true(status_default$start_time > Sys.time() - 10)
   ## Data in default db extracts 20 rows
   expect_match(status_default$output, "\\[ data +\\]  source => dat: 20 x 2",
                all = FALSE)

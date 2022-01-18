@@ -62,6 +62,7 @@ test_that("run", {
   st <- content(r)
   expect_equal(st$status, "success")
   expect_is(st$data, "list")
+  expect_match(st$data$start_time, "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}")
   id <- st$data$version
 
   dest <- file.path(server$path, "archive", "example", id)

@@ -277,7 +277,7 @@ test_that("status - queued behind nothing", {
   ## See mock.R
   key <- "key-2"
   status <- list(key = key, status = "queued", version = NULL,
-                 queue = NULL)
+                 start_time = NULL, queue = NULL)
 
   runner <- mock_runner(key, status)
 
@@ -287,6 +287,7 @@ test_that("status - queued behind nothing", {
     list(key = scalar(key),
          status = scalar("queued"),
          version = NULL,
+         start_time = NULL,
          output = NULL,
          queue = list()))
 
@@ -313,7 +314,7 @@ test_that("status - queued behind nothing", {
 test_that("status - queued", {
   key <- "key-3"
   status <- list(
-    key = key, status = "queued", version = NA_character_,
+    key = key, status = "queued", version = NA_character_, start_time = NULL,
     queue = list(
       list(
         key = "key-1",
@@ -335,6 +336,7 @@ test_that("status - queued", {
     list(key = scalar(key),
          status = scalar("queued"),
          version = scalar(NA_character_),
+         start_time = NULL,
          output = NULL,
          queue = list(
            list(
@@ -371,8 +373,9 @@ test_that("status - queued", {
 test_that("status - completed, no log", {
   key <- "key-1"
   version <- "20200414-123013-a1df28f7"
+  start_time = as.character(Sys.time())
   status <- list(key = key, status = "success", version = version,
-                 output = NULL, queue = character(0))
+                 start_time = start_time, output = NULL, queue = character(0))
 
   runner <- mock_runner(key, status)
 
@@ -382,6 +385,7 @@ test_that("status - completed, no log", {
     list(key = scalar(key),
          status = scalar("success"),
          version = scalar(version),
+         start_time = scalar(start_time),
          output = NULL,
          queue = list()))
   expect_equal(mockery::mock_args(runner$status)[[1]], list(key, FALSE))
@@ -407,7 +411,9 @@ test_that("status - completed, no log", {
 test_that("status - completed, with log", {
   key <- "key-1"
   version <- "20200414-123013-a1df28f7"
+  start_time = as.character(Sys.time())
   status <- list(key = key, status = "success", version = version,
+                 start_time = start_time,
                  output = c("a message", "in the logs"),
                  queue = character(0))
   runner <- mock_runner(key, status)
@@ -418,6 +424,7 @@ test_that("status - completed, with log", {
     list(key = scalar(key),
          status = scalar("success"),
          version = scalar(version),
+         start_time = scalar(start_time),
          output = c("a message", "in the logs"),
          queue = list()))
   expect_equal(mockery::mock_args(runner$status)[[1]], list(key, TRUE))

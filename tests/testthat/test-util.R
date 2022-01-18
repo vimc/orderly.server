@@ -175,3 +175,10 @@ test_that("ordered_map_to_list", {
                "Corrupt ordered map (this should never happen)",
                fixed = TRUE)
 })
+
+
+test_that("can convert double to date string", {
+  time <- Sys.time()
+  out <- double_to_date_string(as.numeric(time))
+  expect_equal(out, as.character(time))
+})
