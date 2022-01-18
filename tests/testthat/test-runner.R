@@ -313,6 +313,7 @@ test_that("status missing ID", {
     key = "missing_key",
     status = "missing",
     version = NULL,
+    start_time = NULL,
     output = NULL,
     queue = list()
   ))
