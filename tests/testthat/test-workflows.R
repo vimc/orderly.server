@@ -586,6 +586,8 @@ test_that("orderly workflow works with running a report twice", {
     list(name = "depend4",
          params = list(nmin = 0.5, another_param = "test")),
     list(name = "depend4",
+         params = list(nmin = 0.5, another_param = "test")),
+    list(name = "depend4",
          params = list(nmin = 1, another_param = "test"))
   )
 
@@ -593,6 +595,8 @@ test_that("orderly workflow works with running a report twice", {
   expect_equal(summary$reports, reports)
   expect_equal(summary$ref, "master")
   expect_equal(summary$missing_dependencies, list(
+    depend4 = list("example", "depend2"),
+    depend4 = list("example", "depend2"),
     depend4 = list("example", "depend2")
   ))
 })

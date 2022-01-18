@@ -20,14 +20,17 @@
 ##'
 ##' @keywords internal
 workflow_summary <- function(path, reports, ref = NULL) {
-  report_names <- unique(vcapply(reports, function(report) report$name,
-                                 USE.NAMES = FALSE))
+  all_reports <- vcapply(reports, function(report) report$name,
+                         USE.NAMES = FALSE)
+  report_names <- unique(all_reports)
   dependencies <- orderly_upstream_dependencies(report_names, root = path,
                                                 ref = ref)
+  missing <- missing_dependencies(report_names, dependencies)
+
   list(
     reports = construct_workflow(reports, report_names, dependencies),
     ref = ref,
-    missing_dependencies = missing_dependencies(report_names, dependencies)
+    missing_dependencies = missing[all_reports]
   )
 }
 
