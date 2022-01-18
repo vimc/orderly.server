@@ -340,6 +340,7 @@ test_that("workflow status", {
              key = scalar("key1"),
              status = scalar("queued"),
              version = NULL,
+             start_time = NULL,
              output = NULL,
              queue = list()
            )
@@ -379,6 +380,7 @@ test_that("workflow status - queued", {
                               key = "key-2",
                               status = "queued",
                               version = NULL,
+                              start_time = NULL,
                               output = NULL,
                               queue = list(
                                 list(
@@ -400,6 +402,7 @@ test_that("workflow status - queued", {
              key = scalar("key-2"),
              status = scalar("queued"),
              version = NULL,
+             start_time = NULL,
              output = NULL,
              queue = list(
                list(

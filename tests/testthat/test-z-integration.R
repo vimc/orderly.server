@@ -73,9 +73,12 @@ test_that("run", {
   expect_equal(httr::status_code(r), 200)
   st <- content(r)
   expect_equal(st$status, "success")
-  cmp <- list(key = dat$data$key, status = "success",
-              version = id, output = NULL, queue = list())
-  expect_equal(st$data, cmp)
+  expect_equal(st$data$key, dat$data$key)
+  expect_equal(st$data$status, "success")
+  expect_equal(st$data$version, id)
+  expect_match(st$data$start_time, "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}")
+  expect_null(st$data$output)
+  expect_equal(st$data$queue, list())
 
   r <- httr::GET(server$api_url(dat$data$path), query = list(output = TRUE))
   expect_equal(httr::status_code(r), 200)
@@ -214,9 +217,12 @@ test_that("run: pass parameters", {
   expect_equal(httr::status_code(r), 200)
   st <- content(r)
   expect_equal(st$status, "success")
-  cmp <- list(key = dat$data$key, status = "success",
-              version = version, output = NULL, queue = list())
-  expect_equal(st$data, cmp)
+  expect_equal(st$data$key, dat$data$key)
+  expect_equal(st$data$status, "success")
+  expect_equal(st$data$version, version)
+  expect_match(st$data$start_time, "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}")
+  expect_null(st$data$output)
+  expect_equal(st$data$queue, list())
 
   r <- httr::GET(server$api_url(dat$data$path), query = list(output = TRUE))
   expect_equal(httr::status_code(r), 200)
