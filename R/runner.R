@@ -339,9 +339,11 @@ orderly_runner_ <- R6::R6Class(
         ## Choice of 5000 is totally arbitrary, really we want to
         ## look at all logs
         log <- self$queue$worker_log_tail(n = 5000)
-        start_time <- log[log$message == task_id & log$command == "TASK_START",
-                          "time"]
-        start_time <- double_to_date_string(start_time)
+        start <- log[log$message == task_id & log$command == "TASK_START",
+                     "time"]
+        if (length(start) == 1) {
+          start_time <- double_to_date_string(start_time)
+        }
       }
       if (output) {
         out <- readlines_if_exists(path_stderr(self$root, key), NULL)

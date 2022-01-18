@@ -840,3 +840,39 @@ test_that("status translation", {
   expect_equal(rrq_to_orderly_status(rrq:::TASK_RUNNING), "running")
   expect_equal(rrq_to_orderly_status(rrq:::TASK_TIMEOUT), "timeout")
 })
+
+
+test_that("run status works if workflow logs have been removed", {
+  testthat::skip_on_cran()
+  skip_on_windows()
+  skip_if_no_redis()
+  path <- orderly_git_example("demo")
+  runner <- orderly_runner(path)
+
+  ## Run a report slow enough to reliably report back a "running" status
+  key <- runner$submit_task_report("slow1")
+  testthat::try_again(5, {
+    Sys.sleep(0.5)
+    status <- runner$status(key)
+    expect_setequal(names(status), c("key", "status", "version", "start_time",
+                                     "output", "queue"))
+    expect_equal(status$key, key)
+    expect_equal(status$status, "success")
+    expect_true(!is.null(status$version))
+    expect_true(!is.null(status$start_time))
+  })
+
+  ## Remove the worker so that worker_log_tail is empty
+  worker_id <- runner$queue$worker_list()
+  expect_length(worker_id, 1)
+  runner$queue$worker_stop(worker_id)
+  Sys.sleep(0.5) ## wait for worker cleanup to finish
+  expect_equal(runner$queue$worker_delete_exited(), worker_id)
+
+  ## Get the status again
+  status <- runner$status(key)
+  expect_equal(status$key, key)
+  expect_equal(status$status, "success")
+  expect_true(!is.null(status$version))
+  expect_null(status$start_time)
+})
