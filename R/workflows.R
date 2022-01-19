@@ -20,14 +20,17 @@
 ##'
 ##' @keywords internal
 workflow_summary <- function(path, reports, ref = NULL) {
-  report_names <- vcapply(reports, function(report) report$name,
-                          USE.NAMES = FALSE)
+  all_reports <- vcapply(reports, function(report) report$name,
+                         USE.NAMES = FALSE)
+  report_names <- unique(all_reports)
   dependencies <- orderly_upstream_dependencies(report_names, root = path,
                                                 ref = ref)
+  missing <- missing_dependencies(report_names, dependencies)
+
   list(
     reports = construct_workflow(reports, report_names, dependencies),
     ref = ref,
-    missing_dependencies = missing_dependencies(report_names, dependencies)
+    missing_dependencies = missing[all_reports]
   )
 }
 
@@ -91,7 +94,6 @@ build_workflow <- function(root, reports, ref) {
 construct_workflow <- function(reports, report_names, dependencies) {
   dependencies_graph <- workflow_dependencies(report_names, dependencies)
   order <- topological_sort(dependencies_graph)
-  report_names <- vcapply(reports, "[[", "name")
   build_item <- function(report_name) {
     ## There may be multiple reports due to be run with this name
     report_details <- reports[report_name == report_names]

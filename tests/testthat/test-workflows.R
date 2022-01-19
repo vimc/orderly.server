@@ -577,3 +577,26 @@ test_that("can get upstream dependencies", {
     depend2 = "example"
   ))
 })
+
+test_that("orderly workflow works with running a report twice", {
+  path <- orderly_prepare_orderly_example("depends", testing = TRUE, git = TRUE)
+  commits <- git_commits(branch = "master", root = path)
+
+  reports <- list(
+    list(name = "depend4",
+         params = list(nmin = 0.5, another_param = "test")),
+    list(name = "depend4",
+         params = list(nmin = 0.5, another_param = "test")),
+    list(name = "depend4",
+         params = list(nmin = 1, another_param = "test"))
+  )
+
+  summary <- workflow_summary(path, reports, "master")
+  expect_equal(summary$reports, reports)
+  expect_equal(summary$ref, "master")
+  expect_equal(summary$missing_dependencies, list(
+    depend4 = list("example", "depend2"),
+    depend4 = list("example", "depend2"),
+    depend4 = list("example", "depend2")
+  ))
+})
