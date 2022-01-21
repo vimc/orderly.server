@@ -373,7 +373,7 @@ test_that("status - queued", {
 test_that("status - completed, no log", {
   key <- "key-1"
   version <- "20200414-123013-a1df28f7"
-  start_time <- as.character(Sys.time())
+  start_time <- as.numeric(Sys.time())
   status <- list(key = key, status = "success", version = version,
                  start_time = start_time, output = NULL, queue = character(0))
 
@@ -411,7 +411,7 @@ test_that("status - completed, no log", {
 test_that("status - completed, with log", {
   key <- "key-1"
   version <- "20200414-123013-a1df28f7"
-  start_time <- as.character(Sys.time())
+  start_time <- as.numeric(Sys.time())
   status <- list(key = key, status = "success", version = version,
                  start_time = start_time,
                  output = c("a message", "in the logs"),

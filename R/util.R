@@ -181,9 +181,3 @@ key_value_collector <- function(init = list()) {
        get_all = function() env$res,
        get = function(keys) unlist(lapply(keys, get), recursive = FALSE))
 }
-
-double_to_date_string <- function(x) {
-  as.character(
-    as.POSIXct(x, origin = "1970-01-01 00:00.00 UTC")
-  )
-}
