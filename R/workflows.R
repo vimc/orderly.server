@@ -65,6 +65,7 @@ missing_dependencies <- function(report_names, dependencies) {
 ## > - reportD = c(reportA, reportB)
 ## means A & C have no dependencies, B depends on C, D depends on A & B
 workflow_dependencies <- function(report_names, dependencies) {
+
   get_present_dependencies <- function(report) {
     present_deps <- report_names[report_names %in% dependencies[[report]]]
     if (length(present_deps) == 0) {
@@ -72,6 +73,7 @@ workflow_dependencies <- function(report_names, dependencies) {
     }
     present_deps
   }
+
   deps_graph <- lapply(report_names, get_present_dependencies)
   names(deps_graph) <- report_names
   deps_graph
@@ -94,9 +96,11 @@ build_workflow <- function(root, reports, ref) {
 construct_workflow <- function(reports, report_names, dependencies) {
   dependencies_graph <- workflow_dependencies(report_names, dependencies)
   order <- topological_sort(dependencies_graph)
+  all_report_names <- vcapply(reports, function(report) report$name)
+
   build_item <- function(report_name) {
     ## There may be multiple reports due to be run with this name
-    report_details <- reports[report_name == report_names]
+    report_details <- reports[report_name == all_report_names]
     lapply(report_details, function(report_detail) {
       deps <- dependencies_graph[[report_name]]
       if (length(deps) == 0 || all(is.na(deps))) {
@@ -106,6 +110,7 @@ construct_workflow <- function(reports, report_names, dependencies) {
       report_detail
     })
   }
+
   workflow <- lapply(order, build_item)
   unlist(workflow, recursive = FALSE, use.names = FALSE)
 }
@@ -162,6 +167,7 @@ workflow_combine_status <- function(report_status) {
 ## but we need to be careful with tagging items as scalar so it
 ## serializes properly
 serialize_workflow_summary <- function(workflow) {
+
   serialize_report <- function(single_report) {
     item <- list(
       name = scalar(single_report$name)

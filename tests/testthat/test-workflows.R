@@ -1,6 +1,5 @@
 context("workflows")
 
-
 test_that("workflow summary errors if report not found", {
   path <- orderly_prepare_orderly_example("minimal", git = TRUE)
   reports <- list(
@@ -20,22 +19,22 @@ test_that("can get summary of a workflow", {
                list(reports = list(
                  list(name = "other")
                ),
-               ref = NULL,
-               missing_dependencies = list(
-                 other = list()
-               )))
+                    ref = NULL,
+                    missing_dependencies = list(
+                      other = list()
+                    )))
 
   reports <- list(
     list(name = "use_dependency")
   )
   expect_equal(workflow_summary(path, reports),
                list(reports = list(
-                  list(name = "use_dependency")
-                ),
-                ref = NULL,
-                missing_dependencies = list(
-                 use_dependency = list("other")
-               )))
+                 list(name = "use_dependency")
+               ),
+                    ref = NULL,
+                    missing_dependencies = list(
+                      use_dependency = list("other")
+                    )))
 
   reports <- list(
     list(name = "use_dependency"),
@@ -47,11 +46,113 @@ test_that("can get summary of a workflow", {
                  list(name = "use_dependency",
                       depends_on = "other")
                ),
-               ref = NULL,
-               missing_dependencies = list(
-                 use_dependency = list(),
-                 other = list()
-               )))
+                    ref = NULL,
+                    missing_dependencies = list(
+                      use_dependency = list(),
+                      other = list()
+                    )))
+})
+
+test_that("workflow summary can handle multiple instances of the same report", {
+  path <- orderly_prepare_orderly_example("demo", git = TRUE)
+  reports <- list(
+    list(name = "other", params = list(
+      nmin = 0.5
+    )),
+    list(name = "global"),
+    list(name = "other", params = list(
+      nmin = 1
+    )),
+    list(name = "connection")
+  )
+
+  # original order here is considered to be "other", "global", "connection"
+  # the second "other" report is grouped with the first
+  expect_equal(workflow_summary(path, reports),
+               list(
+                 reports = list(
+                   list(name = "other",
+                        params = list(
+                          nmin = 0.5
+                        )),
+                   list(name = "other",
+                        params = list(
+                          nmin = 1
+                        )),
+                   list(name = "global"),
+                   list(name = "connection")
+                 ),
+                 ref = NULL,
+                 missing_dependencies = list(other = list(),
+                                             global = list(),
+                                             other = list(),
+                                             connection = list())))
+})
+
+test_that("workflow summary can handle mutiple instances and dependencies", {
+  path <- orderly_prepare_orderly_example("depends", testing = TRUE, git = TRUE)
+  reports <- list(
+    list(name = "other", params = list(
+      nmin = 0.5
+    )),
+    list(name = "global"),
+    list(name = "depend4",
+         params = list(nmin = 0.5)),
+    list(name = "other", params = list(
+      nmin = 1
+    )),
+    list(name = "depend2",
+         params = list(nmin = 0.5)),
+    list(name = "depend4",
+         params = list(nmin = 2)),
+    list(name = "depend2",
+         params = list(nmin = 2)),
+    list(name = "connection")
+  )
+
+  # original order here is considered to be "other", "global", "depend4", "connection"
+  # the second "other" report is grouped with the first and the second "depend4" is grouped with the first
+  expect_equal(s <- workflow_summary(path, reports),
+               list(
+                 reports = list(
+                   list(name = "other",
+                        params = list(
+                          nmin = 0.5
+                        )),
+                   list(name = "other",
+                        params = list(
+                          nmin = 1
+                        )),
+                   list(name = "global"),
+                   list(name = "depend2",
+                        params = list(
+                          nmin = 0.5
+                        )),
+                   list(name = "depend2",
+                        params = list(
+                          nmin = 2
+                        )),
+                   list(name = "connection"),
+                   list(name = "depend4",
+                        params = list(
+                          nmin = 0.5
+                        ),
+                        depends_on = "depend2"),
+                   list(name = "depend4",
+                        params = list(
+                          nmin = 2
+                        ),
+                        depends_on = "depend2")
+                 ),
+                 ref = NULL,
+                 missing_dependencies = list(other = list(),
+                                             global = list(),
+                                             depend4 = list("example"),
+                                             other = list(),
+                                             depend2 = list("example"),
+                                             depend4 = list("example"),
+                                             depend2 = list("example"),
+                                             connection = list())))
 })
 
 test_that("workflow summary only looks at depth 1 dependencies", {
@@ -66,8 +167,8 @@ test_that("workflow summary only looks at depth 1 dependencies", {
                  ),
                  ref = NULL,
                  missing_dependencies = list(
-                 use_dependency_2 = list("use_dependency")
-               )))
+                   use_dependency_2 = list("use_dependency")
+                 )))
 })
 
 test_that("workflow summary can handle multiple dependencies", {
@@ -80,9 +181,9 @@ test_that("workflow summary can handle multiple dependencies", {
                list(reports = list(
                  list(name = "depend4")
                ),
-               ref = NULL,
-               missing_dependencies = list(
-                 depend4 = list("example", "depend2"))
+                    ref = NULL,
+                    missing_dependencies = list(
+                      depend4 = list("example", "depend2"))
                ))
 
   reports <- list(
@@ -95,10 +196,10 @@ test_that("workflow summary can handle multiple dependencies", {
                  list(name = "depend4",
                       depends_on = "depend2")
                ),
-               ref = NULL,
-               missing_dependencies = list(
-                 depend4 = list("example"),
-                 depend2 =  list("example"))
+                    ref = NULL,
+                    missing_dependencies = list(
+                      depend4 = list("example"),
+                      depend2 = list("example"))
                ))
 
   reports <- list(
@@ -114,11 +215,11 @@ test_that("workflow summary can handle multiple dependencies", {
                  list(name = "depend4",
                       depends_on = c("depend2", "example"))
                ),
-               ref = NULL,
-               missing_dependencies = list(
-                 depend4 = list(),
-                 depend2 = list(),
-                 example =  list())
+                    ref = NULL,
+                    missing_dependencies = list(
+                      depend4 = list(),
+                      depend2 = list(),
+                      example = list())
                ))
 
 
@@ -129,10 +230,10 @@ test_that("workflow summary can handle multiple dependencies", {
                list(reports = list(
                  list(name = "depend2")
                ),
-               ref = NULL,
-               missing_dependencies = list(
-                 depend2 = list("example")
-               )))
+                    ref = NULL,
+                    missing_dependencies = list(
+                      depend2 = list("example")
+                    )))
 })
 
 test_that("workflow summary returns ref, instance and parameters", {
@@ -153,9 +254,9 @@ test_that("workflow summary returns ref, instance and parameters", {
                         another_param = "test"
                       ))
                ),
-               ref = commits$id,
-               missing_dependencies = list(
-                 depend4 = list("example", "depend2"))
+                    ref = commits$id,
+                    missing_dependencies = list(
+                      depend4 = list("example", "depend2"))
                ))
 })
 
@@ -192,7 +293,7 @@ test_that("can work out dependencies graph", {
                     depend4 = c("example", "depend2")))
 })
 
-test_that("sorting can be retrieved", {
+test_that("can topological sort", {
   graph <- list(b = NA,
                 e = "k",
                 k = c("b", "i", "j"),
@@ -204,6 +305,41 @@ test_that("sorting can be retrieved", {
   sort <- topological_sort(graph)
   expect_equal(sort,
                c("b", "i", "j", "k", "h", "e", "g", "c"))
+})
+
+test_that("sort preserves original order if no dependencies", {
+  graph <- list(b = NA,
+                e = NA,
+                f = NA)
+  sort <- topological_sort(graph)
+  expect_equal(sort,
+               c("b", "e", "f"))
+
+  graph <- list(b = c("e", "k"),
+                e = NA,
+                f = NA,
+                k = NA)
+  sort <- topological_sort(graph)
+  expect_equal(sort,
+               c("e", "f", "k", "b"))
+
+  graph <- list(b = NA,
+                e = NA,
+                f = "k",
+                k = NA,
+                g = NA)
+  sort <- topological_sort(graph)
+  expect_equal(sort,
+               c("b", "e", "k", "g", "f"))
+})
+
+test_that("sort preserves original order if valid", {
+  graph <- list(b = NA,
+                e = "b",
+                k = c("e", "b"))
+  sort <- topological_sort(graph)
+  expect_equal(sort,
+               c("b", "e", "k"))
 })
 
 test_that("cycled can be detected", {
@@ -453,7 +589,7 @@ test_that("dependencies are resolved using git ref", {
 
   ## Remove dependencies on branch
   prev <- git_checkout_branch("test", root = runner$root, create = TRUE)
-  depend4_path <- file.path(runner$root,  "src/depend4/orderly.yml")
+  depend4_path <- file.path(runner$root, "src/depend4/orderly.yml")
   writeLines(c("script: script.R",
                "artefacts:",
                "  staticgraph:",
