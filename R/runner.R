@@ -332,7 +332,7 @@ orderly_runner_ <- R6::R6Class(
         queued <- list()
       }
       report_id <- self$con$HGET(self$keys$key_report_id, key)
-      times <- self$queue$task_times(task_id)
+      times <- round(self$queue$task_times(task_id))
       start_time <- times[1, "start"] # Only ever 1 task_id here so always 1 row
       if (is.na(start_time)) {
         start_time <- NULL
