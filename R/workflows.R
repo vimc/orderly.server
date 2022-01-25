@@ -120,29 +120,30 @@ construct_workflow <- function(reports, report_names, dependencies) {
 ## and assumes that the graph is expressed as a *named* list.  The
 ## daughters of an element are its dependencies.
 topological_sort <- function(graph) {
-  m <- matrix(FALSE, length(graph), length(graph))
-  for (i in seq_along(graph)) {
-    m[, i] <- unname(names(graph) %in% graph[[i]])
-  }
-  pending <- rep(TRUE, length(graph))
-  graph_sorted <- integer(0)
-  while (any(pending)) {
-    i <- which(pending)[colSums(m[, pending, drop = FALSE]) == 0]
-    if (length(i) > 0L) {
-      graph_sorted <- c(graph_sorted, i)
-      pending[i] <- FALSE
-      m[i, ] <- FALSE
-    } else {
-      f <- function(i) {
-        sprintf("  %s: depends on %s",
-                names(graph)[[i]], paste(err[m[pending, i]], collapse = ", "))
+  report_names <- names(graph)
+  graph_sorted <- NULL
+  explored <- rep(FALSE, length(graph))
+  deps <- lapply(seq_along(graph), function(i) which(report_names %in% graph[[i]]))
+
+  stack <- 1
+
+  while (any(!explored)) {
+    i <- head(stack, n = 1)
+    if (!explored[i]) {
+      if (length(deps[[i]]) == 0 || all(explored[deps[[i]]])) {
+        graph_sorted <- c(graph_sorted, i)
+        explored[i] <- TRUE
+        stack <- stack[-1]
       }
-      err <- names(graph)[pending]
-      detail <- paste(vcapply(which(pending), f), collapse = "\n")
-      stop(sprintf(
-        "A cyclic dependency detected for %s:\n%s",
-        paste(names(graph)[pending], collapse = ", "),
-        detail), call. = FALSE)
+      else {
+        stack <- c(which(report_names %in% graph[[i]]), stack)
+      }
+    }
+    else {
+      stack <- stack[-1]
+    }
+    if (length(stack) == 0) {
+      stack <- which(!explored)
     }
   }
   names(graph)[graph_sorted]

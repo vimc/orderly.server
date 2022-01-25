@@ -132,7 +132,6 @@ test_that("workflow summary can handle mutiple instances and dependencies", {
                         params = list(
                           nmin = 2
                         )),
-                   list(name = "connection"),
                    list(name = "depend4",
                         params = list(
                           nmin = 0.5
@@ -142,7 +141,8 @@ test_that("workflow summary can handle mutiple instances and dependencies", {
                         params = list(
                           nmin = 2
                         ),
-                        depends_on = "depend2")
+                        depends_on = "depend2"),
+                   list(name = "connection")
                  ),
                  ref = NULL,
                  missing_dependencies = list(other = list(),
@@ -304,7 +304,7 @@ test_that("can topological sort", {
                 c = c("j", "h"))
   sort <- topological_sort(graph)
   expect_equal(sort,
-               c("b", "i", "j", "k", "h", "e", "g", "c"))
+               c("b", "i", "j", "k", "e", "h", "g", "c"))
 })
 
 test_that("sort preserves original order if no dependencies", {
@@ -321,7 +321,7 @@ test_that("sort preserves original order if no dependencies", {
                 k = NA)
   sort <- topological_sort(graph)
   expect_equal(sort,
-               c("e", "f", "k", "b"))
+               c("e", "k", "b", "f"))
 
   graph <- list(b = NA,
                 e = NA,
@@ -330,7 +330,7 @@ test_that("sort preserves original order if no dependencies", {
                 g = NA)
   sort <- topological_sort(graph)
   expect_equal(sort,
-               c("b", "e", "k", "g", "f"))
+               c("b", "e", "k", "f", "g"))
 })
 
 test_that("sort preserves original order if valid", {
@@ -358,6 +358,7 @@ test_that("cycled can be detected", {
   a: depends on b, c
   b: depends on c
   c: depends on a", fixed = TRUE)
+
 })
 
 test_that("workflow representation can be built", {
