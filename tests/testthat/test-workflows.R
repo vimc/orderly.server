@@ -16,9 +16,7 @@ test_that("can get summary of a workflow", {
     list(name = "other")
   )
   expect_equal(workflow_summary(path, reports),
-               list(reports = list(
-                 list(name = "other")
-               ),
+               list(reports = list(list(name = "other")),
                     ref = NULL,
                     missing_dependencies = list(
                       other = list()
@@ -90,29 +88,31 @@ test_that("workflow summary can handle multiple instances of the same report", {
 })
 
 test_that("workflow summary can handle mutiple instances and dependencies", {
-  path <- orderly_prepare_orderly_example("depends", testing = TRUE, git = TRUE)
+  path <- orderly_prepare_orderly_example("demo", git = TRUE)
   reports <- list(
     list(name = "other", params = list(
       nmin = 0.5
     )),
     list(name = "global"),
-    list(name = "depend4",
+    list(name = "use_dependency_2",
          params = list(nmin = 0.5)),
     list(name = "other", params = list(
       nmin = 1
     )),
-    list(name = "depend2",
+    list(name = "use_dependency",
          params = list(nmin = 0.5)),
-    list(name = "depend4",
+    list(name = "use_dependency_2",
          params = list(nmin = 2)),
-    list(name = "depend2",
+    list(name = "use_dependency",
          params = list(nmin = 2)),
     list(name = "connection")
   )
 
-  # original order here is considered to be "other", "global", "depend4", "connection"
-  # the second "other" report is grouped with the first and the second "depend4" is grouped with the first
-  expect_equal(s <- workflow_summary(path, reports),
+  # original order here is considered to be
+  # "other", "global", "use_dependency_2", "use_dependency", "connection"
+  # the second "other" report is grouped with the first
+  # and the second "use_dependency_2" is grouped with the first
+  expect_equal(workflow_summary(path, reports),
                list(
                  reports = list(
                    list(name = "other",
@@ -124,34 +124,36 @@ test_that("workflow summary can handle mutiple instances and dependencies", {
                           nmin = 1
                         )),
                    list(name = "global"),
-                   list(name = "depend2",
-                        params = list(
-                          nmin = 0.5
-                        )),
-                   list(name = "depend2",
-                        params = list(
-                          nmin = 2
-                        )),
-                   list(name = "depend4",
+                   list(name = "use_dependency",
                         params = list(
                           nmin = 0.5
                         ),
-                        depends_on = "depend2"),
-                   list(name = "depend4",
+                        depends_on = "other"),
+                   list(name = "use_dependency",
                         params = list(
                           nmin = 2
                         ),
-                        depends_on = "depend2"),
+                        depends_on = "other"),
+                   list(name = "use_dependency_2",
+                        params = list(
+                          nmin = 0.5
+                        ),
+                        depends_on = "use_dependency"),
+                   list(name = "use_dependency_2",
+                        params = list(
+                          nmin = 2
+                        ),
+                        depends_on = "use_dependency"),
                    list(name = "connection")
                  ),
                  ref = NULL,
                  missing_dependencies = list(other = list(),
                                              global = list(),
-                                             depend4 = list("example"),
+                                             use_dependency_2 = list(),
                                              other = list(),
-                                             depend2 = list("example"),
-                                             depend4 = list("example"),
-                                             depend2 = list("example"),
+                                             use_dependency = list(),
+                                             use_dependency_2 = list(),
+                                             use_dependency = list(),
                                              connection = list())))
 })
 
@@ -343,6 +345,9 @@ test_that("sort preserves original order if valid", {
 })
 
 test_that("cycled can be detected", {
+
+  topological_sort(list(a = NA, b = list(a = "a", c = "c"), c = list(a = "a")))
+
   expect_error(topological_sort(list(a = "a")),
                "A cyclic dependency detected for a:
   a: depends on a", fixed = TRUE)

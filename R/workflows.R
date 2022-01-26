@@ -115,19 +115,38 @@ construct_workflow <- function(reports, report_names, dependencies) {
   unlist(workflow, recursive = FALSE, use.names = FALSE)
 }
 
-## This algorithm comes from here:
-## http://blog.jupo.org/2012/04/06/topological-sorting-acyclic-directed-graphs/
-## and assumes that the graph is expressed as a *named* list.  The
-## daughters of an element are its dependencies.
 topological_sort <- function(graph) {
   report_names <- names(graph)
   graph_sorted <- NULL
   explored <- rep(FALSE, length(graph))
-  deps <- lapply(seq_along(graph), function(i) which(report_names %in% graph[[i]]))
+  deps <- lapply(seq_along(graph),
+                 function(i) which(report_names %in% graph[[i]]))
 
   stack <- 1
 
   while (any(!explored)) {
+    if (length(stack) > 1 && head(stack, n = 1) == tail(stack, n = 1)) {
+      f <- function(i) {
+        sprintf("  %s: depends on %s",
+                names(graph)[[i]], paste(graph[[i]], collapse = ", "))
+      }
+
+      stack <- rev(stack)
+      node <- stack[1]
+      nodes <- node
+      stack <- stack[-1]
+      while (length(stack) > 1) {
+        children <- which(report_names %in% graph[[node]])
+        index <- seq_along(children)
+        stack <- stack[-index]
+        node <- head(children, n = 1)
+        nodes <- c(nodes, node)
+      }
+      detail <- paste(vcapply(nodes, f), collapse = "\n")
+      stop(sprintf("A cyclic dependency detected for %s:\n%s",
+                   paste(names(graph)[nodes], collapse = ", "), detail))
+    }
+
     i <- head(stack, n = 1)
     if (!explored[i]) {
       if (length(deps[[i]]) == 0 || all(explored[deps[[i]]])) {
@@ -143,7 +162,7 @@ topological_sort <- function(graph) {
       stack <- stack[-1]
     }
     if (length(stack) == 0) {
-      stack <- which(!explored)
+      stack <- head(which(!explored), n = 1)
     }
   }
   names(graph)[graph_sorted]
