@@ -26,29 +26,30 @@ test_that("can get summary of a workflow", {
     list(name = "use_dependency")
   )
   expect_equal(workflow_summary(path, reports),
-               list(reports = list(
-                 list(name = "use_dependency")
-               ),
-                    ref = NULL,
-                    missing_dependencies = list(
-                      use_dependency = list("other")
-                    )))
+               list(
+                 reports = list(
+                   list(name = "use_dependency")
+                 ),
+                 ref = NULL,
+                 missing_dependencies = list(
+                   use_dependency = list("other")
+                 )))
 
   reports <- list(
     list(name = "use_dependency"),
     list(name = "other")
   )
   expect_equal(workflow_summary(path, reports),
-               list(reports = list(
-                 list(name = "other"),
-                 list(name = "use_dependency",
-                      depends_on = "other")
-               ),
-                    ref = NULL,
-                    missing_dependencies = list(
-                      use_dependency = list(),
-                      other = list()
-                    )))
+               list(
+                 reports = list(
+                   list(name = "other"),
+                   list(name = "use_dependency",
+                        depends_on = "other")),
+                 ref = NULL,
+                 missing_dependencies = list(
+                   use_dependency = list(),
+                   other = list()
+                 )))
 })
 
 test_that("workflow summary can handle multiple instances of the same report", {
@@ -180,12 +181,13 @@ test_that("workflow summary can handle multiple dependencies", {
     list(name = "depend4")
   )
   expect_equal(workflow_summary(path, reports),
-               list(reports = list(
-                 list(name = "depend4")
-               ),
-                    ref = NULL,
-                    missing_dependencies = list(
-                      depend4 = list("example", "depend2"))
+               list(
+                 reports = list(
+                   list(name = "depend4")
+                 ),
+                 ref = NULL,
+                 missing_dependencies = list(
+                   depend4 = list("example", "depend2"))
                ))
 
   reports <- list(
@@ -193,15 +195,16 @@ test_that("workflow summary can handle multiple dependencies", {
     list(name = "depend2")
   )
   expect_equal(workflow_summary(path, reports),
-               list(reports = list(
-                 list(name = "depend2"),
-                 list(name = "depend4",
-                      depends_on = "depend2")
-               ),
-                    ref = NULL,
-                    missing_dependencies = list(
-                      depend4 = list("example"),
-                      depend2 = list("example"))
+               list(
+                 reports = list(
+                   list(name = "depend2"),
+                   list(name = "depend4",
+                        depends_on = "depend2")
+                 ),
+                 ref = NULL,
+                 missing_dependencies = list(
+                   depend4 = list("example"),
+                   depend2 = list("example"))
                ))
 
   reports <- list(
@@ -210,18 +213,19 @@ test_that("workflow summary can handle multiple dependencies", {
     list(name = "example")
   )
   expect_equal(workflow_summary(path, reports),
-               list(reports = list(
-                 list(name = "example"),
-                 list(name = "depend2",
-                      depends_on = "example"),
-                 list(name = "depend4",
-                      depends_on = c("depend2", "example"))
-               ),
-                    ref = NULL,
-                    missing_dependencies = list(
-                      depend4 = list(),
-                      depend2 = list(),
-                      example = list())
+               list(
+                 reports = list(
+                   list(name = "example"),
+                   list(name = "depend2",
+                        depends_on = "example"),
+                   list(name = "depend4",
+                        depends_on = c("depend2", "example"))
+                 ),
+                 ref = NULL,
+                 missing_dependencies = list(
+                   depend4 = list(),
+                   depend2 = list(),
+                   example = list())
                ))
 
 
@@ -229,13 +233,14 @@ test_that("workflow summary can handle multiple dependencies", {
     list(name = "depend2")
   )
   expect_equal(workflow_summary(path, reports),
-               list(reports = list(
-                 list(name = "depend2")
-               ),
-                    ref = NULL,
-                    missing_dependencies = list(
-                      depend2 = list("example")
-                    )))
+               list(
+                 reports = list(
+                   list(name = "depend2")
+                 ),
+                 ref = NULL,
+                 missing_dependencies = list(
+                   depend2 = list("example")
+                 )))
 })
 
 test_that("workflow summary returns ref, instance and parameters", {
@@ -248,17 +253,18 @@ test_that("workflow summary returns ref, instance and parameters", {
          params = list(nmin = 0.5, another_param = "test"))
   )
   expect_equal(workflow_summary(path, reports, commits$id),
-               list(reports = list(
-                 list(name = "depend4",
-                      instance = "production",
-                      params = list(
-                        nmin = 0.5,
-                        another_param = "test"
-                      ))
-               ),
-                    ref = commits$id,
-                    missing_dependencies = list(
-                      depend4 = list("example", "depend2"))
+               list(
+                 reports = list(
+                   list(name = "depend4",
+                        instance = "production",
+                        params = list(
+                          nmin = 0.5,
+                          another_param = "test"
+                        ))
+                 ),
+                 ref = commits$id,
+                 missing_dependencies = list(
+                   depend4 = list("example", "depend2"))
                ))
 })
 

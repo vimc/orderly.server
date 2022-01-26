@@ -126,11 +126,6 @@ topological_sort <- function(graph) {
 
   while (any(!explored)) {
     if (length(stack) > 1 && head(stack, n = 1) == tail(stack, n = 1)) {
-      f <- function(i) {
-        sprintf("  %s: depends on %s",
-                names(graph)[[i]], paste(graph[[i]], collapse = ", "))
-      }
-
       stack <- rev(stack)
       node <- stack[1]
       nodes <- node
@@ -139,30 +134,34 @@ topological_sort <- function(graph) {
         children <- which(report_names %in% graph[[node]])
         index <- seq_along(children)
         stack <- stack[-index]
-        node <- head(children, n = 1)
+        node <- children[1]
         nodes <- c(nodes, node)
       }
+
+      f <- function(i) {
+        sprintf("  %s: depends on %s",
+                names(graph)[[i]], paste(graph[[i]], collapse = ", "))
+      }
+
       detail <- paste(vcapply(nodes, f), collapse = "\n")
       stop(sprintf("A cyclic dependency detected for %s:\n%s",
                    paste(names(graph)[nodes], collapse = ", "), detail))
     }
 
-    i <- head(stack, n = 1)
+    i <- stack[1]
     if (!explored[i]) {
       if (length(deps[[i]]) == 0 || all(explored[deps[[i]]])) {
         graph_sorted <- c(graph_sorted, i)
         explored[i] <- TRUE
         stack <- stack[-1]
-      }
-      else {
+      } else {
         stack <- c(which(report_names %in% graph[[i]]), stack)
       }
-    }
-    else {
+    } else {
       stack <- stack[-1]
     }
     if (length(stack) == 0) {
-      stack <- head(which(!explored), n = 1)
+      stack <- which(!explored)[1]
     }
   }
   names(graph)[graph_sorted]
