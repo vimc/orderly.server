@@ -65,6 +65,7 @@ missing_dependencies <- function(report_names, dependencies) {
 ## > - reportD = c(reportA, reportB)
 ## means A & C have no dependencies, B depends on C, D depends on A & B
 workflow_dependencies <- function(report_names, dependencies) {
+
   get_present_dependencies <- function(report) {
     present_deps <- report_names[report_names %in% dependencies[[report]]]
     if (length(present_deps) == 0) {
@@ -72,6 +73,7 @@ workflow_dependencies <- function(report_names, dependencies) {
     }
     present_deps
   }
+
   deps_graph <- lapply(report_names, get_present_dependencies)
   names(deps_graph) <- report_names
   deps_graph
@@ -94,9 +96,11 @@ build_workflow <- function(root, reports, ref) {
 construct_workflow <- function(reports, report_names, dependencies) {
   dependencies_graph <- workflow_dependencies(report_names, dependencies)
   order <- topological_sort(dependencies_graph)
+  all_report_names <- vcapply(reports, function(report) report$name)
+
   build_item <- function(report_name) {
     ## There may be multiple reports due to be run with this name
-    report_details <- reports[report_name == report_names]
+    report_details <- reports[report_name == all_report_names]
     lapply(report_details, function(report_detail) {
       deps <- dependencies_graph[[report_name]]
       if (length(deps) == 0 || all(is.na(deps))) {
@@ -106,38 +110,58 @@ construct_workflow <- function(reports, report_names, dependencies) {
       report_detail
     })
   }
+
   workflow <- lapply(order, build_item)
   unlist(workflow, recursive = FALSE, use.names = FALSE)
 }
 
-## This algorithm comes from here:
-## http://blog.jupo.org/2012/04/06/topological-sorting-acyclic-directed-graphs/
-## and assumes that the graph is expressed as a *named* list.  The
-## daughters of an element are its dependencies.
 topological_sort <- function(graph) {
-  m <- matrix(FALSE, length(graph), length(graph))
-  for (i in seq_along(graph)) {
-    m[, i] <- unname(names(graph) %in% graph[[i]])
-  }
-  pending <- rep(TRUE, length(graph))
-  graph_sorted <- integer(0)
-  while (any(pending)) {
-    i <- which(pending)[colSums(m[, pending, drop = FALSE]) == 0]
-    if (length(i) > 0L) {
-      graph_sorted <- c(graph_sorted, i)
-      pending[i] <- FALSE
-      m[i, ] <- FALSE
-    } else {
+  report_names <- names(graph)
+  graph_sorted <- NULL
+  explored <- rep(FALSE, length(graph))
+  deps <- lapply(seq_along(graph),
+                 function(i) which(report_names %in% graph[[i]]))
+
+  stack <- 1
+
+  while (any(!explored)) {
+    if (length(stack) > 1 && head(stack, n = 1) == tail(stack, n = 1)) {
+      stack <- rev(stack)
+      node <- stack[1]
+      nodes <- node
+      stack <- stack[-1]
+      while (length(stack) > 1) {
+        children <- which(report_names %in% graph[[node]])
+        index <- seq_along(children)
+        stack <- stack[-index]
+        node <- children[1]
+        nodes <- c(nodes, node)
+      }
+
       f <- function(i) {
         sprintf("  %s: depends on %s",
-                names(graph)[[i]], paste(err[m[pending, i]], collapse = ", "))
+                names(graph)[[i]], paste(graph[[i]], collapse = ", "))
       }
-      err <- names(graph)[pending]
-      detail <- paste(vcapply(which(pending), f), collapse = "\n")
-      stop(sprintf(
-        "A cyclic dependency detected for %s:\n%s",
-        paste(names(graph)[pending], collapse = ", "),
-        detail), call. = FALSE)
+
+      detail <- paste(vcapply(nodes, f), collapse = "\n")
+      stop(sprintf("A cyclic dependency detected for %s:\n%s",
+                   paste(names(graph)[nodes], collapse = ", "), detail))
+    }
+
+    i <- stack[1]
+    if (!explored[i]) {
+      if (length(deps[[i]]) == 0 || all(explored[deps[[i]]])) {
+        graph_sorted <- c(graph_sorted, i)
+        explored[i] <- TRUE
+        stack <- stack[-1]
+      } else {
+        stack <- c(which(report_names %in% graph[[i]]), stack)
+      }
+    } else {
+      stack <- stack[-1]
+    }
+    if (length(stack) == 0) {
+      stack <- which(!explored)[1]
     }
   }
   names(graph)[graph_sorted]
@@ -162,6 +186,7 @@ workflow_combine_status <- function(report_status) {
 ## but we need to be careful with tagging items as scalar so it
 ## serializes properly
 serialize_workflow_summary <- function(workflow) {
+
   serialize_report <- function(single_report) {
     item <- list(
       name = scalar(single_report$name)
