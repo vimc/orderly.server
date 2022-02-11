@@ -517,7 +517,12 @@ Response
 
 ## GET /workflow/status
 
-Get the status of a running workflow. Finds list of reports within this workflow and gets the status of each of the reports.
+Get the status of a running workflow. Finds list of reports within this workflow and gets the status of each of the reports. Note the format of the status of each report matches the format of the `/reports/:key/status/` endpoint. The status of the workflow is a combination of the status of the individual reports. Values it can take are:
+* success - if all reports in workflow have completed successfully
+* running - if at least one of the reports is running
+* cancelled - if at least one of the reports has been cancelled
+* queued - if all the reports are either queued or deferred
+* error - otherwise
 
 Response schema: [`WorkflowStatus.schema.json`](WorkflowStatus.schema.json)
 
