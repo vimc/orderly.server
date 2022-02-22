@@ -81,7 +81,7 @@ Schema: [`Status.schema.json`](Status.schema.json)
             "key": "antiutopian_peregrinefalcon",
             "status": "running",
             "name": "minimal",
-            "version": 20210211-143212-98c45632
+            "version": "20210211-143212-98c45632"
         },
         {
             "key": "flavoured_bassethound",
@@ -143,7 +143,7 @@ Schema: [`QueueStatus.schema.json`](QueueStatus.schema.json)
         "key": "antiutopian_peregrinefalcon",
         "status": "running",
         "name": "minimal",
-        "version": 20210211-143212-98c45632
+        "version": "20210211-143212-98c45632"
     },
     {
         "key": "flavoured_bassethound",
@@ -551,7 +551,7 @@ Response schema: [`WorkflowStatus.schema.json`](WorkflowStatus.schema.json)
           "[ git        ]  checkout master; was HEAD",
           "[ data       ]  source => dat: 20 x 2",
           "",
-          "> png("mygraph.png")",
+          "> png(\\"mygraph.png\\")",
           "",
           "> par(mar = c(15, 4, 0.5, 0.5))",
           "",
@@ -572,9 +572,9 @@ Response schema: [`WorkflowStatus.schema.json`](WorkflowStatus.schema.json)
         "queue":[]
       },
       {
-        "key":"panphobic_seabird",
-        "status":"success",
-        "version":"20220211-171616-61ccb4c1",
+        "key": "panphobic_seabird",
+        "status": "success",
+        "version": "20220211-171616-61ccb4c1",
         "output": [
           "[ git        ]  fetch",
           "[ checkout   ]  579dd44fa71f579cbe5669578718c957015a71f3; was master",
