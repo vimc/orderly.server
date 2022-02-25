@@ -1,5 +1,16 @@
 # orderly.server API
 
+<!--
+
+To update the spec, the easiest thing to do is to:
+
+    ./scripts/redis start
+    ./scripts/demo
+
+which will start a server on 8080 with a bunch of reports in it already. A table of committed reports will be printed.
+
+-->
+
 This API is built on top of [`porcelain`](https://reside-ic.github.io/porcelain) (itself influenced by [`hintr`](https://github.com/mrc-ide/hintr) and [montagu api](https://github.com/vimc/montagu-api/blob/master/spec/spec.md)).
 
 
