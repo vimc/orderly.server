@@ -53,6 +53,19 @@ Accepts query parameter `output`, which if TRUE returns the log from the job run
 
 This works only for reports that were queued by the runner itself.
 
+Each task has a `status` which can be:
+* queued - report is waiting in queue for an available worker
+* running - report is being run on a worker
+* success - report has completed successfully
+* error - report has completed with an error
+* orphan - report killed by external process, has crashed or worker has died
+* interrupted - report running was cancelled, either via timeout or `/reports/:key/kill/` endpoint
+* deferred - report is waiting on a dependency to be available before being put into queue
+* impossible - report has a dependency which will never be met i.e. its dependency errored, was cancelled or the worker died
+* missing - report is not known
+
+Note these are equivalent to status from [rrq task lifecycle](https://mrc-ide.github.io/rrq/reference/rrq_controller.html) but with some small name changes for backward compatibility.
+
 Schema: [`Status.schema.json`](Status.schema.json)
 
 ### Example queued status
@@ -67,12 +80,14 @@ Schema: [`Status.schema.json`](Status.schema.json)
         {
             "key": "antiutopian_peregrinefalcon",
             "status": "running",
-            "name": "minimal"
+            "name": "minimal",
+            "version": "20210211-143212-98c45632"
         },
         {
             "key": "flavoured_bassethound",
             "status": "queued",
-            "name": "other"
+            "name": "other",
+            "version": null
         }
     ]
 }
@@ -127,12 +142,14 @@ Schema: [`QueueStatus.schema.json`](QueueStatus.schema.json)
     {
         "key": "antiutopian_peregrinefalcon",
         "status": "running",
-        "name": "minimal"
+        "name": "minimal",
+        "version": "20210211-143212-98c45632"
     },
     {
         "key": "flavoured_bassethound",
         "status": "queued",
-        "name": "other"
+        "name": "other",
+        "version": null
     }
 ]
 ```
@@ -395,3 +412,195 @@ Response schema: [`ReportInfo.schema.json`](ReportInfo.schema.json)
   }
 }
 ```
+
+## POST /workflow/summary
+
+Takes an array of reports to be run and returns info about how they will be run. Including the order they will be submitted to the queue and details of any missing immediate dependencies.
+
+Request schema: [`WorkflowSummaryRequest.schema.json`](WorkflowSummaryRequest.schema.json)
+
+Response schema: [`WorkflowSummaryResponse.schema.json`](WorkflowSummaryResponse.schema.json)
+
+### Example
+
+Request
+```json
+{
+  "reports": [
+    {
+      "name": "process",
+      "instance": "production"
+      "params": {
+        "nmin": 0.5,
+        "nmax": 2
+      }
+    },
+    {
+      "name": "postprocess",
+      "instance": "production"
+    }
+  ],
+  "ref": "cf57b021cf4d8597e9c703a54582090005bef830"
+}
+```
+
+Response
+```json
+{
+  "reports": [
+    {
+      "name": "process",
+      "instance": "production",
+      "params": {
+        "nmin": 0.5,
+        "nmax": 2
+      }
+      "depends_on": ["preprocess"]
+    },
+    {
+      "name": "postprocess",
+      "instance": "production",
+      "depends_on": ["preprocess", "process"]
+    }
+  ],
+  "ref": "cf57b021cf4d8597e9c703a54582090005bef830",
+  "missing_dependencies": {
+    "process": ["preprocess"],
+    "postprocess": ["preprocess"]
+  }
+} 
+```
+
+## POST /workflow/run
+
+Run a set of reports as a workflow. Takes a set of reports to run, and any instance, params or dependencies between the reports. Works out the order the reports can be sent to the queue respecting any dependencies and adds them to the queue. Returns the ID of the workflow and each individual report.
+
+Request schema: [`WorkflowRunRequest.schema.json`](WorkflowRunRequest.schema.json)
+
+Response schema: [`WorkflowRunResponse.schema.json`](WorkflowRunResponse.schema.json)
+
+### Example
+
+Request
+```json
+{
+  "reports": [
+    {
+      "name": "other",
+      "params": {
+        "nmin": [0.5]
+      }
+    },
+    {
+      "name": "minimal"
+    }
+  ],
+  "ref": "695d4e1673919ae77babc64b39ba26e9c844efa5",
+  "changelog": {
+    "message": "changelog 1",
+    "type": "internal"
+  }
+} 
+```
+
+Response
+```json
+{
+  "status": "success",
+  "errors": null,
+  "data": {
+    "workflow_key": "aghast_wolf",
+    "reports": ["deific_thrip", "monarchistic_blackmamba"]
+  }
+}
+```
+
+## GET /workflow/status
+
+Get the status of a running workflow. Finds list of reports within this workflow and gets the status of each of the reports. Note the format of the status of each report matches the format of the `/reports/:key/status/` endpoint. The status of the workflow is a combination of the status of the individual reports. Values it can take are:
+* success - if all reports in workflow have completed successfully
+* running - if at least one of the reports is running
+* cancelled - if at least one of the reports has been cancelled
+* queued - if all the reports are either queued or deferred
+* error - otherwise
+
+Response schema: [`WorkflowStatus.schema.json`](WorkflowStatus.schema.json)
+
+### Example
+
+
+```json
+{
+  "status": "success",
+  "errors": null,
+  "data": {
+    "workflow_key": "prophetic_ankolewatusi",
+    "status": "success",
+    "reports": [
+      {
+        "key": "chartreuse_alleycat",
+        "status": "success",
+        "version": "20220211-171617-6b2b2cac",
+        "output": [
+          "[ git        ]  fetch",
+          "[ checkout   ]  579dd44fa71f579cbe5669578718c957015a71f3; was master",
+          "[ name       ]  minimal",
+          "[ id         ]  20220211-171617-6b2b2cac",
+          "[ id_file    ]  /tmp/RtmpUyRoEL/file30698f4fe64e83/runner/id/chartreuse_alleycat.id_file",
+          "[ start      ]  2022-02-11 17:16:17",
+          "[ git        ]  checkout master; was HEAD",
+          "[ data       ]  source => dat: 20 x 2",
+          "",
+          "> png(\\"mygraph.png\\")",
+          "",
+          "> par(mar = c(15, 4, 0.5, 0.5))",
+          "",
+          "> barplot(setNames(dat$number, dat$name), las = 2)",
+          "",
+          "> dev.off()",
+          "null device ",
+          "          1 ",
+          "[ end        ]  2022-02-11 17:16:17",
+          "[ elapsed    ]  Ran report in 0.34585 secs",
+          "[ artefact   ]  mygraph.png: 4a9b9329e8de721c9a081cb8f982c21f",
+          "[ commit     ]  minimal/20220211-171617-6b2b2cac",
+          "[ copy       ]",
+          "[ import     ]  minimal:20220211-171617-6b2b2cac",
+          "[ success    ]  :)",
+          "id:20220211-171617-6b2b2cac"
+        ],
+        "queue":[]
+      },
+      {
+        "key": "panphobic_seabird",
+        "status": "success",
+        "version": "20220211-171616-61ccb4c1",
+        "output": [
+          "[ git        ]  fetch",
+          "[ checkout   ]  579dd44fa71f579cbe5669578718c957015a71f3; was master",
+          "[ name       ]  global",
+          "[ id         ]  20220211-171616-61ccb4c1",
+          "[ id_file    ]  /tmp/RtmpUyRoEL/file30698f4fe64e83/runner/id/panphobic_seabird.id_file",
+          "[ global     ]  data.csv -> data.csv",
+          "[ start      ]  2022-02-11 17:16:16",
+          "[ git        ]  checkout master; was HEAD",
+          "",
+          "> data <- read.csv(\\"data.csv\\")",
+          "",
+          "> saveRDS(data, \\"out.rds\\")",
+          "[ end        ]  2022-02-11 17:16:16",
+          "[ elapsed    ]  Ran report in 0.01059127 secs",
+          "[ artefact   ]  out.rds: 94bce2af59aeeba7e0d556344ed45285",
+          "[ commit     ]  global/20220211-171616-61ccb4c1",
+          "[ copy       ]",
+          "[ import     ]  global:20220211-171616-61ccb4c1",
+          "[ success    ]  :)",
+          "id:20220211-171616-61ccb4c1"
+        ],
+        "queue":[]
+      }
+    ]
+  }
+}
+```
+
