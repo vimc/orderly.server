@@ -759,7 +759,7 @@ test_that("workflow can be run: dependencies are cancelled on error", {
   ## We have in this setup
   ##        example
   ##        /  |   \
-  ##  depend   |    depend2
+  ##  depend   |    depend2 (this errors)
   ##           |   /
   ##        depend4
   ## so if depend2 errors we should see depend4 cancel
@@ -804,10 +804,7 @@ test_that("workflow can be run: dependencies are cancelled on error", {
 
   result_2 <- runner$queue$task_wait(task_ids[[2]])
   status_2 <- runner$status(res$reports[[2]], output = TRUE)
-  expect_equal(status_2$status, "success")
-  expect_match(status_2$version, "^\\d{8}-\\d{6}-\\w{8}")
-  expect_match(status_2$output, "\\[ name +\\]  depend4",
-               all = FALSE)
+  expect_equal(status_2$status, "impossible")
 
   result_3 <- runner$queue$task_wait(task_ids[[3]])
   status_3 <- runner$status(res$reports[[3]], output = TRUE)
