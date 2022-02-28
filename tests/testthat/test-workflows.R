@@ -748,3 +748,78 @@ test_that("orderly workflow works with running a report twice", {
     depend4 = list("example", "depend2")
   ))
 })
+
+test_that("workflow can be run: dependencies are cancelled on error", {
+  testthat::skip_on_cran()
+  skip_on_windows()
+  skip_if_no_redis()
+  path <- orderly_git_example("depends", testing = TRUE)
+  runner <- orderly_runner(path)
+
+  ## We have in this setup
+  ##        example
+  ##        /  |   \
+  ##  depend   |    depend2
+  ##           |   /
+  ##        depend4
+  ## so if depend2 errors we should see depend4 cancel
+  ## but depend still run
+  err <- "stop('this report fails!')"
+  writeLines(err, file.path(path, "src/depend2/script.R"))
+  multiple_deps <- list(
+    list(
+      name = "example"
+    ),
+    list(
+      name = "depend4"
+    ),
+    list(
+      name = "depend2"
+    ),
+    list(
+      name = "depend"
+    )
+  )
+  res <- runner$submit_workflow(multiple_deps)
+  testthat::try_again(5, {
+    Sys.sleep(0.5)
+    tasks <- runner$queue$task_list()
+    expect_length(tasks, 4)
+  })
+  expect_equal(names(res), c("workflow_key", "reports"))
+  expect_true(!is.null(res$workflow_key))
+  redis_key <- workflow_redis_key(runner$queue$queue_id, res$workflow_key)
+  expect_setequal(runner$con$SMEMBERS(redis_key), res$reports)
+  expect_length(res$reports, 4)
+  task_ids <- vcapply(res$reports, function(id) get_task_id_key(runner, id))
+  expect_setequal(tasks, task_ids)
+
+  ## Order of returned tasks is correct
+  result_1 <- runner$queue$task_wait(task_ids[[1]])
+  status_1 <- runner$status(res$reports[[1]], output = TRUE)
+  expect_equal(status_1$status, "success")
+  expect_match(status_1$version, "^\\d{8}-\\d{6}-\\w{8}")
+  expect_match(status_1$output, "\\[ name +\\]  example",
+               all = FALSE)
+
+  result_2 <- runner$queue$task_wait(task_ids[[2]])
+  status_2 <- runner$status(res$reports[[2]], output = TRUE)
+  expect_equal(status_2$status, "success")
+  expect_match(status_2$version, "^\\d{8}-\\d{6}-\\w{8}")
+  expect_match(status_2$output, "\\[ name +\\]  depend4",
+               all = FALSE)
+
+  result_3 <- runner$queue$task_wait(task_ids[[3]])
+  status_3 <- runner$status(res$reports[[3]], output = TRUE)
+  expect_equal(status_3$status, "error")
+  expect_match(status_3$version, "^\\d{8}-\\d{6}-\\w{8}")
+  expect_match(status_3$output, "\\[ name +\\]  depend2",
+               all = FALSE)
+
+  result_4 <- runner$queue$task_wait(task_ids[[4]])
+  status_4 <- runner$status(res$reports[[4]], output = TRUE)
+  expect_equal(status_4$status, "success")
+  expect_match(status_4$version, "^\\d{8}-\\d{6}-\\w{8}")
+  expect_match(status_4$output, "\\[ name +\\]  depend",
+               all = FALSE)
+})
