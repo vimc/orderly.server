@@ -1,0 +1,38 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "ReportVersionArtefact",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "id": {
+                "type": "integer"
+            },
+            "format": {
+                "enum": ["staticgraph", "interactivegraph", "data", "report",
+                         "interactivehtml"]
+            },
+            "description": {
+                "type": "string"
+            },
+            "files": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "filename": {
+                            "type": "string"
+                        },
+                        "size": {
+                            "type": "number"
+                        }
+                    },
+                    "additionalProperties": false,
+                    "required": ["filename", "size"]
+                }
+            }
+        },
+        "additionalProperties": false,
+        "required": ["id", "format", "description", "files"]
+    }
+}

@@ -1,5 +1,16 @@
 # orderly.server API
 
+<!--
+
+To update the spec, the easiest thing to do is to:
+
+    ./scripts/redis start
+    ./scripts/demo
+
+which will start a server on 8080 with a bunch of reports in it already. A table of committed reports will be printed.
+
+-->
+
 This API is built on top of [`porcelain`](https://reside-ic.github.io/porcelain) (itself influenced by [`hintr`](https://github.com/mrc-ide/hintr) and [montagu api](https://github.com/vimc/montagu-api/blob/master/spec/spec.md)).
 
 
@@ -604,3 +615,75 @@ Response schema: [`WorkflowStatus.schema.json`](WorkflowStatus.schema.json)
 }
 ```
 
+## GET /report/version/:id/artefacts
+
+Get information about artefacts for a report.
+
+Note that the report name is not needed here.
+
+## Example
+
+```json
+{
+  "status": "success",
+  "errors": null,
+  "data": [
+    {
+      "id": 1,
+      "format": "data",
+      "description": "raw export",
+      "files": [
+        {
+          "filename": "all.csv",
+          "size": 801
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "format": "data",
+      "description": "the subset we care most about",
+      "files": [
+        {
+          "filename": "subset.csv",
+          "size": 127
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "format": "staticgraph",
+      "description": "plot of all data",
+      "files": [
+        {
+          "filename": "all.png",
+          "size": 9866
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "format": "staticgraph",
+      "description": "plot of a subset of the data",
+      "files": [
+        {
+          "filename": "subset.png",
+          "size": 4291
+        }
+      ]
+    }
+  ]
+}
+```
+
+If a nonexistant key is given the response is
+
+```json
+{
+  "status": "success",
+  "errors": null,
+  "data": []
+}
+```
+
+Schema: [`ReportVersionArtefact.schema.json`](ReportVersionArtefact.schema.json)
