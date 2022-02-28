@@ -473,7 +473,7 @@ Response
 
 ## POST /workflow/run
 
-Run a set of reports as a workflow. Takes a set of reports to run, and any instance, params or dependencies between the reports. Works out the order the reports can be sent to the queue respecting any dependencies and adds them to the queue. Returns the ID of the workflow and each individual report.
+Run a set of reports as a workflow. Takes a set of reports to run, and any instance, params or dependencies between the reports. Works out the order the reports can be sent to the queue respecting any dependencies and adds them to the queue. Returns the ID of the workflow and each individual report. If 1 report fails reports dependent on the failed report will have status set to "impossible". Any independent reports will still be run.
 
 Request schema: [`WorkflowRunRequest.schema.json`](WorkflowRunRequest.schema.json)
 
