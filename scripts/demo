@@ -1,0 +1,6 @@
+#!/usr/bin/env Rscript
+pkgload::load_all(export_all = FALSE, attach_testthat = FALSE)
+path <- orderly::orderly_example("demo", run_demo = TRUE, git = TRUE,
+                                 quiet = TRUE)
+print(orderly::orderly_list_archive(path))
+orderly.server::server(path, 8080, "127.0.0.1")

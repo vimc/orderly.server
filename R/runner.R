@@ -320,6 +320,7 @@ orderly_runner_ <- R6::R6Class(
           key = key,
           status = "missing",
           version = NULL,
+          start_time = NULL,
           output = NULL,
           queue = list()
         ))
@@ -331,6 +332,11 @@ orderly_runner_ <- R6::R6Class(
         queued <- list()
       }
       report_id <- self$con$HGET(self$keys$key_report_id, key)
+      times <- round(self$queue$task_times(task_id))
+      start_time <- times[1, "start"] # Only ever 1 task_id here so always 1 row
+      if (is.na(start_time)) {
+        start_time <- NULL
+      }
       if (output) {
         out <- readlines_if_exists(path_stderr(self$root, key), NULL)
       } else {
@@ -348,6 +354,7 @@ orderly_runner_ <- R6::R6Class(
         key = key,
         status = out_status,
         version = report_id,
+        start_time = start_time,
         output = out,
         queue = queued
       )

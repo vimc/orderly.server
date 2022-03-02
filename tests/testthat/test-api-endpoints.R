@@ -277,7 +277,7 @@ test_that("status - queued behind nothing", {
   ## See mock.R
   key <- "key-2"
   status <- list(key = key, status = "queued", version = NULL,
-                 queue = NULL)
+                 start_time = NULL, queue = NULL)
 
   runner <- mock_runner(key, status)
 
@@ -287,6 +287,7 @@ test_that("status - queued behind nothing", {
     list(key = scalar(key),
          status = scalar("queued"),
          version = NULL,
+         start_time = NULL,
          output = NULL,
          queue = list()))
 
@@ -313,7 +314,7 @@ test_that("status - queued behind nothing", {
 test_that("status - queued", {
   key <- "key-3"
   status <- list(
-    key = key, status = "queued", version = NA_character_,
+    key = key, status = "queued", version = NA_character_, start_time = NULL,
     queue = list(
       list(
         key = "key-1",
@@ -335,6 +336,7 @@ test_that("status - queued", {
     list(key = scalar(key),
          status = scalar("queued"),
          version = scalar(NA_character_),
+         start_time = NULL,
          output = NULL,
          queue = list(
            list(
@@ -371,8 +373,9 @@ test_that("status - queued", {
 test_that("status - completed, no log", {
   key <- "key-1"
   version <- "20200414-123013-a1df28f7"
+  start_time <- as.numeric(Sys.time())
   status <- list(key = key, status = "success", version = version,
-                 output = NULL, queue = character(0))
+                 start_time = start_time, output = NULL, queue = character(0))
 
   runner <- mock_runner(key, status)
 
@@ -382,6 +385,7 @@ test_that("status - completed, no log", {
     list(key = scalar(key),
          status = scalar("success"),
          version = scalar(version),
+         start_time = scalar(start_time),
          output = NULL,
          queue = list()))
   expect_equal(mockery::mock_args(runner$status)[[1]], list(key, FALSE))
@@ -407,7 +411,9 @@ test_that("status - completed, no log", {
 test_that("status - completed, with log", {
   key <- "key-1"
   version <- "20200414-123013-a1df28f7"
+  start_time <- as.numeric(Sys.time())
   status <- list(key = key, status = "success", version = version,
+                 start_time = start_time,
                  output = c("a message", "in the logs"),
                  queue = character(0))
   runner <- mock_runner(key, status)
@@ -418,6 +424,7 @@ test_that("status - completed, with log", {
     list(key = scalar(key),
          status = scalar("success"),
          version = scalar(version),
+         start_time = scalar(start_time),
          output = c("a message", "in the logs"),
          queue = list()))
   expect_equal(mockery::mock_args(runner$status)[[1]], list(key, TRUE))
@@ -1043,4 +1050,27 @@ test_that("endpoint_report_info returns parameter info", {
   expect_null(info$data$git)
   expect_null(info$data$logfile)
   expect_null(info$data$error)
+})
+
+
+test_that("can retrieve information about artefacts", {
+  path <- orderly_prepare_orderly_example("demo")
+  id <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+                             root = path, echo = FALSE)
+  orderly::orderly_commit(id, root = path)
+
+  data <- target_report_version_artefact(path, id)
+
+  endpoint <- endpoint_report_version_artefact(path)
+  res <- endpoint$run(id = id)
+
+  expect_true(res$validated)
+  expect_equal(res$status_code, 200)
+  expect_type(res$data, "list")
+  ## No need to check the format of the data all over as that's
+  ## duplicated by the schema check.  But here, check the first file
+  ## is indeed first:
+  expect_equal(res$data[[1]]$id, scalar(1L))
+  expect_equal(res$data[[1]]$description, scalar("A summary table"))
+  expect_equal(res$data[[1]]$files[[1]]$filename, scalar("summary.csv"))
 })
