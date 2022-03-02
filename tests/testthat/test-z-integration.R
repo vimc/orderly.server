@@ -62,6 +62,7 @@ test_that("run", {
   st <- content(r)
   expect_equal(st$status, "success")
   expect_is(st$data, "list")
+  expect_type(st$data$start_time, "integer")
   id <- st$data$version
 
   dest <- file.path(server$path, "archive", "example", id)
@@ -72,9 +73,12 @@ test_that("run", {
   expect_equal(httr::status_code(r), 200)
   st <- content(r)
   expect_equal(st$status, "success")
-  cmp <- list(key = dat$data$key, status = "success",
-              version = id, output = NULL, queue = list())
-  expect_equal(st$data, cmp)
+  expect_equal(st$data$key, dat$data$key)
+  expect_equal(st$data$status, "success")
+  expect_equal(st$data$version, id)
+  expect_type(st$data$start_time, "integer")
+  expect_null(st$data$output)
+  expect_equal(st$data$queue, list())
 
   r <- httr::GET(server$api_url(dat$data$path), query = list(output = TRUE))
   expect_equal(httr::status_code(r), 200)
@@ -213,9 +217,12 @@ test_that("run: pass parameters", {
   expect_equal(httr::status_code(r), 200)
   st <- content(r)
   expect_equal(st$status, "success")
-  cmp <- list(key = dat$data$key, status = "success",
-              version = version, output = NULL, queue = list())
-  expect_equal(st$data, cmp)
+  expect_equal(st$data$key, dat$data$key)
+  expect_equal(st$data$status, "success")
+  expect_equal(st$data$version, version)
+  expect_type(st$data$start_time, "integer")
+  expect_null(st$data$output)
+  expect_equal(st$data$queue, list())
 
   r <- httr::GET(server$api_url(dat$data$path), query = list(output = TRUE))
   expect_equal(httr::status_code(r), 200)

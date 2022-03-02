@@ -474,6 +474,7 @@ test_that("workflow can be run: simple", {
   status <- runner$status(res$reports, output = TRUE)
   expect_equal(status$status, "success")
   expect_match(status$version, "^\\d{8}-\\d{6}-\\w{8}")
+  expect_type(status$start_time, "double")
   expect_match(status$output, "\\[ data +\\]  source => dat: 20 x 2",
                all = FALSE)
 })
@@ -515,6 +516,7 @@ test_that("workflow can be run: dependencies", {
   status_1 <- runner$status(res$reports[[1]], output = TRUE)
   expect_equal(status_1$status, "success")
   expect_match(status_1$version, "^\\d{8}-\\d{6}-\\w{8}")
+  expect_type(status_1$start_time, "double")
   expect_match(status_1$output, "\\[ name +\\]  example",
                all = FALSE)
 
@@ -522,6 +524,7 @@ test_that("workflow can be run: dependencies", {
   status_2 <- runner$status(res$reports[[2]], output = TRUE)
   expect_equal(status_2$status, "success")
   expect_match(status_2$version, "^\\d{8}-\\d{6}-\\w{8}")
+  expect_type(status_2$start_time, "double")
   expect_match(status_2$output, "\\[ name +\\]  depend4",
                all = FALSE)
 
@@ -529,6 +532,7 @@ test_that("workflow can be run: dependencies", {
   status_3 <- runner$status(res$reports[[3]], output = TRUE)
   expect_equal(status_3$status, "success")
   expect_match(status_3$version, "^\\d{8}-\\d{6}-\\w{8}")
+  expect_type(status_3$start_time, "double")
   expect_match(status_3$output, "\\[ name +\\]  depend2",
                all = FALSE)
 
@@ -692,14 +696,17 @@ test_that("can get status of a worfklow", {
   expect_setequal(report_keys, res$reports)
   expect_equal(status$reports[[1]]$status, "success")
   expect_match(status$reports[[1]]$version, "^\\d{8}-\\d{6}-\\w{8}")
+  expect_type(status$reports[[1]]$start_time, "double")
   expect_null(status$reports[[1]]$output)
   expect_equal(status$reports[[1]]$queue, list())
   expect_equal(status$reports[[2]]$status, "success")
   expect_match(status$reports[[2]]$version, "^\\d{8}-\\d{6}-\\w{8}")
+  expect_type(status$reports[[2]]$start_time, "double")
   expect_null(status$reports[[2]]$output)
   expect_equal(status$reports[[2]]$queue, list())
   expect_equal(status$reports[[3]]$status, "success")
   expect_match(status$reports[[3]]$version, "^\\d{8}-\\d{6}-\\w{8}")
+  expect_type(status$reports[[3]]$start_time, "double")
   expect_null(status$reports[[3]]$output)
   expect_equal(status$reports[[3]]$queue, list())
 
