@@ -78,6 +78,17 @@ runner_run <- function(key_report_id, key, root, name, parameters, instance,
     Sys.sleep(poll)
   }
 
+  ## For very fast report running we can get into the state that
+  ## id is still null here. e.g. first check the file doesn't exist,
+  ## then report finishes running and processx exists whilst poll
+  ## is waiting. Check again for ID if it is NULL to handle this
+  ## edge case.
+  if (is.na(id)) {
+    if (file.exists(id_file)) {
+      id <- readlines_if_exists(id_file, NA_character_)
+      con$HSET(key_report_id, key, id)
+    }
+  }
   ok <- px$get_exit_status() == 0L
   base <- if (ok) path_archive else path_draft
   p <- file.path(base(root), name, id)
