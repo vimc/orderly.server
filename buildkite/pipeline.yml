@@ -49,3 +49,9 @@ steps:
     branches: "master"
     build:
       branch: main
+
+  - trigger: "fertility-orderly-image"
+    label: ":rocket: fertility orderly image (from orderly.server) :pregnant_woman:"
+    branches: "master"
+    build:
+      branch: main
