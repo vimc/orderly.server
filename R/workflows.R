@@ -125,7 +125,8 @@ topological_sort <- function(graph) {
   stack <- 1
 
   while (any(!explored)) {
-    if (length(stack) > 1 && head(stack, n = 1) == tail(stack, n = 1)) {
+    if (length(stack) > 1 &&
+        utils::head(stack, n = 1) == utils::tail(stack, n = 1)) {
       stack <- rev(stack)
       node <- stack[1]
       nodes <- node
