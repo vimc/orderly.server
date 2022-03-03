@@ -76,7 +76,6 @@ runner_run <- function(key_report_id, key, root, name, parameters, instance,
     id
   }
   id <- NA_character_
-  ## Might be worth killing px on function exit
   ## Pull out ID and save in redis as soon as possible with a busy wait
   ## then block wait for processx to finish
   while (px$is_alive()) {
