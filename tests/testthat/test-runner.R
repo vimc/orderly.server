@@ -604,7 +604,8 @@ test_that("runner run passes git args to orderly CLI", {
   skip_if_no_redis()
   mock_processx <- mockery::mock(list(
     is_alive = function() FALSE,
-    get_exit_status = function() 0L), cycle = TRUE)
+    get_exit_status = function() 0L,
+    wait = function() TRUE), cycle = TRUE)
   mockery::stub(runner_run, "processx::process$new", mock_processx)
   run <- runner_run("key_report_id", "key", ".", "test", NULL, NULL,
                     ref = NULL, changelog = NULL)
@@ -637,7 +638,8 @@ test_that("runner run passes changelog to orderly CLI", {
   skip_if_no_redis()
   mock_processx <- mockery::mock(list(
     is_alive = function() FALSE,
-    get_exit_status = function() 0L), cycle = TRUE)
+    get_exit_status = function() 0L,
+    wait = function() TRUE), cycle = TRUE)
   mockery::stub(runner_run, "processx::process$new", mock_processx)
   run <- runner_run("key_report_id", "key", ".", "test", NULL, NULL,
                     ref = NULL, changelog = "[tst] message")
