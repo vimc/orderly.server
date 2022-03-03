@@ -66,29 +66,38 @@ runner_run <- function(key_report_id, key, root, name, parameters, instance,
   ## stderr for us
   px <- processx::process$new(orderly_bin, args,
                               stdout = NULL, stderr = log_err)
-  ## Might be worth killing px on function exit
-  id <- NA_character_
-  while (px$is_alive()) {
-    if (is.na(id)) {
-      if (file.exists(id_file)) {
-        id <- readlines_if_exists(id_file, NA_character_)
-        con$HSET(key_report_id, key, id)
-      }
-    }
-    Sys.sleep(poll)
-  }
 
-  ## For very fast report running we can get into the state that
-  ## id is still null here. e.g. first check the file doesn't exist,
-  ## then report finishes running and processx exists whilst poll
-  ## is waiting. Check again for ID if it is NULL to handle this
-  ## edge case.
-  if (is.na(id)) {
+  check_for_id <- function() {
+    id <- NA_character_
     if (file.exists(id_file)) {
       id <- readlines_if_exists(id_file, NA_character_)
       con$HSET(key_report_id, key, id)
     }
+    id
   }
+  id <- NA_character_
+  ## Might be worth killing px on function exit
+  ## Pull out ID and save in redis as soon as possible with a busy wait
+  ## then block wait for processx to finish
+  while (px$is_alive()) {
+    id <- check_for_id()
+    if (!is.na(id)) {
+      break
+    }
+    Sys.sleep(poll)
+  }
+  px$wait()
+  ## For very fast report running we can get into the state that
+  ## id is still NA here. For example if in while loop
+  ## 1. Check process is alive, try to read ID it doesn't exist yet so ID is NA
+  ## 2. Whilst sleep is being run the report run finishes
+  ## 3. On next check of px$is_alive it is false so the block is skipped and
+  ##    ID never gets read out and so never gets set in redis
+  ## so we check for ID again if it is still NA
+  if (is.na(id)) {
+    id <- check_for_id()
+  }
+
   ok <- px$get_exit_status() == 0L
   base <- if (ok) path_archive else path_draft
   p <- file.path(base(root), name, id)
