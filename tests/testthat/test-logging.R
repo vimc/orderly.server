@@ -3,7 +3,7 @@ context("logging")
 test_that("Can log verbosely", {
   tmp <- tempfile()
   on.exit(unlink(tmp))
-  logger <- make_logger("trace", tmp)
+  logger <- porcelain::porcelain_logger("trace", path = tmp)
   runner <- mock_runner()
   api <- build_api(runner, "path", logger = logger)
   res <- api$request("GET", "/")

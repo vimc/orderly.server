@@ -42,11 +42,10 @@ server <- function(path, port, host = "0.0.0.0", allow_ref = TRUE,
   wait_for_go_signal(path, go_signal)
   runner <- orderly_runner(path, allow_ref, queue_id = queue_id,
                            workers = workers)
-  logger <- make_logger(log_level)
   api <- build_api(runner, runner$root,
                    backup_period = backup_period,
                    rate_limit = timeout_rate_limit,
-                   logger = logger)
+                   logger = porcelain::porcelain_logger(log_level))
   api$run(host, port)
 
   message("Server exiting")
