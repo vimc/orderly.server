@@ -607,11 +607,11 @@ test_that("workflow can be run", {
   expect_equal(names(dat$data), c("workflow_key", "reports"))
   expect_length(dat$data$reports, 2)
 
-  wait_for_finished(dat$data$reports[1], server)
-  wait_for_finished(dat$data$reports[2], server)
+  wait_for_finished(dat$data$reports[[1]]$key, server)
+  wait_for_finished(dat$data$reports[[2]]$key, server)
 
   report_1_status <- httr::GET(server$api_url(
-    sprintf("/v1/reports/%s/status/", dat$data$reports[1])),
+    sprintf("/v1/reports/%s/status/", dat$data$reports[[1]]$key)),
     query = list(output = TRUE))
   expect_equal(httr::status_code(report_1_status), 200)
   status_1 <- content(report_1_status)
@@ -620,7 +620,7 @@ test_that("workflow can be run", {
   expect_true(!is.null(status_1$data$version))
 
   report_2_status <- httr::GET(server$api_url(
-    sprintf("/v1/reports/%s/status/", dat$data$reports[2])),
+    sprintf("/v1/reports/%s/status/", dat$data$reports[[2]]$key)),
     query = list(output = TRUE))
   expect_equal(httr::status_code(report_2_status), 200)
   status_2 <- content(report_2_status)

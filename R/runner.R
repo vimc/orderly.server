@@ -314,13 +314,14 @@ orderly_runner_ <- R6::R6Class(
       redis_key <- workflow_redis_key(self$queue$queue_id, workflow_key)
       self$con$SADD(self$keys$key_workflows, workflow_key)
       self$con$SADD(redis_key, report_keys)
+      reports <- data.frame(key = report_keys, execution_order = seq_along(report_keys))
       ## Return in same order we received the reports
       ## These will be used by OW to map returned ID to specific report
       return_order <- vnapply(workflow, "[[", "original_order")
-      report_keys <- report_keys[order(return_order)]
+      reports <- reports[order(return_order), ]
       list(
         workflow_key = workflow_key,
-        reports = report_keys
+        reports = reports
       )
     },
 

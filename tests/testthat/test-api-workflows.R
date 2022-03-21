@@ -116,7 +116,8 @@ test_that("workflow job can be submitted", {
   path <- orderly_git_example("depends", testing = TRUE)
   runner <- mock_runner(submit_workflow = list(
     workflow_key = "123",
-    reports = c("report1_key", "report2_key")))
+    reports = data.frame(key = c("report1_key", "report2_key"),
+                         execution_order = c(1, 2))))
   reports <- list(
     list(
       name = scalar("report1")
@@ -138,7 +139,9 @@ test_that("workflow job can be submitted", {
 
   res <- list(
     workflow_key = scalar("123"),
-    reports = c(scalar("report1_key"), scalar("report2_key")))
+    reports = data.frame(key = c("report1_key", "report2_key"),
+                         execution_order = c(1, 2)))
+
   expect_equal(target_workflow_run(runner, body), res)
   args <- mockery::mock_args(runner$submit_workflow)
   expect_length(args, 1)
@@ -146,7 +149,7 @@ test_that("workflow job can be submitted", {
     list(name = "report1"),
     list(name = "report2")))
   expect_equal(args[[1]][[2]], "ref123")
-  expect_equal(args[[1]][[3]],  "[internal] changelog 1")
+  expect_equal(args[[1]][[3]], "[internal] changelog 1")
 
   ## endpoint
   endpoint <- endpoint_workflow_run(runner)
@@ -159,7 +162,7 @@ test_that("workflow job can be submitted", {
     list(name = "report1"),
     list(name = "report2")))
   expect_equal(args[[2]][[2]], "ref123")
-  expect_equal(args[[2]][[3]],  "[internal] changelog 1")
+  expect_equal(args[[2]][[3]], "[internal] changelog 1")
 
   ## api
   api <- build_api(runner, path)
@@ -170,14 +173,15 @@ test_that("workflow job can be submitted", {
   expect_equal(output$status, "success")
   expect_null(output$errors)
   expect_equal(output$data$workflow_key, "123")
-  expect_equal(output$data$reports, c("report1_key", "report2_key"))
+  expect_equal(output$data$reports$key, c("report1_key", "report2_key"))
+  expect_equal(output$data$reports$execution_order, c(1, 2))
   args <- mockery::mock_args(runner$submit_workflow)
   expect_length(args, 3)
   expect_equal(args[[3]][[1]], list(
     list(name = "report1"),
     list(name = "report2")))
   expect_equal(args[[3]][[2]], "ref123")
-  expect_equal(args[[3]][[3]],  "[internal] changelog 1")
+  expect_equal(args[[3]][[3]], "[internal] changelog 1")
 })
 
 test_that("additional parameters are passed to task run", {
@@ -211,7 +215,7 @@ test_that("additional parameters are passed to task run", {
   api <- build_api(runner, path)
   res_api <- api$request("POST", "/v1/workflow/run/",
                          body = body)
-  keys <- jsonlite::fromJSON(res_api$body)$data$reports
+  keys <- jsonlite::fromJSON(res_api$body)$data$reports$key
   task_ids <- vcapply(keys, function(key) get_task_id_key(runner, key))
   result_1 <- runner$queue$task_wait(task_ids[[1]])
   result_2 <- runner$queue$task_wait(task_ids[[2]])
@@ -231,7 +235,7 @@ test_that("additional parameters are passed to task run", {
   expect_equal(data_2$expr$name, "minimal")
   expect_null(data_2$expr$parameters)
   expect_equal(data_2$expr$ref, ref)
-  expect_equal(data_2$expr$changelog,  "[internal] changelog 1")
+  expect_equal(data_2$expr$changelog, "[internal] changelog 1")
   expect_equal(data_2$expr$poll, 0.1)
   res_2 <- runner$status(keys[2])
   expect_equal(res_2$status, "success")
@@ -241,7 +245,7 @@ test_that("single report workflow can be run", {
   path <- orderly_git_example("depends", testing = TRUE)
   runner <- mock_runner(submit_workflow = list(
     workflow_key = "123",
-    reports = "report1_key"))
+    reports = data.frame(key = "report1_key", execution_order = 1)))
   reports <- list(
     list(
       name = scalar("report1")
@@ -260,7 +264,7 @@ test_that("single report workflow can be run", {
 
   res <- list(
     workflow_key = scalar("123"),
-    reports = "report1_key")
+    reports = data.frame(key = "report1_key", execution_order = 1))
 
   endpoint <- endpoint_workflow_run(runner)
   output <- endpoint$run(body)
@@ -271,7 +275,7 @@ test_that("single report workflow can be run", {
   expect_equal(args[[1]][[1]], list(
     list(name = "report1")))
   expect_equal(args[[1]][[2]], "ref123")
-  expect_equal(args[[1]][[3]],  "[internal] changelog 1")
+  expect_equal(args[[1]][[3]], "[internal] changelog 1")
 })
 
 test_that("report can be included in a workflow twice", {
@@ -297,7 +301,7 @@ test_that("report can be included in a workflow twice", {
   api <- build_api(runner, path)
   res_api <- api$request("POST", "/v1/workflow/run/",
                          body = body)
-  keys <- jsonlite::fromJSON(res_api$body)$data$reports
+  keys <- jsonlite::fromJSON(res_api$body)$data$reports$key
   task_ids <- vcapply(keys, function(key) get_task_id_key(runner, key))
   expect_length(task_ids, 2)
 
@@ -432,7 +436,7 @@ test_that("git commits endpoint returns valid refs for workflow running", {
 
   expect_no_error(res <- runner$submit_workflow(list(list(name = "global")),
                                                 commits$id))
-  task_id <- get_task_id_key(runner, res$reports)
+  task_id <- get_task_id_key(runner, res$reports$key)
   result <- runner$queue$task_wait(task_id)
 
   commits <- git_commits("master", root = path[["local"]])
@@ -492,9 +496,9 @@ test_that("mrc-2626: workflow can be queued on new branch", {
   expect_equal(names(res), c("workflow_key", "reports"))
   expect_true(!is.null(res$workflow_key))
   redis_key <- workflow_redis_key(runner$queue$queue_id, res$workflow_key)
-  expect_setequal(runner$con$SMEMBERS(redis_key), res$reports)
-  expect_length(res$reports, 3)
-  task_ids <- vcapply(res$reports, function(id) get_task_id_key(runner, id))
+  expect_setequal(runner$con$SMEMBERS(redis_key), res$reports$key)
+  expect_equal(nrow(res$reports), 3)
+  task_ids <- vcapply(res$reports$key, function(id) get_task_id_key(runner, id))
   expect_setequal(tasks, task_ids)
 })
 
@@ -533,7 +537,7 @@ test_that("workflow submit response lists reports in same order as request", {
   })
 
   status_keys <- vcapply(status$reports, "[[", "key")
-  expect_setequal(status_keys, res$reports)
+  expect_setequal(status_keys, res$reports$key)
   ## If `orderly_info` can find reports when we specify their name and id
   ## then we know response has been returned in same order as input
   check_same <- function(report, key) {
@@ -543,5 +547,6 @@ test_that("workflow submit response lists reports in same order as request", {
                                           name = report$name,
                                           root = path))
   }
-  Map(check_same, reports, res$reports)
+
+  Map(check_same, reports, res$reports$key)
 })

@@ -465,13 +465,13 @@ test_that("workflow can be run: simple", {
   expect_equal(names(res), c("workflow_key", "reports"))
   expect_true(!is.null(res$workflow_key))
   redis_key <- workflow_redis_key(runner$queue$queue_id, res$workflow_key)
-  expect_equal(runner$con$SMEMBERS(redis_key), list(res$reports))
-  expect_length(res$reports, 1)
-  task_id <- get_task_id_key(runner, res$reports)
+  expect_equal(runner$con$SMEMBERS(redis_key), list(res$reports$key))
+  expect_equal(nrow(res$reports), 1)
+  task_id <- get_task_id_key(runner, res$reports$key)
   expect_equal(tasks, task_id)
 
   result <- runner$queue$task_wait(task_id)
-  status <- runner$status(res$reports, output = TRUE)
+  status <- runner$status(res$reports$key, output = TRUE)
   expect_equal(status$status, "success")
   expect_match(status$version, "^\\d{8}-\\d{6}-\\w{8}")
   expect_type(status$start_time, "double")
@@ -506,14 +506,14 @@ test_that("workflow can be run: dependencies", {
   expect_equal(names(res), c("workflow_key", "reports"))
   expect_true(!is.null(res$workflow_key))
   redis_key <- workflow_redis_key(runner$queue$queue_id, res$workflow_key)
-  expect_setequal(runner$con$SMEMBERS(redis_key), res$reports)
-  expect_length(res$reports, 3)
-  task_ids <- vcapply(res$reports, function(id) get_task_id_key(runner, id))
+  expect_setequal(runner$con$SMEMBERS(redis_key), res$reports$key)
+  expect_equal(nrow(res$reports), 3)
+  task_ids <- vcapply(res$reports$key, function(id) get_task_id_key(runner, id))
   expect_setequal(tasks, task_ids)
 
   ## Order of returned tasks is correct
   result_1 <- runner$queue$task_wait(task_ids[[1]])
-  status_1 <- runner$status(res$reports[[1]], output = TRUE)
+  status_1 <- runner$status(res$reports$key[[1]], output = TRUE)
   expect_equal(status_1$status, "success")
   expect_match(status_1$version, "^\\d{8}-\\d{6}-\\w{8}")
   expect_type(status_1$start_time, "double")
@@ -521,7 +521,7 @@ test_that("workflow can be run: dependencies", {
                all = FALSE)
 
   result_2 <- runner$queue$task_wait(task_ids[[2]])
-  status_2 <- runner$status(res$reports[[2]], output = TRUE)
+  status_2 <- runner$status(res$reports$key[[2]], output = TRUE)
   expect_equal(status_2$status, "success")
   expect_match(status_2$version, "^\\d{8}-\\d{6}-\\w{8}")
   expect_type(status_2$start_time, "double")
@@ -529,12 +529,15 @@ test_that("workflow can be run: dependencies", {
                all = FALSE)
 
   result_3 <- runner$queue$task_wait(task_ids[[3]])
-  status_3 <- runner$status(res$reports[[3]], output = TRUE)
+  status_3 <- runner$status(res$reports$key[[3]], output = TRUE)
   expect_equal(status_3$status, "success")
   expect_match(status_3$version, "^\\d{8}-\\d{6}-\\w{8}")
   expect_type(status_3$start_time, "double")
   expect_match(status_3$output, "\\[ name +\\]  depend2",
                all = FALSE)
+
+  # execution order also returned
+  expect_equal(res$reports$execution_order, c(1, 3, 2))
 
   ## depend2 run used artefacts from example run
   expect_match(status_3$output,
@@ -693,7 +696,7 @@ test_that("can get status of a worfklow", {
   expect_equal(status$status, "success")
   expect_length(status$reports, 3)
   report_keys <- lapply(status$reports, "[[", "key")
-  expect_setequal(report_keys, res$reports)
+  expect_setequal(report_keys, res$reports$key)
   expect_equal(status$reports[[1]]$status, "success")
   expect_match(status$reports[[1]]$version, "^\\d{8}-\\d{6}-\\w{8}")
   expect_type(status$reports[[1]]$start_time, "double")
@@ -796,32 +799,32 @@ test_that("workflow can be run: dependencies are cancelled on error", {
   expect_equal(names(res), c("workflow_key", "reports"))
   expect_true(!is.null(res$workflow_key))
   redis_key <- workflow_redis_key(runner$queue$queue_id, res$workflow_key)
-  expect_setequal(runner$con$SMEMBERS(redis_key), res$reports)
-  expect_length(res$reports, 4)
-  task_ids <- vcapply(res$reports, function(id) get_task_id_key(runner, id))
+  expect_setequal(runner$con$SMEMBERS(redis_key), res$reports$key)
+  expect_equal(nrow(res$reports), 4)
+  task_ids <- vcapply(res$reports$key, function(id) get_task_id_key(runner, id))
   expect_setequal(tasks, task_ids)
 
   ## Order of returned tasks is correct
   result_1 <- runner$queue$task_wait(task_ids[[1]])
-  status_1 <- runner$status(res$reports[[1]], output = TRUE)
+  status_1 <- runner$status(res$reports$key[[1]], output = TRUE)
   expect_equal(status_1$status, "success")
   expect_match(status_1$version, "^\\d{8}-\\d{6}-\\w{8}")
   expect_match(status_1$output, "\\[ name +\\]  example",
                all = FALSE)
 
   result_2 <- runner$queue$task_wait(task_ids[[2]])
-  status_2 <- runner$status(res$reports[[2]], output = TRUE)
+  status_2 <- runner$status(res$reports$key[[2]], output = TRUE)
   expect_equal(status_2$status, "impossible")
 
   result_3 <- runner$queue$task_wait(task_ids[[3]])
-  status_3 <- runner$status(res$reports[[3]], output = TRUE)
+  status_3 <- runner$status(res$reports$key[[3]], output = TRUE)
   expect_equal(status_3$status, "error")
   expect_match(status_3$version, "^\\d{8}-\\d{6}-\\w{8}")
   expect_match(status_3$output, "\\[ name +\\]  depend2",
                all = FALSE)
 
   result_4 <- runner$queue$task_wait(task_ids[[4]])
-  status_4 <- runner$status(res$reports[[4]], output = TRUE)
+  status_4 <- runner$status(res$reports$key[[4]], output = TRUE)
   expect_equal(status_4$status, "success")
   expect_match(status_4$version, "^\\d{8}-\\d{6}-\\w{8}")
   expect_match(status_4$output, "\\[ name +\\]  depend",
