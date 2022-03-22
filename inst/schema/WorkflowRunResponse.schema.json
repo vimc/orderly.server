@@ -6,14 +6,18 @@
         "queuedReport": {
             "type": "object",
             "properties": {
-                "key": {
-                    "type": "string"
+                "name": { "type": "string" },
+                "instance": { "type": "string" },
+                "params": { "$ref": "Parameters.schema.json" },
+                "depends_on": {
+                    "type": "array",
+                    "items": { "type": "string" }
                 },
-                "execution_order": {
-                    "type": "number"
-                }
+                "key": {  "type": "string" },
+                "execution_order": { "type": "number" }
             },
             "required": [
+                "name",
                 "key",
                 "execution_order"
             ],

@@ -524,10 +524,15 @@ Response
     "workflow_key": "aghast_wolf",
     "reports": [
       {
+        "name": "other",
+        "params": {
+          "nmin": [0.5]
+        },
         "key": "deific_thrip",
         "execution_order": 1
       },
       {
+        "name": "minimal",
         "key": "monarchistic_blackmamba",
         "execution_order": 2
       }
