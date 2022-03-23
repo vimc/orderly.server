@@ -515,13 +515,28 @@ Request
 ```
 
 Response
+
 ```json
 {
   "status": "success",
   "errors": null,
   "data": {
     "workflow_key": "aghast_wolf",
-    "reports": ["deific_thrip", "monarchistic_blackmamba"]
+    "reports": [
+      {
+        "name": "other",
+        "params": {
+          "nmin": 0.5
+        },
+        "key": "deific_thrip",
+        "execution_order": 1
+      },
+      {
+        "name": "minimal",
+        "key": "monarchistic_blackmamba",
+        "execution_order": 2
+      }
+    ]
   }
 }
 ```

@@ -2,11 +2,33 @@
     "$schema": "http://json-schema.org/draft-04/schema#",
     "id": "WorkflowRunResponse",
     "type": "object",
+    "definitions": {
+        "queuedReport": {
+            "type": "object",
+            "properties": {
+                "name": { "type": "string" },
+                "instance": { "type": "string" },
+                "params": { "$ref": "Parameters.schema.json" },
+                "depends_on": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                },
+                "key": {  "type": "string" },
+                "execution_order": { "type": "number" }
+            },
+            "required": [
+                "name",
+                "key",
+                "execution_order"
+            ],
+            "additionalProperties": false
+        }
+    },
     "properties": {
         "workflow_key": { "type": "string" },
         "reports": {
             "type": "array",
-            "items": { "type": "string" }
+            "items": { "$ref": "#/definitions/queuedReport" }
         }
     },
     "required": ["workflow_key", "reports"],

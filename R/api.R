@@ -400,10 +400,7 @@ target_workflow_run <- function(runner, body) {
   body <- jsonlite::fromJSON(body, simplifyDataFrame = FALSE)
   changelog <- format_changelog(body$changelog)
   res <- runner$submit_workflow(body$reports, body$ref, changelog)
-  list(
-    workflow_key = scalar(res$workflow_key),
-    reports = res$reports
-  )
+  serialize_workflow_run(res)
 }
 
 endpoint_workflow_run <- function(runner) {

@@ -183,24 +183,35 @@ workflow_combine_status <- function(report_status) {
   workflow_status
 }
 
+serialize_report <- function(single_report) {
+  item <- list(
+    name = scalar(single_report$name)
+  )
+  item$instance <- scalar(single_report$instance)
+  item$params <- recursive_scalar(single_report$params)
+  item$depends_on <- single_report$depends_on
+  item$key <- scalar(single_report$key)
+  item$execution_order <- scalar(single_report$execution_order)
+  item
+}
+
 ## Has format matching WorkflowSummaryResponse schema
 ## but we need to be careful with tagging items as scalar so it
 ## serializes properly
 serialize_workflow_summary <- function(workflow) {
-
-  serialize_report <- function(single_report) {
-    item <- list(
-      name = scalar(single_report$name)
-    )
-    item$instance <- scalar(single_report$instance)
-    item$params <- recursive_scalar(single_report$params)
-    item$depends_on <- single_report$depends_on
-    item
-  }
-
   list(
     reports = lapply(workflow$reports, serialize_report),
     ref = scalar(workflow$ref),
     missing_dependencies = recursive_scalar(workflow$missing_dependencies)
+  )
+}
+
+## Has format matching WorkflowRunResponse schema
+## but we need to be careful with tagging items as scalar so it
+## serializes properly
+serialize_workflow_run <- function(workflow) {
+  list(
+    workflow_key = scalar(workflow$workflow_key),
+    reports = lapply(workflow$reports, serialize_report)
   )
 }
