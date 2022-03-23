@@ -144,12 +144,12 @@ test_that("workflow job can be submitted", {
 
   res <- list(
     workflow_key = scalar("123"),
-    reports = list(list(name = "report1",
-                        key = "report1_key",
-                        execution_order = 1),
-                   list(name = "report2",
-                        key = "report2_key",
-                        execution_order = 2))
+    reports = list(list(name = scalar("report1"),
+                        key = scalar("report1_key"),
+                        execution_order = scalar(1)),
+                   list(name = scalar("report2"),
+                        key = scalar("report2_key"),
+                        execution_order = scalar(2)))
   )
 
   expect_equal(target_workflow_run(runner, body), res)
@@ -183,8 +183,7 @@ test_that("workflow job can be submitted", {
   expect_equal(output$status, "success")
   expect_null(output$errors)
   expect_equal(output$data$workflow_key, "123")
-  report_keys <- vcapply(output$data$reports, "[[", "key")
-  expect_equal(report_keys, c("report1_key", "report2_key"))
+  expect_equal(output$data$reports$key, c("report1_key", "report2_key"))
   expect_equal(output$data$reports$execution_order, c(1, 2))
   args <- mockery::mock_args(runner$submit_workflow)
   expect_length(args, 3)
@@ -226,7 +225,7 @@ test_that("additional parameters are passed to task run", {
   api <- build_api(runner, path)
   res_api <- api$request("POST", "/v1/workflow/run/",
                          body = body)
-  keys <- vcapply(jsonlite::fromJSON(res_api$body)$data$reports, "[[", "key")
+  keys <- jsonlite::fromJSON(res_api$body)$data$reports$key
   task_ids <- vcapply(keys, function(key) get_task_id_key(runner, key))
   result_1 <- runner$queue$task_wait(task_ids[[1]])
   result_2 <- runner$queue$task_wait(task_ids[[2]])
@@ -278,9 +277,9 @@ test_that("single report workflow can be run", {
 
   res <- list(
     workflow_key = scalar("123"),
-    reports = list(list(name = "report1",
-                        key = "report1_key",
-                        execution_order = 1))
+    reports = list(list(name = scalar("report1"),
+                        key = scalar("report1_key"),
+                        execution_order = scalar(1)))
   )
 
   endpoint <- endpoint_workflow_run(runner)
@@ -318,7 +317,7 @@ test_that("report can be included in a workflow twice", {
   api <- build_api(runner, path)
   res_api <- api$request("POST", "/v1/workflow/run/",
                          body = body)
-  keys <- vcapply(jsonlite::fromJSON(res_api$body)$data$reports, "[[", "key")
+  keys <- jsonlite::fromJSON(res_api$body)$data$reports$key
   task_ids <- vcapply(keys, function(key) get_task_id_key(runner, key))
   expect_length(task_ids, 2)
 
@@ -519,53 +518,4 @@ test_that("mrc-2626: workflow can be queued on new branch", {
   expect_length(res$reports, 3)
   task_ids <- vcapply(report_keys, function(id) get_task_id_key(runner, id))
   expect_setequal(tasks, task_ids)
-})
-
-test_that("workflow submit response lists reports in same order as request", {
-  skip_if_no_redis()
-  skip_on_covr()
-  path <- orderly_prepare_orderly_example(name = "depends", testing = TRUE,
-                                          git = TRUE)
-  runner <- orderly_runner(path)
-  reports <- list(
-    list(
-      name = "depend3"
-    ),
-    list(
-      name = "depend2"
-    ),
-    list(
-      name = "example"
-    ),
-    list(
-      name = "depend3"
-    ),
-    list(
-      name = "depend2"
-    ),
-    list(
-      name = "example"
-    )
-  )
-  res <- runner$submit_workflow(reports)
-  testthat::try_again(30, {
-    Sys.sleep(0.5)
-    status <- runner$workflow_status(res$workflow_key)
-    result <- lapply(status$reports, "[[", "status")
-    expect_true(all(result == "success"))
-  })
-
-  status_keys <- vcapply(status$reports, "[[", "key")
-  report_keys <- vcapply(res$reports, "[[", "key")
-  expect_setequal(status_keys, report_keys)
-  ## If `orderly_info` can find reports when we specify their name and id
-  ## then we know response has been returned in same order as input
-  check_same <- function(report, key) {
-    status <- status$reports[status_keys == key]
-    expect_length(status, 1)
-    expect_no_error(orderly::orderly_info(id = status[[1]]$version,
-                                          name = report$name,
-                                          root = path))
-  }
-  Map(check_same, reports, report_keys)
 })

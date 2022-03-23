@@ -204,3 +204,26 @@ serialize_workflow_summary <- function(workflow) {
     missing_dependencies = recursive_scalar(workflow$missing_dependencies)
   )
 }
+
+## Has format matching WorkflowRunResponse schema
+## but we need to be careful with tagging items as scalar so it
+## serializes properly
+serialize_workflow_run <- function(workflow) {
+
+  serialize_report <- function(single_report) {
+    item <- list(
+      name = scalar(single_report$name)
+    )
+    item$instance <- scalar(single_report$instance)
+    item$params <- recursive_scalar(single_report$params)
+    item$depends_on <- single_report$depends_on
+    item$key <- scalar(single_report$key)
+    item$execution_order <- scalar(single_report$execution_order)
+    item
+  }
+
+  list(
+    workflow_key = scalar(workflow$workflow_key),
+    reports = lapply(workflow$reports, serialize_report)
+  )
+}

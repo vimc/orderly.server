@@ -527,7 +527,7 @@ test_that("workflow can be run: dependencies", {
   expect_equal(status_2$status, "success")
   expect_match(status_2$version, "^\\d{8}-\\d{6}-\\w{8}")
   expect_type(status_2$start_time, "double")
-  expect_match(status_2$output, "\\[ name +\\]  depend4",
+  expect_match(status_2$output, "\\[ name +\\]  depend2",
                all = FALSE)
 
   result_3 <- runner$queue$task_wait(task_ids[[3]])
@@ -535,24 +535,24 @@ test_that("workflow can be run: dependencies", {
   expect_equal(status_3$status, "success")
   expect_match(status_3$version, "^\\d{8}-\\d{6}-\\w{8}")
   expect_type(status_3$start_time, "double")
-  expect_match(status_3$output, "\\[ name +\\]  depend2",
+  expect_match(status_3$output, "\\[ name +\\]  depend4",
                all = FALSE)
 
   # execution order also returned
-  order <- vcapply(report_keys, "[[", "execution_order")
-  expect_equal(order, c(1, 3, 2))
+  order <- vnapply(res$reports, "[[", "execution_order")
+  expect_equal(order, c(1, 2, 3))
 
   ## depend2 run used artefacts from example run
-  expect_match(status_3$output,
+  expect_match(status_2$output,
                paste0("\\[ depends +\\]  example@", status_1$version),
                all = FALSE)
 
   ## depend4 run using artefacts from example & depend2 runs
-  expect_match(status_2$output,
+  expect_match(status_3$output,
                paste0("\\[ depends +\\]  example@", status_1$version),
                all = FALSE)
-  expect_match(status_2$output,
-               paste0("\\[ ... +\\]  depend2@", status_3$version),
+  expect_match(status_3$output,
+               paste0("\\[ ... +\\]  depend2@", status_2$version),
                all = FALSE)
 })
 
@@ -819,14 +819,14 @@ test_that("workflow can be run: dependencies are cancelled on error", {
 
   result_2 <- runner$queue$task_wait(task_ids[[2]])
   status_2 <- runner$status(report_keys[[2]], output = TRUE)
-  expect_equal(status_2$status, "impossible")
+  expect_equal(status_2$status, "error")
+  expect_match(status_2$version, "^\\d{8}-\\d{6}-\\w{8}")
+  expect_match(status_2$output, "\\[ name +\\]  depend2",
+               all = FALSE)
 
   result_3 <- runner$queue$task_wait(task_ids[[3]])
   status_3 <- runner$status(report_keys[[3]], output = TRUE)
-  expect_equal(status_3$status, "error")
-  expect_match(status_3$version, "^\\d{8}-\\d{6}-\\w{8}")
-  expect_match(status_3$output, "\\[ name +\\]  depend2",
-               all = FALSE)
+  expect_equal(status_3$status, "impossible")
 
   result_4 <- runner$queue$task_wait(task_ids[[4]])
   status_4 <- runner$status(report_keys[[4]], output = TRUE)
@@ -834,4 +834,6 @@ test_that("workflow can be run: dependencies are cancelled on error", {
   expect_match(status_4$version, "^\\d{8}-\\d{6}-\\w{8}")
   expect_match(status_4$output, "\\[ name +\\]  depend",
                all = FALSE)
+
+
 })
