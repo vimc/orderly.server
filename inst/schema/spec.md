@@ -526,7 +526,7 @@ Response
       {
         "name": "other",
         "params": {
-          "nmin": [0.5]
+          "nmin": 0.5
         },
         "key": "deific_thrip",
         "execution_order": 1
