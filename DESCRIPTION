@@ -1,6 +1,6 @@
 Package: orderly.server
 Title: Serve Orderly
-Version: 0.3.24
+Version: 0.3.25
 Description: Run orderly reports as a server.
 License: MIT + file LICENSE
 Author: Rich FitzJohn

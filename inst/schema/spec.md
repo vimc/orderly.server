@@ -702,3 +702,23 @@ If a nonexistant key is given the response is
 ```
 
 Schema: [`ReportVersionArtefact.schema.json`](ReportVersionArtefact.schema.json)
+
+## GET /report/version/:id/instances
+
+Get information about instances used by a report
+
+Note that the report name is not needed here.
+
+## Example
+
+```json
+{
+  "status": "success",
+  "errors": null,
+  "data": {
+    "source": "alternative"
+  }
+}
+```
+
+Schema: [`ReportVersionInstances.schema.json`](ReportVersionInstances.schema.json)

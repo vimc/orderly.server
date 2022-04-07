@@ -1074,3 +1074,46 @@ test_that("can retrieve information about artefacts", {
   expect_equal(res$data[[1]]$description, scalar("A summary table"))
   expect_equal(res$data[[1]]$files[[1]]$filename, scalar("summary.csv"))
 })
+
+
+test_that("Can retrieve information about instances", {
+  path <- orderly_prepare_orderly_example("minimal")
+
+  p <- file.path(path, "orderly_config.yml")
+  writeLines(c(
+    "database:",
+    "  source:",
+    "    driver: RSQLite::SQLite",
+    "    instances:",
+    "      default:",
+    "        dbname: source.sqlite",
+    "      alternative:",
+    "        dbname: alternative.sqlite"),
+    p)
+
+  file.copy(file.path(path, "source.sqlite"),
+            file.path(path, "alternative.sqlite"))
+  run_and_commit <- function(...) {
+    if (orderly::orderly_log_off()) {
+      on.exit(orderly::orderly_log_on())
+    }
+    id <- orderly::orderly_run(..., root = path, echo = FALSE)
+    orderly::orderly_commit(id, root = path)
+    id
+  }
+
+  id <- run_and_commit("example", instance = "alternative")
+  expected <- list(source = scalar("alternative"))
+
+  expect_equal(
+    target_report_version_instances(path, id),
+    expected)
+
+  endpoint <- endpoint_report_version_instances(path)
+  res <- endpoint$run(id)
+  expect_equal(res$data, expected)
+
+  expect_true(res$validated)
+  expect_equal(res$status_code, 200)
+  expect_type(res$data, "list")
+})

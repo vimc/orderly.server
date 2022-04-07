@@ -488,3 +488,24 @@ endpoint_report_version_artefact <- function(path) {
     porcelain::porcelain_state(path = path),
     returning = returning_json("ReportVersionArtefact.schema"))
 }
+
+
+target_report_version_instances <- function(path, id) {
+  db <- orderly::orderly_db("destination", root = path)
+  sql <- paste(
+    "select report_version_instance.instance,",
+    "       report_version_instance.type",
+    "  from report_version_instance",
+    " where report_Version_instance.report_version = $1")
+  dat <- DBI::dbGetQuery(db, sql, id)
+  set_names(lapply(dat$instance, scalar), dat$type)
+}
+
+
+endpoint_report_version_instances <- function(path) {
+  porcelain::porcelain_endpoint$new(
+    "GET", "/v1/report/version/<id>/instances",
+    target_report_version_instances,
+    porcelain::porcelain_state(path = path),
+    returning = returning_json("ReportVersionInstances.schema"))
+}
