@@ -649,15 +649,23 @@ test_that("Can cancel a running report", {
                   body = NULL, encode = "json")
   dat <- content(r)
   key <- dat$data$key
-
   wait_for_version(key, server)
 
   r <- httr::DELETE(
-    server$api_url("/v1/reports/%s/kill/", dat$data$key))
-  httr::content(r)
+    server$api_url("/v1/reports/%s/kill/", key))
+  dat <- httr::content(r)
+  expect_equal(dat$status, "success")
+  expect_equal(dat$data$killed, TRUE)
+  expect_null(dat$data$message)
 
   r <- httr::GET(server$api_url("/v1/reports/%s/status/", key))
   dat <- httr::content(r)
-
   expect_equal(dat$data$status, "interrupted")
+
+  r <- httr::DELETE(
+    server$api_url("/v1/reports/%s/kill/", key))
+  dat <- httr::content(r)
+  expect_equal(dat$status, "success")
+  expect_equal(dat$data$killed, FALSE)
+  expect_equal(dat$data$message, sprintf("Failed to kill '%s'", key))
 })

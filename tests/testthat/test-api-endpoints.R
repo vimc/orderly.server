@@ -507,7 +507,8 @@ test_that("kill - successful", {
   runner <- mock_runner()
 
   res <- target_kill(runner, key)
-  expect_true(res)
+  expect_true(res$killed)
+  expect_equal(res$message, scalar(NA_character_))
   expect_equal(mockery::mock_args(runner$kill)[[1]], list(key))
 
   ## endpoint
@@ -529,34 +530,27 @@ test_that("kill - successful", {
 
 
 test_that("kill - failure", {
+  path <- orderly_git_example("minimal")
+  runner <- orderly_runner(path)
+
   key <- "key-1"
-  runner <- mock_runner()
-
-  msg <- "Failed to kill 'key-1' task doesn't exist"
-  runner$kill <- mockery::mock(stop(msg), cycle = TRUE)
-
-  res <- expect_error(target_kill(runner, key), class = "porcelain_error")
-  res$trace <- NULL
-  expect_equal(mockery::mock_args(runner$kill)[[1]], list(key))
-  expect_equal(res$data[[1]]$error, jsonlite::unbox("ERROR"))
-  expect_equal(res$data[[1]]$detail, jsonlite::unbox(msg))
+  res <- target_kill(runner, key)
+  expect_false(res$killed)
+  expect_equal(res$message, scalar("Failed to kill 'key-1' task doesn't exist"))
 
   ## endpoint
   endpoint <- endpoint_kill(runner)
   res_endpoint <- endpoint$run(key)
-  expect_equal(res_endpoint$status_code, 400)
+  expect_equal(res_endpoint$status_code, 200)
   expect_equal(res_endpoint$content_type, "application/json")
-  expect_null(res_endpoint$data)
-  expect_equal(res_endpoint$error, res)
-  expect_equal(mockery::mock_args(runner$kill)[[2]], list(key))
+  expect_equal(res_endpoint$data, res)
 
   ## api
   api <- build_api(runner, runner$root)
   res_api <- api$request("DELETE", sprintf("/v1/reports/%s/kill/", key))
-  expect_equal(res_api$status, 400L)
+  expect_equal(res_api$status, 200L)
   expect_equal(res_api$headers[["Content-Type"]], "application/json")
   expect_equal(res_api$body, as.character(res_endpoint$body))
-  expect_equal(mockery::mock_args(runner$kill)[[3]], list(key))
 })
 
 
