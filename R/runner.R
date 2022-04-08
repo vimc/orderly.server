@@ -469,7 +469,7 @@ orderly_runner_ <- R6::R6Class(
       if (is.null(task_id)) {
         return(list(
           killed = FALSE,
-          message = sprintf("Failed to kill '%s' task doesn't exist", key)
+          message = sprintf("Failed to kill '%s'\n   task doesn't exist", key)
         ))
       }
       ret <- tryCatch({
