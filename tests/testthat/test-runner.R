@@ -436,7 +436,7 @@ test_that("kill - no process", {
   ret <- runner$kill(key)
   expect_false(ret$killed)
   expect_equal(ret$message,
-               "Failed to kill 'virtual_plant' task doesn't exist")
+               "Failed to kill 'virtual_plant'\n task doesn't exist")
 })
 
 test_that("prevent git changes", {

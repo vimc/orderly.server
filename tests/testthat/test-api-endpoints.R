@@ -539,7 +539,8 @@ test_that("kill - failure", {
   key <- "key-1"
   res <- target_kill(runner, key)
   expect_false(res$killed)
-  expect_equal(res$message, scalar("Failed to kill 'key-1' task doesn't exist"))
+  expect_equal(res$message,
+               scalar("Failed to kill 'key-1'\n   task doesn't exist"))
 
   ## endpoint
   endpoint <- endpoint_kill(runner)
