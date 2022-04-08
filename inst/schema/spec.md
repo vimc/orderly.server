@@ -728,6 +728,7 @@ GET /report/metadata/instances?version=20220408-094127-5bd0f4e,b20220408-094148-
       "20220408-094148-8f77a35a": {
         "source": "production"
       }
+    }
   }
 }
 ```
