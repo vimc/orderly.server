@@ -667,5 +667,5 @@ test_that("Can cancel a running report", {
   dat <- httr::content(r)
   expect_equal(dat$status, "success")
   expect_equal(dat$data$killed, FALSE)
-  expect_equal(dat$data$message, sprintf("Failed to kill '%s'", key))
+  expect_match(dat$data$message, sprintf("Failed to kill '%s'", key))
 })
