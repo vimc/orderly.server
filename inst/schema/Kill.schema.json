@@ -1,4 +1,8 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
-    "type": "boolean",
+    "type": "object",
+    "properties": {
+      "killed": {"type": "boolean"},
+      "message": {"type": ["null", "string"]}
+    }
 }

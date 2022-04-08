@@ -167,14 +167,24 @@ Schema: [`QueueStatus.schema.json`](QueueStatus.schema.json)
 
 ## DELETE /reports/:key/kill/
 
-Kill a running report.  If the report was running then `true` will be returned.  Otherwise an error will be thrown.
+Kill a running report. Returns boolean `killed`, `true` if successfully killed otherwise `false`. If killing fails will return the reason in `message` property.
 
 Schema: [`Kill.schema.json`](Kill.schema.json)
 
 ### Example
 
 ``` json
-true
+{
+    "killed": true,
+    "message": null
+}
+```
+
+``` json
+{
+    "killed": false,
+    "message": "Failed to kill 'credulous_electriceel'\n  Task 0ca2a05ae01d0f2afea5c166a28983b6 is not cancelable (CANCELLED)"
+}
 ```
 
 ## GET /reports/git/status/

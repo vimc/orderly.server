@@ -294,9 +294,9 @@ endpoint_queue_status <- function(runner) {
 }
 
 target_kill <- function(runner, key) {
-  tryCatch(
-    jsonlite::unbox(runner$kill(key)),
-    error = function(e) porcelain::porcelain_stop(e$message))
+  res <- runner$kill(key)
+  list(killed = scalar(res$killed),
+       message = scalar(res$message))
 }
 
 endpoint_kill <- function(runner) {

@@ -406,9 +406,11 @@ test_that("kill - when running", {
 
   id <- wait_for_id(runner, key)
   expect_equal(runner$status(key)$status, "running")
-  expect_true(runner$kill(key))
+  expect_equal(runner$kill(key), list(killed = TRUE, message = NA_character_))
   expect_equal(runner$status(key)$status, "interrupted")
-  expect_error(runner$kill(key), sprintf("Failed to kill '%s'", key))
+  ret <- runner$kill(key)
+  expect_false(ret$killed)
+  expect_match(ret$message, sprintf("Failed to kill '%s'", key))
 })
 
 test_that("kill - whist queued", {
@@ -422,7 +424,7 @@ test_that("kill - whist queued", {
   id <- wait_for_id(runner, key)
 
   key2 <- runner$submit_task_report(name)
-  expect_true(runner$kill(key))
+  expect_true(runner$kill(key)$killed)
 })
 
 test_that("kill - no process", {
@@ -431,8 +433,10 @@ test_that("kill - no process", {
   path <- orderly_git_example("interactive", testing = TRUE)
   runner <- orderly_runner(path)
   key <- "virtual_plant"
-  expect_error(runner$kill(key),
-               "Failed to kill 'virtual_plant' task doesn't exist")
+  ret <- runner$kill(key)
+  expect_false(ret$killed)
+  expect_equal(ret$message,
+               "Failed to kill 'virtual_plant'\n   task doesn't exist")
 })
 
 test_that("prevent git changes", {
