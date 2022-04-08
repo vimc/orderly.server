@@ -530,6 +530,9 @@ test_that("kill - successful", {
 
 
 test_that("kill - failure", {
+  testthat::skip_on_cran()
+  skip_on_windows()
+  skip_if_no_redis()
   path <- orderly_git_example("minimal")
   runner <- orderly_runner(path)
 
