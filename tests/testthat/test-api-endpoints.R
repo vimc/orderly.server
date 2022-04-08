@@ -1102,18 +1102,29 @@ test_that("Can retrieve information about instances", {
     id
   }
 
-  id <- run_and_commit("example", instance = "alternative")
-  expected <- list(source = scalar("alternative"))
+  id1 <- run_and_commit("example", instance = "alternative")
+  id2 <- run_and_commit("example", instance = "default")
 
+  expected1 <- set_names(list(list(source = scalar("alternative"))),
+                         id1)
+  expected2 <- set_names(list(list(source = scalar("alternative")),
+                              list(source = scalar("default"))),
+                         c(id1, id2))
+
+  expect_equal(target_report_version_instances(path, id1), expected1)
+  expect_equal(target_report_version_instances(path, c(id1, id2)), expected2)
   expect_equal(
-    target_report_version_instances(path, id),
-    expected)
+    target_report_version_instances(path, paste(id1, id2, sep = ",")),
+    expected2)
 
   endpoint <- endpoint_report_version_instances(path)
-  res <- endpoint$run(id)
-  expect_equal(res$data, expected)
+  res1 <- endpoint$run(id1)
+  expect_equal(res1$data, expected1)
+  expect_true(res1$validated)
+  expect_equal(res1$status_code, 200)
 
-  expect_true(res$validated)
-  expect_equal(res$status_code, 200)
-  expect_type(res$data, "list")
+  res2 <- endpoint$run(paste(id1, id2, sep = ","))
+  expect_equal(res2$data, expected2)
+  expect_true(res2$validated)
+  expect_equal(res2$status_code, 200)
 })

@@ -490,22 +490,29 @@ endpoint_report_version_artefact <- function(path) {
 }
 
 
-target_report_version_instances <- function(path, id) {
+target_report_version_instances <- function(path, version) {
+  if (length(version) == 1 && grepl(",", version, fixed = TRUE)) {
+    version <- strsplit(version, ",", fixed = TRUE)[[1]]
+  }
   db <- orderly::orderly_db("destination", root = path)
   sql <- paste(
-    "select report_version_instance.instance,",
+    "select report_version_instance.report_version,",
+    "       report_version_instance.instance,",
     "       report_version_instance.type",
     "  from report_version_instance",
-    " where report_Version_instance.report_version = $1")
-  dat <- DBI::dbGetQuery(db, sql, id)
-  set_names(lapply(dat$instance, scalar), dat$type)
+    sprintf(" where report_version_instance.report_version in (%s)",
+            paste(squote(version), collapse = ", ")))
+  dat <- DBI::dbGetQuery(db, sql)
+  lapply(split(dat, dat$report_version), function(x)
+    set_names(lapply(x$instance, scalar), x$type))
 }
 
 
 endpoint_report_version_instances <- function(path) {
   porcelain::porcelain_endpoint$new(
-    "GET", "/v1/report/version/<id>/instances",
+    "GET", "/v1/report/metadata/instances",
     target_report_version_instances,
+    porcelain::porcelain_input_query(version = "string"),
     porcelain::porcelain_state(path = path),
     returning = returning_json("ReportVersionInstances.schema"))
 }

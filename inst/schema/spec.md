@@ -703,20 +703,31 @@ If a nonexistant key is given the response is
 
 Schema: [`ReportVersionArtefact.schema.json`](ReportVersionArtefact.schema.json)
 
-## GET /report/version/:id/instances
+## GET /report/metadata/instances
 
-Get information about instances used by a report
+Get information about instances used by a report.  Accepts the query parameter `version` which is a comma-separated list of report ids.
 
 Note that the report name is not needed here.
 
 ## Example
+
+```
+GET /report/metadata/instances?version=20220408-094127-5bd0f4e,b20220408-094148-8f77a35a
+```
+
 
 ```json
 {
   "status": "success",
   "errors": null,
   "data": {
-    "source": "alternative"
+    {
+      "20220408-094127-5bd0f4eb": {
+        "source": "alternative"
+      },
+      "20220408-094148-8f77a35a": {
+        "source": "production"
+      }
   }
 }
 ```
