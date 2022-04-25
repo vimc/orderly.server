@@ -91,14 +91,20 @@ Schema: [`Status.schema.json`](Status.schema.json)
         {
             "key": "antiutopian_peregrinefalcon",
             "status": "running",
-            "name": "minimal",
             "version": "20210211-143212-98c45632"
+            "name": "minimal",
+            "params": null,
+            "ref": null,
+            "instance": null
         },
         {
             "key": "flavoured_bassethound",
             "status": "queued",
+            "version": null,
             "name": "other",
-            "version": null
+            "params": { "nmin": "0.5" },
+            "ref": null,
+            "instance": null
         }
     ]
 }
@@ -153,14 +159,20 @@ Schema: [`QueueStatus.schema.json`](QueueStatus.schema.json)
     {
         "key": "antiutopian_peregrinefalcon",
         "status": "running",
+        "version": "20210211-143212-98c45632",
         "name": "minimal",
-        "version": "20210211-143212-98c45632"
+        "params": null,
+        "ref": "3e0d1d2",
+        "instance": "production"
     },
     {
         "key": "flavoured_bassethound",
         "status": "queued",
+        "version": null,
         "name": "other",
-        "version": null
+        "params": { "nmin": "0.5" },
+        "ref": null,
+        "instance": null
     }
 ]
 ```
