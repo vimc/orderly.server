@@ -12,12 +12,20 @@
                     "status": {
                         "$ref": "TaskStatus.schema.json"
                     },
-                    "name": {"type": "string"},
                     "version": {
+                        "type": [ "string", "null" ]
+                    },
+                    "name": {"type": "string"},
+                    "params": { "$ref": "Parameters.schema.json" },
+                    "ref": {
+                        "type": [ "string", "null" ]
+                    },
+                    "instance": {
                         "type": [ "string", "null" ]
                     }
                 },
-                "required": ["key", "status", "name", "version"],
+                "required": ["key", "status", "version", "name", "params",
+                             "ref", "instance"],
                 "additionalProperties": false
             }
         }

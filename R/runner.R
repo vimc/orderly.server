@@ -528,8 +528,11 @@ orderly_runner_ <- R6::R6Class(
       list(
         key = key,
         status = status,
+        version = report_id,
         name = task_data$expr$name,
-        version = report_id
+        params = task_data$expr$parameters,
+        ref = task_data$expr$ref,
+        instance = task_data$expr$instance
       )
     }
   )
