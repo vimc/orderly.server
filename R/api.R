@@ -422,9 +422,7 @@ target_workflow_status <- function(runner, workflow_key, output = FALSE) {
       version = scalar(report$version),
       start_time = scalar(report$start_time),
       output = report$output,
-      queue = lapply(report$queue, function(item) {
-        lapply(item, scalar)
-      })
+      queue = recursive_scalar(report$queue)
     )
   })
   list(

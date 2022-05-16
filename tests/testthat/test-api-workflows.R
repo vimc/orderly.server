@@ -406,8 +406,15 @@ test_that("workflow status - queued", {
                                 list(
                                   key = "key-1",
                                   status = "running",
-                                  name = "minimal",
-                                  version = "20210310-123928-fef89bc7"
+                                  version = "20210310-123928-fef89bc7",
+                                  inputs = list(
+                                    name = "minimal",
+                                    params = list(timeout = 10,
+                                                  poll = 1),
+                                    ref = NULL,
+                                    instance = NULL,
+                                    changelog = "[internal] changelog"
+                                  )
                                 )))))
 
   runner <- mock_runner(key, workflow_status = workflow_status)
@@ -428,12 +435,18 @@ test_that("workflow status - queued", {
                list(
                  key = scalar("key-1"),
                  status = scalar("running"),
-                 name = scalar("minimal"),
-                 version = scalar("20210310-123928-fef89bc7")
+                 version = scalar("20210310-123928-fef89bc7"),
+                 inputs = list(
+                   name = scalar("minimal"),
+                   params = list(timeout = scalar(10),
+                                 poll = scalar(1)),
+                   ref = NULL,
+                   instance = NULL,
+                   changelog = scalar("[internal] changelog")
                )
              )
            )
-         )))
+         ))))
   mockery::expect_called(runner$workflow_status, 1)
   expect_equal(mockery::mock_args(runner$workflow_status)[[1]],
                list(workflow_key, FALSE))
