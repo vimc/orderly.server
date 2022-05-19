@@ -454,14 +454,24 @@ test_that("queue status", {
       list(
         key = "key-1",
         status = "running",
-        name = "minimal",
-        version = "20210310-123928-fef89bc7"
+        version = "20210310-123928-fef89bc7",
+        inputs = list(
+          name = "minimal",
+          params = list(timeout = 10, poll = 1),
+          ref = NULL,
+          instance = NULL,
+          changelog = "[internal] changelog")
       ),
       list(
         key = "key-2",
         status = "queued",
-        name = "minimal",
-        version = NULL)
+        version = NULL,
+        inputs = list(
+          name = "minimal",
+          params = NULL,
+          ref = "123",
+          instance = "production",
+          changelog = NULL))
     )
   )
 
@@ -474,14 +484,24 @@ test_that("queue status", {
       list(
         key = scalar("key-1"),
         status = scalar("running"),
-        name = scalar("minimal"),
-        version = scalar("20210310-123928-fef89bc7")
+        version = scalar("20210310-123928-fef89bc7"),
+        inputs = list(
+          name = scalar("minimal"),
+          params = list(timeout = scalar(10), poll = scalar(1)),
+          ref = NULL,
+          instance = NULL,
+          changelog = scalar("[internal] changelog"))
       ),
       list(
         key = scalar("key-2"),
         status = scalar("queued"),
-        name = scalar("minimal"),
-        version = NULL))))
+        version = NULL,
+        inputs = list(
+          name = scalar("minimal"),
+          params = NULL,
+          ref = scalar("123"),
+          instance = scalar("production"),
+          changelog = NULL)))))
   mockery::expect_called(runner$queue_status, 1)
 
   ## endpoint

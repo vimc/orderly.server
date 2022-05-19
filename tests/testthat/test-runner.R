@@ -663,8 +663,11 @@ test_that("status: lists queued tasks", {
   runner <- orderly_runner(path)
 
   key1 <- runner$submit_task_report("interactive")
-  key2 <- runner$submit_task_report("interactive")
-  key3 <- runner$submit_task_report("interactive")
+  key2 <- runner$submit_task_report("count_params",
+                                    parameters = list(timeout = 10, poll = 1),
+                                    changelog = "[internal] changelog")
+  key3 <- runner$submit_task_report("interactive", instance = "production",
+                                    ref = "123")
   key4 <- runner$submit_task_report("interactive")
   testthat::try_again(5, {
     Sys.sleep(0.5)
@@ -683,8 +686,13 @@ test_that("status: lists queued tasks", {
     list(
       key = key1,
       status = "running",
-      name = "interactive",
-      version = key1_status$version
+      version = key1_status$version,
+      inputs = list(
+        name = "interactive",
+        params = NULL,
+        ref = NULL,
+        instance = NULL,
+        changelog = NULL)
     )
   ))
   key3_status <- runner$status(key3)
@@ -693,32 +701,57 @@ test_that("status: lists queued tasks", {
     list(
       key = key1,
       status = "running",
-      name = "interactive",
-      version = key1_status$version
+      version = key1_status$version,
+      inputs = list(
+        name = "interactive",
+        params = NULL,
+        ref = NULL,
+        instance = NULL,
+        changelog = NULL)
     ),
     list(
       key = key2,
       status = "queued",
-      name = "interactive",
-      version = NULL)))
+      version = NULL,
+      inputs = list(
+        name = "count_params",
+        params = list(timeout = 10, poll = 1),
+        ref = NULL,
+        instance = NULL,
+        changelog = "[internal] changelog"))))
   expect_equal(key4_status$queue, list(
     list(
       key = key1,
       status = "running",
-      name = "interactive",
-      version = key1_status$version
+      version = key1_status$version,
+      inputs = list(
+        name = "interactive",
+        params = NULL,
+        ref = NULL,
+        instance = NULL,
+        changelog = NULL)
     ),
     list(
       key = key2,
       status = "queued",
-      name = "interactive",
-      version = NULL
+      version = NULL,
+      inputs = list(
+        name = "count_params",
+        params = list(timeout = 10, poll = 1),
+        ref = NULL,
+        instance = NULL,
+        changelog = "[internal] changelog")
     ),
     list(
       key = key3,
       status = "queued",
+      version = NULL,
+      inputs = list(
       name = "interactive",
-      version = NULL)))
+      params = NULL,
+      ref = "123",
+      instance = "production",
+      changelog = NULL))))
 })
 
 test_that("orderly runner won't start if root not under version control", {
@@ -766,8 +799,11 @@ test_that("queue_status", {
   runner <- orderly_runner(path)
 
   key1 <- runner$submit_task_report("interactive")
-  key2 <- runner$submit_task_report("interactive")
-  key3 <- runner$submit_task_report("interactive")
+  key2 <- runner$submit_task_report("interactive", ref = "1234",
+                                    instance = "production")
+  key3 <- runner$submit_task_report("count_param", parameters = list(
+    time = 10, poll = 1
+  ), changelog = "[internal] changelog message")
   ## Ensure all tasks have been added to queue
   testthat::try_again(5, {
     Sys.sleep(0.5)
@@ -779,25 +815,43 @@ test_that("queue_status", {
   ## Key1 is running, key 2, 3 are queued
   id1 <- runner$status(key1)$version
   queue_status <- runner$queue_status()
-  expect_equal(queue_status, list(
-    tasks = list(
-      list(
-        key = key1,
-        status = "running",
-        name = "interactive",
-        version = id1
-      ),
-      list(
-        key = key2,
-        status = "queued",
-        name = "interactive",
-        version = NULL
-      ),
-      list(
-        key = key3,
-        status = "queued",
-        name = "interactive",
-        version = NULL))))
+  expect_length(queue_status$tasks, 3)
+  expect_equal(queue_status$tasks[[1]], list(
+    key = key1,
+    status = "running",
+    version = id1,
+    inputs = list(
+      name = "interactive",
+      params = NULL,
+      ref = NULL,
+      instance = NULL,
+      changelog = NULL
+    )
+  ))
+  expect_equal(queue_status$tasks[[2]], list(
+    key = key2,
+    status = "queued",
+    version = NULL,
+    inputs = list(
+      name = "interactive",
+      params = NULL,
+      ref = "1234",
+      instance = "production",
+      changelog = NULL
+    )
+  ))
+  expect_equal(queue_status$tasks[[3]], list(
+    key = key3,
+    status = "queued",
+    version = NULL,
+    inputs = list(
+      name = "count_param",
+      params = list(time = 10, poll = 1),
+      ref = NULL,
+      instance = NULL,
+      changelog = "[internal] changelog message"
+    )
+  ))
 })
 
 
