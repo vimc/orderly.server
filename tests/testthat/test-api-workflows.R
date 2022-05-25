@@ -500,10 +500,10 @@ test_that("mrc-2626: workflow can be queued on new branch", {
   git_checkout_branch(master, root = path)
 
   ## Pull to represent someone hitting "refresh git" button in OW
-  target_git_pull(path)
+  target_git_pull(runner)
 
   ## Get commits
-  commits <- target_git_commits(path, "example")
+  commits <- target_git_commits(runner, "example")
   expect_equal(nrow(commits), 1)
 
   multiple_deps <- list(

@@ -18,6 +18,8 @@ Object for managing running jobs on the redis queue
 
 \item{\code{allow_ref}}{Allow git to change branch/ref for run}
 
+\item{\code{default_branch}}{Default git branch}
+
 \item{\code{con}}{Redis connection}
 
 \item{\code{cleanup_on_exit}}{If TRUE workers are killed on exit}
@@ -57,7 +59,7 @@ Create object, read configuration and setup redis connection.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{orderly_runner_$new(
   root,
-  allow_ref = NULL,
+  identity,
   queue_id,
   workers,
   cleanup_on_exit = workers > 0,
@@ -70,12 +72,6 @@ Create object, read configuration and setup redis connection.
 \describe{
 \item{\code{root}}{Orderly root.}
 
-\item{\code{allow_ref}}{Allow git to change branches/ref for run.  If not
-given, then we will look to see if the orderly configuration
-disallows branch changes (based on the
-\code{ORDERLY_API_SERVER_IDENTITY} environment variable and the
-\code{master_only} setting of the relevant server block.}
-
 \item{\code{queue_id}}{ID of an existing queue to connect to, creates a new one
 if NULL.}
 
@@ -85,6 +81,12 @@ if NULL.}
 
 \item{\code{worker_timeout}}{How long worker should live for before it is
 killed. Expect this is only finite during local testing.}
+
+\item{\code{allow_ref}}{Allow git to change branches/ref for run.  If not
+given, then we will look to see if the orderly configuration
+disallows branch changes (based on the
+\code{ORDERLY_API_SERVER_IDENTITY} environment variable and the
+\code{default_branch_only} setting of the relevant server block.}
 }
 \if{html}{\out{</div>}}
 }

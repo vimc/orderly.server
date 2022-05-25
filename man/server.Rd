@@ -8,13 +8,13 @@ server(
   path,
   port,
   host = "0.0.0.0",
-  allow_ref = TRUE,
   go_signal = NULL,
   queue_id = NULL,
   workers = 1,
   backup_period = 600,
   timeout_rate_limit = 2 * 60,
-  log_level = "info"
+  log_level = "info",
+  identity = NULL
 )
 }
 \arguments{
@@ -23,9 +23,6 @@ server(
 \item{port}{Port to serve on}
 
 \item{host}{Optional}
-
-\item{allow_ref}{Allow git reference changing (passed through to
-\code{orderly_runner}.}
 
 \item{go_signal}{If given, we poll for a file \code{go_signal}
 (within \code{path}) before starting.  This is designed
@@ -47,6 +44,8 @@ is skipped}
 default 2 mins.}
 
 \item{log_level}{The "lgr" log level to use}
+
+\item{identity}{Optional server identity}
 }
 \description{
 Run orderly server

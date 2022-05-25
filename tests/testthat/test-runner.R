@@ -297,7 +297,22 @@ test_that("prevent ref change", {
   testthat::skip_on_cran()
   skip_if_no_redis()
   path <- orderly_unzip_git_demo()
-  runner <- orderly_runner(path, FALSE)
+
+  cfg <- list(
+    database = list(
+      source = list(
+        driver = "RSQLite::SQLite",
+        args = list(
+          dbname = "dbname: source.sqlite"))),
+    remote = list(
+      main = list(
+        driver = "orderly::orderly_remote_path",
+        primary = TRUE,
+        default_branch_only = TRUE,
+        args = list(root = path))))
+  writeLines(yaml::as.yaml(cfg), file.path(path, "orderly_config.yml"))
+
+  runner <- orderly_runner(path, "main")
   expect_error(runner$submit_task_report("other", ref = "other"),
                "Reference switching is disallowed in this runner")
 })
@@ -455,7 +470,7 @@ test_that("prevent git changes", {
       main = list(
         driver = "orderly::orderly_remote_path",
         primary = TRUE,
-        master_only = TRUE,
+        default_branch_only = TRUE,
         args = list(root = path[["origin"]])),
       other = list(
         driver = "orderly::orderly_remote_path",
@@ -488,29 +503,6 @@ test_that("prevent git changes", {
                     parameters = list(nmin = 0))
 })
 
-
-test_that("allow ref logic", {
-  testthat::skip_on_cran()
-  path <- orderly_unzip_git_demo()
-  config <- list(server_options = function() list(master_only = FALSE),
-                 root = path)
-
-  expect_false(runner_allow_ref(FALSE, config))
-  expect_true(runner_allow_ref(TRUE, config))
-  expect_true(runner_allow_ref(NULL, config))
-
-  config <- list(server_options = function() list(master_only = TRUE),
-                 root = path)
-  expect_false(runner_allow_ref(FALSE, config))
-  expect_true(runner_allow_ref(TRUE, config))
-  expect_false(runner_allow_ref(NULL, config))
-
-  config <- list(server_options = function() list(master_only = FALSE),
-                 root = tempfile())
-  expect_false(runner_allow_ref(FALSE, config))
-  expect_false(runner_allow_ref(TRUE, config))
-  expect_false(runner_allow_ref(NULL, config))
-})
 
 test_that("runner can set instance", {
   testthat::skip_on_cran()
@@ -869,7 +861,8 @@ test_that("submit_task_report can queue items with dependencies", {
         mock_submit(expr, depends_on = depends_on)
       }
     ))
-  runner <- mock_orderly_runner$new(path, queue_id = NULL, workers = 0)
+  runner <- mock_orderly_runner$new(path, identity = NULL, queue_id = NULL,
+                                    workers = 0)
 
   key1 <- runner$submit_task_report("example")
   key2 <- runner$submit_task_report("example", depends_on = key1)
@@ -899,4 +892,34 @@ test_that("status translation", {
   expect_equal(rrq_to_orderly_status(rrq:::TASK_MISSING), "missing")
   expect_equal(rrq_to_orderly_status(rrq:::TASK_RUNNING), "running")
   expect_equal(rrq_to_orderly_status(rrq:::TASK_TIMEOUT), "timeout")
+})
+
+
+test_that("change default branch", {
+  testthat::skip_on_cran()
+  skip_on_windows()
+  skip_if_no_redis()
+  path <- orderly_prepare_orderly_git_example(default_branch = "main")
+
+  cfg <- list(
+    database = list(
+      source = list(
+        driver = "RSQLite::SQLite",
+        args = list(
+          dbname = "dbname: source.sqlite"))),
+    remote = list(
+      main = list(
+        driver = "orderly::orderly_remote_path",
+        primary = TRUE,
+        default_branch_only = TRUE,
+        default_branch = "main",
+        args = list(root = path[["origin"]])),
+      other = list(
+        driver = "orderly::orderly_remote_path",
+        default_branch = "main",
+        args = list(root = path[["origin"]]))))
+  path_local <- path[["local"]]
+  writeLines(yaml::as.yaml(cfg), file.path(path_local, "orderly_config.yml"))
+
+  runner <- orderly_runner(path_local, "main")
 })

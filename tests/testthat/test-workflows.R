@@ -570,8 +570,7 @@ test_that("dependencies are set correctly", {
         mock_submit(expr, depends_on = depends_on)
       }
     ))
-  runner <- mock_orderly_runner$new(path, allow_ref = NULL,
-                                    queue_id = NULL, workers = 0)
+  runner <- mock_orderly_runner$new(path, NULL, queue_id = NULL, workers = 0)
 
   multiple_deps <- list(
     list(
@@ -606,8 +605,7 @@ test_that("dependencies are resolved using git ref", {
         mock_submit(expr, depends_on = depends_on)
       }
     ))
-  runner <- mock_orderly_runner$new(path, allow_ref = NULL,
-                                    queue_id = NULL, workers = 0)
+  runner <- mock_orderly_runner$new(path, NULL, queue_id = NULL, workers = 0)
 
   ## Remove dependencies on branch
   prev <- git_checkout_branch("test", root = runner$root, create = TRUE)

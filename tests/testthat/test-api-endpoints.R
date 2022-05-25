@@ -18,7 +18,8 @@ test_that("root", {
 
 test_that("git_status", {
   path <- orderly_unzip_git_demo()
-  endpoint <- endpoint_git_status(path)
+  runner <- mock_runner(root = path)
+  endpoint <- endpoint_git_status(runner)
 
   status <- endpoint$run()
   expect_equal(status$status_code, 200)
@@ -43,93 +44,92 @@ test_that("git_status", {
 })
 
 
+test_that("git_status with non-master repo", {
+  path <- orderly_unzip_git_demo(default_branch = "main")
+  runner <- mock_runner(root = path, default_branch = "main")
+  endpoint <- endpoint_git_status(runner)
+
+  status <- endpoint$run()
+  expect_equal(status$status_code, 200)
+  expect_equal(status$content_type, "application/json")
+  expect_equal(names(status$data), c("branch", "hash", "clean", "output"))
+  expect_equal(status$data$branch, scalar("main"))
+  expect_match(status$data$hash, "^[[:xdigit:]]{40}$")
+  expect_s3_class(status$data$hash, "scalar")
+  expect_equal(status$data$clean, scalar(TRUE))
+  expect_equal(status$data$output, character(0))
+
+  writeLines("hello", file.path(path, "hello"))
+  status <- endpoint$run()
+  expect_equal(status$status_code, 200)
+  expect_equal(status$content_type, "application/json")
+  expect_equal(names(status$data), c("branch", "hash", "clean", "output"))
+  expect_equal(status$data$branch, scalar("main"))
+  expect_match(status$data$hash, "^[[:xdigit:]]{40}$")
+  expect_s3_class(status$data$hash, "scalar")
+  expect_equal(status$data$clean, scalar(FALSE))
+  expect_equal(status$data$output, "?? hello")
+})
+
+
 test_that("git_pull", {
-  mock_pull <- mockery::mock(list(
-    success = TRUE, code = 0,
-    output = c("From upstream",
-               "   0fc0d08..0ec7621  master     -> origin/master",
-               "Updating 0fc0d08..0ec7621",
-               "Fast-forward", " new | 1 +",
-               " 1 file changed, 1 insertion(+)",
-               " create mode 100644 new")))
-
-  with_mock("orderly.server:::git_pull" = mock_pull, {
-    endpoint <- endpoint_git_pull("test_path")
-    res <- endpoint$run()
-  })
-
+  path <- orderly_prepare_orderly_git_example()
+  runner <- mock_runner(root = path[["local"]])
+  endpoint <- endpoint_git_pull(runner)
+  res <- endpoint$run()
   expect_equal(res$status_code, 200)
-  expect_equal(res$data, c("From upstream",
-                           "   0fc0d08..0ec7621  master     -> origin/master",
-                           "Updating 0fc0d08..0ec7621",
-                           "Fast-forward", " new | 1 +",
-                           " 1 file changed, 1 insertion(+)",
-                           " create mode 100644 new"))
-  mockery::expect_args(mock_pull, 1, "test_path")
+  expect_match(res$data, "Fast-forward", all = FALSE)
+  expect_equal(
+    git_ref_to_sha("HEAD", path[["local"]]),
+    git_ref_to_sha("HEAD", path[["origin"]]))
 })
 
 
 test_that("git_fetch", {
-  mock_fetch <- mockery::mock(list(
-    success = TRUE, code = 0,
-    output = c("From upstream",
-               "   0fc0d08..0ec7621  master     -> origin/master")))
-
-  with_mock("orderly.server:::git_fetch" = mock_fetch, {
-    endpoint <- endpoint_git_fetch("test_path")
-    res <- endpoint$run()
-  })
-
+  path <- orderly_prepare_orderly_git_example()
+  runner <- mock_runner(root = path[["local"]])
+  endpoint <- endpoint_git_fetch(runner)
+  res <- endpoint$run()
   expect_equal(res$status_code, 200)
-  expect_equal(res$data, c("From upstream",
-                           "   0fc0d08..0ec7621  master     -> origin/master"))
-  mockery::expect_args(mock_fetch, 1, "test_path")
+
+  expect_equal(
+    git_ref_to_sha("origin/master", path[["local"]]),
+    git_ref_to_sha("HEAD", path[["origin"]]))
+  expect_equal(
+    git_ref_to_sha("HEAD", path[["local"]]),
+    git_ref_to_sha("master^", path[["origin"]]))
 })
 
 
 test_that("git branches endpoint", {
-  branch_data <- data.frame(
-    name = c("master", "dev-branch"),
-    last_commit = c("Mon Jun 1 16:00:41 2020 +0100",
-                    "Mon Jun 4 12:32:41 2020 +0100"),
-    last_commit_age = c(601, 1643),
-    stringsAsFactors = FALSE)
-
-  mock_branches <- mockery::mock(branch_data)
-
-  with_mock("orderly.server:::git_branches_no_merged" = mock_branches, {
-    endpoint <- endpoint_git_branches("test_path")
-    res <- endpoint$run()
-  })
+  path <- orderly_prepare_orderly_git_example()
+  runner <- mock_runner(root = path[["local"]])
+  endpoint <- endpoint_git_branches(runner)
+  res <- endpoint$run()
 
   expect_equal(res$status_code, 200)
-  expect_equal(res$data, branch_data)
-  mockery::expect_args(mock_branches, 1, "test_path", include_master = TRUE)
+  expect_equal(names(res$data), c("name", "last_commit", "last_commit_age"))
+  expect_setequal(res$data$name, c("master", "other"))
 })
 
 
 test_that("git commits endpoint", {
-  commit_data <- data.frame(
-    id = c("2h38dns", "a2d862nd"),
-    date_time = c("20-04-31 23:12:32", "20-05-23 08:54:49"),
-    age = c(324, 124),
-    stringsAsFactors = FALSE
-  )
-  mock_commit <- mockery::mock(commit_data)
+  path <- orderly_prepare_orderly_git_example()
+  runner <- mock_runner(root = path[["local"]])
+  endpoint <- endpoint_git_commits(runner)
+  res <- endpoint$run("master")
 
-  with_mock("orderly.server:::git_commits" = mock_commit, {
-    endpoint <- endpoint_git_commits("test_path")
-    res <- endpoint$run(branch = "master")
-  })
-
+  data <- git_commits("master", runner$root, "master")
   expect_equal(res$status_code, 200)
-  expect_equal(res$data, commit_data)
-  mockery::expect_args(mock_commit, 1, "master", "test_path")
+  expect_equal(res$data[c("id", "date_time")],
+               data[c("id", "date_time")])
+  expect_lte(res$data$age, data$age)
 })
 
 test_that("can get available reports for a branch & commit", {
   path <- orderly_prepare_orderly_git_example()
-  endpoint <- endpoint_available_reports(path["origin"])
+  runner <- mock_runner(root = path[["origin"]])
+  endpoint <- endpoint_available_reports(runner)
   ref <- substr(git_ref_to_sha("master", path["origin"]), 1, 7)
 
   res <- endpoint$run("master", ref)
@@ -138,20 +138,22 @@ test_that("can get available reports for a branch & commit", {
 })
 
 test_that("can get parameters for a report & commit", {
-  mock_report_parameters <- mockery::mock(list(
-    a = NULL,
-    b = list(
-      default = "test"
-    ),
-    c = list(
-      default = 2
-    )
-  ))
+  path <- orderly_prepare_orderly_git_example()
+  runner <- mock_runner(root = path[["origin"]])
+  endpoint <- endpoint_report_parameters(runner)
 
-  with_mock("orderly.server:::get_report_parameters" = mock_report_parameters, {
-    endpoint <- endpoint_report_parameters("test_path")
-    res <- endpoint$run(report_id = "id", commit = "1234567")
-  })
+  writeLines(c(
+    "parameters:",
+    "  a: ~",
+    "  b:",
+    "    default: test",
+    "  c:",
+    "    default: 2"),
+    file.path(path[["origin"]], "src", "minimal", "orderly.yml"))
+  gert::git_add(".", repo = path[["origin"]])
+  ref <- gert::git_commit("add parameters", repo = path[["origin"]])
+
+  res <- endpoint$run("minimal", ref)
 
   expect_equal(res$status_code, 200)
   expect_equal(res$data, list(
@@ -168,12 +170,12 @@ test_that("can get parameters for a report & commit", {
       value = scalar("2")
     )
   ))
-  mockery::expect_args(mock_report_parameters, 1, "id", "1234567", "test_path")
 })
 
 test_that("report parameters endpoint supports no parameters", {
   path <- orderly_prepare_orderly_git_example()
-  endpoint <- endpoint_report_parameters(path["origin"])
+  runner <- mock_runner(root = path[["origin"]])
+  endpoint <- endpoint_report_parameters(runner)
   ref <- substr(git_ref_to_sha("master", path["origin"]), 1, 7)
 
   res <- endpoint$run(report_id = "minimal", commit = ref)
@@ -182,29 +184,35 @@ test_that("report parameters endpoint supports no parameters", {
 })
 
 test_that("report parameter endpoints handles errors", {
-  mock_report_parameters <- mockery::mock(
-    stop("Failed to get report parameters"))
+  path <- orderly_prepare_orderly_git_example()
+  runner <- mock_runner(root = path[["origin"]])
+  endpoint <- endpoint_report_parameters(runner)
 
-  with_mock("orderly.server:::get_report_parameters" = mock_report_parameters, {
-    endpoint <- endpoint_report_parameters("test_path")
-    res <- endpoint$run(report_id = "id", commit = "1234567")
-  })
+  res <- endpoint$run(report_id = "minimal", commit = "1234567")
   expect_equal(res$status_code, 400)
   expect_equal(res$error$data[[1]]$error, scalar("FAILED_RETRIEVE_PARAMS"))
-  expect_equal(res$error$data[[1]]$detail,
-               scalar("Failed to get report parameters"))
+  expect_match(res$error$data[[1]]$detail,
+               "Failed to get report parameters")
+})
 
-  ## Invalid format of parameters throws an error
-  mock_report_parameters <- mockery::mock(c("param1", "param2"))
 
-  with_mock("orderly.server:::get_report_parameters" = mock_report_parameters, {
-    endpoint <- endpoint_report_parameters("test_path")
-    res <- endpoint$run(report_id = "id", commit = "1234567")
-  })
+test_that("Invalid format of parameters throws an error", {
+  path <- orderly_prepare_orderly_git_example()
+  runner <- mock_runner(root = path[["origin"]])
+  endpoint <- endpoint_report_parameters(runner)
+
+  writeLines(c("parameters:", "  - a", "  - b"),
+    file.path(path[["origin"]], "src", "minimal", "orderly.yml"))
+  gert::git_add(".", repo = path[["origin"]])
+  ref <- gert::git_commit("add parameters", repo = path[["origin"]])
+
+  res <- endpoint$run("minimal", ref)
+
   expect_equal(res$status_code, 400)
   expect_equal(res$error$data[[1]]$error, scalar("INVALID_FORMAT"))
-  expect_equal(res$error$data[[1]]$detail, scalar(
-    "Failed to parse parameters for report 'id' and commit '1234567'"))
+  expect_match(
+    res$error$data[[1]]$detail,
+    "Failed to parse parameters for report 'minimal'")
 })
 
 
@@ -865,7 +873,7 @@ test_that("run metadata returns git & db instances supported info", {
            "    slack_url: slack_url",
            "    teams_url: teams_url",
            "    primary: TRUE",
-           "    master_only: TRUE",
+           "    default_branch_only: TRUE",
            "  staging:",
            "    driver: RSQLite::SQLite",
            "    args:",
@@ -998,7 +1006,8 @@ test_that("api runs backup on preroute", {
 
 test_that("can get dependencies", {
   path <- orderly_prepare_orderly_example("demo")
-  dependencies <- endpoint_dependencies(path)
+  runner <- mock_runner(root = path)
+  dependencies <- endpoint_dependencies(runner)
   res <- dependencies$run(name = "use_dependency",
                           id = NULL,
                           direction = "upstream",
@@ -1038,7 +1047,8 @@ test_that("endpoint_report_info can return info from report run", {
   drafts <- orderly::orderly_list_drafts(root = path[["local"]],
                                          include_failed = TRUE)
 
-  endpoint <- endpoint_report_info(path[["local"]])
+  runner <- mock_runner(root = path[["local"]])
+  endpoint <- endpoint_report_info(runner)
   info <- endpoint$run(id = drafts[["id"]], name = "minimal")
   expect_equal(info$status_code, 200)
   expect_equal(info$data$name, scalar("minimal"))
@@ -1059,7 +1069,8 @@ test_that("endpoint_report_info returns parameter info", {
   id <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
                              root = path, echo = FALSE)
 
-  endpoint <- endpoint_report_info(path)
+  runner <- mock_runner(root = path)
+  endpoint <- endpoint_report_info(runner)
   info <- endpoint$run(id = id, name = "other")
   expect_equal(info$status_code, 200)
   expect_equal(info$data$name, scalar("other"))
@@ -1076,10 +1087,10 @@ test_that("can retrieve information about artefacts", {
   id <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
                              root = path, echo = FALSE)
   orderly::orderly_commit(id, root = path)
+  runner <- mock_runner(root = path)
 
-  data <- target_report_version_artefact(path, id)
-
-  endpoint <- endpoint_report_version_artefact(path)
+  data <- target_report_version_artefact(runner, id)
+  endpoint <- endpoint_report_version_artefact(runner)
   res <- endpoint$run(id = id)
 
   expect_true(res$validated)

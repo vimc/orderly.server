@@ -1,4 +1,4 @@
-RSCRIPT = Rscript --no-init-file
+RSCRIPT = Rscript
 
 test:
 	VAULT_BIN_PATH=${PWD}/.vault VAULTR_TEST_SERVER_PORT=18200 ${RSCRIPT} -e 'library(methods); devtools::test()'
