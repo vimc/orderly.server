@@ -486,3 +486,35 @@ endpoint_report_version_artefact <- function(path) {
     porcelain::porcelain_state(path = path),
     returning = returning_json("ReportVersionArtefact.schema"))
 }
+
+
+target_report_versions_custom_fields <- function(path, ids) {
+  db <- orderly::orderly_db("destination", root = path)
+  sql <- paste(
+    "select",
+    "       report_version_custom_fields.key,",
+    "       report_version_custom_fields.value,",
+    "       report_version_custom_fields.report_version",
+    "  from report_version_custom_fields",
+    sprintf(" where report_version in (%s)", ids),
+    sep = "\n")
+  dat <- DBI::dbGetQuery(db, sql)
+
+  process <- function(x) {
+    vals <- lapply(as.list(x$value), function(y) scalar(y))
+    names(vals) <- x$key
+    vals
+  }
+
+  lapply(split(dat, dat$report_version), process)
+}
+
+
+endpoint_report_versions_custom_fields <- function(path) {
+  porcelain::porcelain_endpoint$new(
+    "GET", "/v1/report/version/customFields",
+    target_report_versions_custom_fields,
+    porcelain::porcelain_input_query(ids = "string"),
+    porcelain::porcelain_state(path = path),
+    returning = returning_json("CustomFields.schema"))
+}
