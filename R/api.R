@@ -261,15 +261,17 @@ endpoint_run <- function(runner) {
 
 target_status <- function(runner, key, output = FALSE) {
   res <- runner$status(key, output)
+  queue <- res$queue
+  if (is.null(queue)) {
+    queue <- list()
+  }
   list(
     key = scalar(res$key),
     status = scalar(res$status),
     version = scalar(res$version),
     start_time = scalar(res$start_time),
     output = res$output,
-    queue = lapply(res$queue, function(item) {
-      lapply(item, scalar)
-    })
+    queue = recursive_scalar(queue)
   )
 }
 
@@ -290,7 +292,7 @@ endpoint_queue_status <- function(runner) {
   porcelain::porcelain_endpoint$new(
     "GET", "/v1/queue/status/", target_queue_status,
     porcelain::porcelain_state(runner = runner),
-    returning = returning_json("QueueStatus.schema"))
+    returning = returning_json("QueueStatusResponse.schema"))
 }
 
 target_kill <- function(runner, key) {
