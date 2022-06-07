@@ -736,3 +736,19 @@ If a nonexistant key is given the response is
 ```
 
 Schema: [`ReportVersionArtefact.schema.json`](ReportVersionArtefact.schema.json)
+
+# GET /report/:name
+
+Returns a list of version names for the named report.
+
+Schema: [`VersionIds.schema.json`](VersionIds.schema.json)
+
+## Example
+
+```json
+[
+    "20161006-142357-e80edf58",
+    "20161008-123121-59891d61",
+    "20161012-220715-756d55c8"
+  ]
+```
