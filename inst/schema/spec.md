@@ -736,3 +736,42 @@ If a nonexistant key is given the response is
 ```
 
 Schema: [`ReportVersionArtefact.schema.json`](ReportVersionArtefact.schema.json)
+
+# GET /report/versions/customFields?versions=
+
+Get custom fields for a list of version ids.
+
+Response schema: [`CustomFields.schema.json`](CustomFields.schema.json)
+
+# Example
+
+`GET /report/versions/customFields?versions=20210629-231827-d35633fd,20210730-152428-14ad0fe7`
+
+```json
+{
+  "status": "success",
+  "errors": null,
+  "data": {
+    "20210629-231827-d35633fd": {
+      "requester": "Funder McFunderface",
+      "author": "Researcher McResearcherface",
+      "comment": "This is a comment"
+    },
+    "20210730-152428-14ad0fe7": {
+      "requester": "Funder McFunderface",
+      "author": "Researcher McResearcherface",
+      "comment": "This is a comment"
+    }
+  }
+}
+```
+
+If nonexistant ids are given the response is
+
+```json
+{
+  "status": "success",
+  "errors": null,
+  "data": {}
+}
+```

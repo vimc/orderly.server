@@ -1104,14 +1104,11 @@ test_that("can retrieve custom fields", {
                               root = path, echo = FALSE)
   orderly::orderly_commit(id2, root = path)
 
-  ids <- paste(
-    paste0("'", id1, "'"),
-    paste0("'", id2, "'"), sep=",")
-
+  ids <- paste(id1, id2, sep = ",")
   data <- target_report_versions_custom_fields(path, ids)
 
   endpoint <- endpoint_report_versions_custom_fields(path)
-  res <- endpoint$run(ids = ids)
+  res <- endpoint$run(versions = ids)
 
   expect_true(res$validated)
   expect_equal(res$status_code, 200)
