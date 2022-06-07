@@ -496,7 +496,7 @@ target_report_versions <- function(path, name) {
     "where report_version.report = $1",
     sep = "\n")
   dat <- DBI::dbGetQuery(db, sql, name)
-  dat[, 'id']
+  dat[, "id"]
 }
 
 
