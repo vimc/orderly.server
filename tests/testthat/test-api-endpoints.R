@@ -1115,3 +1115,34 @@ test_that("can retrieve information about artefacts", {
   expect_equal(res$data[[1]]$description, scalar("A summary table"))
   expect_equal(res$data[[1]]$files[[1]]$filename, scalar("summary.csv"))
 })
+
+
+test_that("can retrieve custom fields", {
+  path <- orderly_prepare_orderly_example("demo")
+  id1 <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+                             root = path, echo = FALSE)
+  orderly::orderly_commit(id1, root = path)
+
+  id2 <- orderly::orderly_run("minimal",
+                              root = path, echo = FALSE)
+  orderly::orderly_commit(id2, root = path)
+
+  ids <- paste(id1, id2, sep = ",")
+  data <- target_report_versions_custom_fields(path, ids)
+
+  endpoint <- endpoint_report_versions_custom_fields(path)
+  res <- endpoint$run(versions = ids)
+
+  expect_true(res$validated)
+  expect_equal(res$status_code, 200)
+  expect_type(res$data, "list")
+  expect_equal(res$data, data)
+  expect_length(data, 2)
+  expect_equal(data[[1]], list(requester = scalar("ACME"),
+                               author = scalar("Dr Serious"),
+                               comment = scalar("This is another comment")))
+
+  expect_equal(data[[2]], list(requester = scalar("Funder McFunderface"),
+                               author = scalar("Researcher McResearcherface"),
+                               comment = scalar("This is a comment")))
+})
