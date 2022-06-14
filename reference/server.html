@@ -62,13 +62,21 @@
     <h2>Arguments</h2>
     <dl><dt>path</dt>
 <dd><p>Path to serve</p></dd>
+
+
 <dt>port</dt>
 <dd><p>Port to serve on</p></dd>
+
+
 <dt>host</dt>
 <dd><p>Optional</p></dd>
+
+
 <dt>allow_ref</dt>
 <dd><p>Allow git reference changing (passed through to
 <code>orderly_runner</code>.</p></dd>
+
+
 <dt>go_signal</dt>
 <dd><p>If given, we poll for a file <code>go_signal</code>
 (within <code>path</code>) before starting.  This is designed
@@ -77,19 +85,30 @@ ready at the same time as the process container (and indeed
 won't be if the container is used to provision the volume).
 During this period the server will not respond to any http
 requests.</p></dd>
+
+
 <dt>queue_id</dt>
 <dd><p>ID of an existing queue to connect to, creates a new one
 if NULL</p></dd>
+
+
 <dt>workers</dt>
 <dd><p>Number of workers to spawn</p></dd>
+
+
 <dt>backup_period</dt>
 <dd><p>How frequently should backup be run, if NULL backup
 is skipped</p></dd>
+
+
 <dt>timeout_rate_limit</dt>
 <dd><p>How frequently should the API check for timeouts
 default 2 mins.</p></dd>
+
+
 <dt>log_level</dt>
 <dd><p>The "lgr" log level to use</p></dd>
+
 </dl></div>
 
   </div>
@@ -104,7 +123,7 @@ default 2 mins.</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.4.</p>
 </div>
 
       </footer></div>
