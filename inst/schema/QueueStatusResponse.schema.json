@@ -1,0 +1,10 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "QueueStatusResponse",
+    "type": "object",
+    "properties": {
+        "tasks": { "$ref": "QueueStatus.schema.json" }
+    },
+    "required": [ "tasks" ],
+    "additionalProperties": false
+}

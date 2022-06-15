@@ -1,44 +1,37 @@
 {
-    "$schema": "http://json-schema.org/draft-04/schema#",
-    "id": "QueueStatus",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "QueueStatus",
+  "type": "array",
+  "items": {
     "type": "object",
     "properties": {
-        "tasks": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "key": {"type": "string"},
-                    "status": {
-                        "$ref": "TaskStatus.schema.json"
-                    },
-                    "version": {
-                        "type": [ "string", "null" ]
-                    },
-                    "inputs" :{
-                        "type": "object",
-                        "properties": {
-                            "name": {"type": "string"},
-                            "params": { "$ref": "Parameters.schema.json" },
-                            "ref": {
-                                "type": [ "string", "null" ]
-                            },
-                            "instance": {
-                                "type": [ "string", "null" ]
-                            },
-                            "changelog": {
-                                "type": [ "string", "null" ]
-                            }
-                        },
-                        "required": ["name", "params", "ref", "instance",
-                                     "changelog"]
-                    }
-                },
-                "required": ["key", "status", "version", "inputs"],
-                "additionalProperties": false
-            }
-        }
+      "key": {"type": "string"},
+      "status": {
+        "$ref": "TaskStatus.schema.json"
+      },
+      "version": {
+        "type": [ "string", "null" ]
+      },
+      "inputs": {
+          "type": "object",
+          "properties": {
+              "name": {"type": "string"},
+              "params": { "$ref": "Parameters.schema.json" },
+              "ref": {
+                  "type": [ "string", "null" ]
+              },
+              "instance": {
+                  "type": [ "string", "null" ]
+              },
+              "changelog": {
+                  "type": [ "string", "null" ]
+              }
+          },
+          "required": ["name", "params", "ref", "instance",
+                       "changelog"]
+      }
     },
-    "required": [ "tasks" ],
+    "required": ["key", "status", "version", "inputs"],
     "additionalProperties": false
+  }
 }

@@ -1,0 +1,9 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "CustomFields",
+    "type": "object",
+    "items": {
+        "type": "object",
+        "additionalProperties": true
+    }
+}

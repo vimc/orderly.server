@@ -752,3 +752,42 @@ Schema: [`VersionIds.schema.json`](VersionIds.schema.json)
     "20161012-220715-756d55c8"
   ]
 ```
+
+# GET /report/versions/customFields?versions=
+
+Get custom fields for a list of version ids.
+
+Response schema: [`CustomFields.schema.json`](CustomFields.schema.json)
+
+# Example
+
+`GET /report/versions/customFields?versions=20210629-231827-d35633fd,20210730-152428-14ad0fe7`
+
+```json
+{
+  "status": "success",
+  "errors": null,
+  "data": {
+    "20210629-231827-d35633fd": {
+      "requester": "Funder McFunderface",
+      "author": "Researcher McResearcherface",
+      "comment": "This is a comment"
+    },
+    "20210730-152428-14ad0fe7": {
+      "requester": "Funder McFunderface",
+      "author": "Researcher McResearcherface",
+      "comment": "This is a comment"
+    }
+  }
+}
+```
+
+If non-existent ids are given the response is
+
+```json
+{
+  "status": "success",
+  "errors": null,
+  "data": {}
+}
+```

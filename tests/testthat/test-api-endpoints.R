@@ -319,14 +319,25 @@ test_that("status - queued", {
       list(
         key = "key-1",
         status = "running",
-        name = "minimal",
-        version = "20210310-123928-fef89bc7"
+        version = "20210310-123928-fef89bc7",
+        inputs = list(
+          name = "minimal",
+          params = list(timeout = 10, poll = 1),
+          ref = NULL,
+          instance = NULL,
+          changelog = "[internal] changelog"
+        )
       ),
       list(
         key = "key-2",
         status = "queued",
-        name = "minimal",
-        version = NULL)))
+        version = NULL,
+        inputs = list(
+          name = "minimal",
+          params = NULL,
+          ref = "123",
+          instance = "production",
+          changelog = NULL))))
 
   runner <- mock_runner(key, status)
 
@@ -342,14 +353,26 @@ test_that("status - queued", {
            list(
              key = scalar("key-1"),
              status = scalar("running"),
-             name = scalar("minimal"),
-             version = scalar("20210310-123928-fef89bc7")
+             version = scalar("20210310-123928-fef89bc7"),
+             inputs = list(
+               name = scalar("minimal"),
+               params = list(timeout = scalar(10), poll = scalar(1)),
+               ref = NULL,
+               instance = NULL,
+               changelog = scalar("[internal] changelog")
+             )
            ),
            list(
              key = scalar("key-2"),
              status = scalar("queued"),
-             name = scalar("minimal"),
-             version = NULL))))
+             version = NULL,
+             inputs = list(
+               name = scalar("minimal"),
+               params = NULL,
+               ref = scalar("123"),
+               instance = scalar("production"),
+               changelog = NULL
+             )))))
   expect_equal(mockery::mock_args(runner$status)[[1]], list(key, FALSE))
 
   ## endpoint
@@ -1097,15 +1120,15 @@ test_that("can retrieve information about artefacts", {
 test_that("can retrieve version list", {
   path <- orderly_prepare_orderly_example("demo")
   id1 <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
-                             root = path, echo = FALSE)
+                              root = path, echo = FALSE)
   orderly::orderly_commit(id1, root = path)
 
   id2 <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
-                             root = path, echo = FALSE)
+  root = path, echo = FALSE)
   orderly::orderly_commit(id2, root = path)
 
   id3 <- orderly::orderly_run("minimal",
-                             root = path, echo = FALSE)
+  root = path, echo = FALSE)
   orderly::orderly_commit(id3, root = path)
 
   data <- target_report_versions(path, "other")
@@ -1117,4 +1140,36 @@ test_that("can retrieve version list", {
   expect_true(res$validated)
   expect_equal(res$status_code, 200)
   expect_equal(res$data, c(id1, id2))
+
+})
+
+
+test_that("can retrieve custom fields", {
+  path <- orderly_prepare_orderly_example("demo")
+  id1 <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+                             root = path, echo = FALSE)
+  orderly::orderly_commit(id1, root = path)
+
+  id2 <- orderly::orderly_run("minimal",
+                              root = path, echo = FALSE)
+  orderly::orderly_commit(id2, root = path)
+
+  ids <- paste(id1, id2, sep = ",")
+  data <- target_report_versions_custom_fields(path, ids)
+
+  endpoint <- endpoint_report_versions_custom_fields(path)
+  res <- endpoint$run(versions = ids)
+
+  expect_true(res$validated)
+  expect_equal(res$status_code, 200)
+  expect_type(res$data, "list")
+  expect_equal(res$data, data)
+  expect_length(data, 2)
+  expect_equal(data[[1]], list(requester = scalar("ACME"),
+                               author = scalar("Dr Serious"),
+                               comment = scalar("This is another comment")))
+
+  expect_equal(data[[2]], list(requester = scalar("Funder McFunderface"),
+                               author = scalar("Researcher McResearcherface"),
+                               comment = scalar("This is a comment")))
 })
