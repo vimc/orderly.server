@@ -1144,7 +1144,7 @@ test_that("can retrieve version list", {
 })
 
 
-test_that("can retrieve custom fields", {
+test_that("can retrieve custom fields for versions", {
   path <- orderly_prepare_orderly_example("demo")
   id1 <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
                              root = path, echo = FALSE)
@@ -1172,4 +1172,18 @@ test_that("can retrieve custom fields", {
   expect_equal(data[[2]], list(requester = scalar("Funder McFunderface"),
                                author = scalar("Researcher McResearcherface"),
                                comment = scalar("This is a comment")))
+})
+
+
+test_that("can retrieve custom fields", {
+  data <- target_custom_fields(path)
+  endpoint <- endpoint_custom_fields(path)
+  res <- endpoint$run()
+
+  expect_true(res$validated)
+  expect_equal(res$status_code, 200)
+  expect_type(res$data, "character")
+  expect_equal(res$data, data)
+  expect_length(data, 3)
+  expect_equal(data, c("author", "comment", "requester"))
 })
