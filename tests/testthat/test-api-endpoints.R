@@ -1117,6 +1117,33 @@ test_that("can retrieve information about artefacts", {
 })
 
 
+test_that("can retrieve version list", {
+  path <- orderly_prepare_orderly_example("demo")
+  id1 <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+                              root = path, echo = FALSE)
+  orderly::orderly_commit(id1, root = path)
+
+  id2 <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+  root = path, echo = FALSE)
+  orderly::orderly_commit(id2, root = path)
+
+  id3 <- orderly::orderly_run("minimal",
+  root = path, echo = FALSE)
+  orderly::orderly_commit(id3, root = path)
+
+  data <- target_report_versions(path, "other")
+  expect_equal(data, c(id1, id2))
+
+  endpoint <- endpoint_report_versions(path)
+  res <- endpoint$run(name = "other")
+
+  expect_true(res$validated)
+  expect_equal(res$status_code, 200)
+  expect_equal(res$data, c(id1, id2))
+
+})
+
+
 test_that("can retrieve custom fields", {
   path <- orderly_prepare_orderly_example("demo")
   id1 <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
