@@ -792,7 +792,7 @@ If non-existent ids are given the response is
 }
 ```
 
-# GET /report/versions/parameters?versions=
+# GET /reports/versions/parameters?versions=
 
 Get parameters for a list of version ids.
 
@@ -800,7 +800,7 @@ Response schema: [`Parameters.schema.json`](Parameters.schema.json)
 
 # Example
 
-`GET /report/versions/parameters?versions=20210629-231827-d35633fd,20210730-152428-14ad0fe7`
+`GET /reports/versions/parameters?versions=20210629-231827-d35633fd,20210730-152428-14ad0fe7`
 
 ```json
 {

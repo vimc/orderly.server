@@ -574,7 +574,7 @@ target_report_versions_params <- function(path, versions) {
 
 endpoint_report_versions_params <- function(path) {
   porcelain::porcelain_endpoint$new(
-    "GET", "/v1/report/version/parameters",
+    "GET", "/v1/reports/versions/parameters",
     target_report_versions_params,
     porcelain::porcelain_input_query(versions = "string"),
     porcelain::porcelain_state(path = path),
