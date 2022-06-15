@@ -561,7 +561,7 @@ target_custom_fields <- function(path) {
 
 endpoint_custom_fields <- function(path) {
   porcelain::porcelain_endpoint$new(
-    "GET", "/v1/report/version/customFields",
+    "GET", "/v1/report/customFields",
     target_custom_fields,
     porcelain::porcelain_state(path = path),
     returning = returning_json("CustomFields.schema"))
