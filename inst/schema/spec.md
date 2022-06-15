@@ -792,7 +792,7 @@ If non-existent ids are given the response is
 }
 ```
 
-# GET /report/customFields
+# GET /reports/customFields
 
 Get custom fields for orderly instance
 
