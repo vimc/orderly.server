@@ -226,7 +226,7 @@ target_report_info <- function(path, id, name) {
 
 endpoint_report_info <- function(path) {
   porcelain::porcelain_endpoint$new(
-    "GET", "/v1/report/info", target_report_info,
+    "GET", "/v1/reports/info", target_report_info,
     porcelain::porcelain_input_query(id = "string"),
     porcelain::porcelain_input_query(name = "string"),
     porcelain::porcelain_state(path = path),
@@ -484,7 +484,7 @@ target_report_version_artefact <- function(path, id) {
 
 endpoint_report_version_artefact <- function(path) {
   porcelain::porcelain_endpoint$new(
-    "GET", "/v1/report/version/<id>/artefacts",
+    "GET", "/v1/reports/versions/<id>/artefacts",
     target_report_version_artefact,
     porcelain::porcelain_state(path = path),
     returning = returning_json("ReportVersionArtefact.schema"))
@@ -505,7 +505,7 @@ target_report_versions <- function(path, name) {
 
 endpoint_report_versions <- function(path) {
   porcelain::porcelain_endpoint$new(
-    "GET", "/v1/report/<name>",
+    "GET", "/v1/reports/<name>",
     target_report_versions,
     porcelain::porcelain_state(path = path),
     returning = returning_json("VersionIds.schema"))
@@ -538,7 +538,7 @@ target_report_versions_custom_fields <- function(path, versions) {
 
 endpoint_report_versions_custom_fields <- function(path) {
   porcelain::porcelain_endpoint$new(
-    "GET", "/v1/report/version/customFields",
+    "GET", "/v1/reports/versions/customFields",
     target_report_versions_custom_fields,
     porcelain::porcelain_input_query(versions = "string"),
     porcelain::porcelain_state(path = path),
