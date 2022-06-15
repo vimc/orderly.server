@@ -1176,6 +1176,7 @@ test_that("can retrieve custom fields for versions", {
 
 
 test_that("can retrieve custom fields", {
+  path <- orderly_prepare_orderly_example("demo")
   data <- target_custom_fields(path)
   endpoint <- endpoint_custom_fields(path)
   res <- endpoint$run()
