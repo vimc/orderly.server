@@ -775,3 +775,38 @@ If nonexistant ids are given the response is
   "data": {}
 }
 ```
+
+# GET /report/versions/parameters?versions=
+
+Get parameters for a list of version ids.
+
+Response schema: [`Parameters.schema.json`](Parameters.schema.json)
+
+# Example
+
+`GET /report/versions/parameters?versions=20210629-231827-d35633fd,20210730-152428-14ad0fe7`
+
+```json
+{
+  "status": "success",
+  "errors": null,
+  "data": {
+    "20210629-231827-d35633fd": {
+      "nmin": "0.1"
+    },
+    "20210730-152428-14ad0fe7": {
+      "disease": "YF"
+    }
+  }
+}
+```
+
+If non-existent ids are given the response is
+
+```json
+{
+  "status": "success",
+  "errors": null,
+  "data": {}
+}
+```
