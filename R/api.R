@@ -25,6 +25,7 @@ build_api <- function(runner, path, backup_period = NULL,
   api$handle(endpoint_workflow_status(runner))
   api$handle(endpoint_report_version_artefact(path))
   api$handle(endpoint_report_versions_custom_fields(path))
+  api$handle(endpoint_report_versions_params(path))
   api$setDocs(FALSE)
   backup <- orderly_backup(runner$config, backup_period)
   api$registerHook("preroute", backup$check_backup)
@@ -543,4 +544,39 @@ endpoint_report_versions_custom_fields <- function(path) {
     porcelain::porcelain_input_query(versions = "string"),
     porcelain::porcelain_state(path = path),
     returning = returning_json("CustomFields.schema"))
+}
+
+
+target_report_versions_params <- function(path, versions) {
+  db <- orderly::orderly_db("destination", root = path)
+  versions <- paste0("'", paste0(unlist(strsplit(versions, split = ",")),
+                                 collapse = "','"),
+                     "'")
+  sql <- paste(
+    "select",
+    "       parameters.report_version,",
+    "       parameters.name,",
+    "       parameters.value",
+    "  from parameters",
+    sprintf(" where parameters.report_version in (%s)", versions),
+    sep = "\n")
+  dat <- DBI::dbGetQuery(db, sql)
+
+  process <- function(x) {
+    vals <- lapply(as.list(x$value), function(y) scalar(y))
+    names(vals) <- x$name
+    vals
+  }
+
+  lapply(split(dat, dat$report_version), process)
+}
+
+
+endpoint_report_versions_params <- function(path) {
+  porcelain::porcelain_endpoint$new(
+    "GET", "/v1/reports/versions/parameters",
+    target_report_versions_params,
+    porcelain::porcelain_input_query(versions = "string"),
+    porcelain::porcelain_state(path = path),
+    returning = returning_json("Parameters.schema"))
 }
