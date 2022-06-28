@@ -106,14 +106,14 @@ and task_id</p></dd>
 <h3 id="method-new-">Method <code>new()</code><a class="anchor" aria-label="anchor" href="#method-new-"></a></h3>
 <p>Create object, read configuration and setup redis connection.</p><div class="section">
 <h4 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span class="va"><a href="../reference/orderly_runner_.html">orderly_runner_</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span>
-  <span class="va">root</span>,
-  allow_ref <span class="op">=</span> <span class="cn">NULL</span>,
-  <span class="va">queue_id</span>,
-  <span class="va">workers</span>,
-  cleanup_on_exit <span class="op">=</span> <span class="va">workers</span> <span class="op">&gt;</span> <span class="fl">0</span>,
-  worker_timeout <span class="op">=</span> <span class="cn">Inf</span>
-<span class="op">)</span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va"><a href="../reference/orderly_runner_.html">orderly_runner_</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
+<span>  <span class="va">root</span>,</span>
+<span>  allow_ref <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">queue_id</span>,</span>
+<span>  <span class="va">workers</span>,</span>
+<span>  cleanup_on_exit <span class="op">=</span> <span class="va">workers</span> <span class="op">&gt;</span> <span class="fl">0</span>,</span>
+<span>  worker_timeout <span class="op">=</span> <span class="cn">Inf</span></span>
+<span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -155,7 +155,7 @@ killed. Expect this is only finite during local testing.</p></dd>
 <h3 id="method-start-workers-">Method <code>start_workers()</code><a class="anchor" aria-label="anchor" href="#method-start-workers-"></a></h3>
 <p>Start n workers for this queue and optionally set a timeout.</p><div class="section">
 <h4 id="usage-1">Usage<a class="anchor" aria-label="anchor" href="#usage-1"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span class="va">orderly_runner_</span><span class="op">$</span><span class="fu">start_workers</span><span class="op">(</span><span class="va">workers</span>, <span class="va">timeout</span><span class="op">)</span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">orderly_runner_</span><span class="op">$</span><span class="fu">start_workers</span><span class="op">(</span><span class="va">workers</span>, <span class="va">timeout</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -182,7 +182,7 @@ killed. Expect this is only finite during local testing.</p></dd>
 ref is non NULL and ref switching disallowed, otherwise
 does nothing.</p><div class="section">
 <h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span class="va">orderly_runner_</span><span class="op">$</span><span class="fu">assert_ref_switching_allowed</span><span class="op">(</span><span class="va">ref</span><span class="op">)</span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">orderly_runner_</span><span class="op">$</span><span class="fu">assert_ref_switching_allowed</span><span class="op">(</span><span class="va">ref</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -202,16 +202,16 @@ does nothing.</p><div class="section">
 <h3 id="method-submit-task-report-">Method <code>submit_task_report()</code><a class="anchor" aria-label="anchor" href="#method-submit-task-report-"></a></h3>
 <p>Queue a job to run an orderly report.</p><div class="section">
 <h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span class="va">orderly_runner_</span><span class="op">$</span><span class="fu">submit_task_report</span><span class="op">(</span>
-  <span class="va">name</span>,
-  parameters <span class="op">=</span> <span class="cn">NULL</span>,
-  ref <span class="op">=</span> <span class="cn">NULL</span>,
-  instance <span class="op">=</span> <span class="cn">NULL</span>,
-  changelog <span class="op">=</span> <span class="cn">NULL</span>,
-  poll <span class="op">=</span> <span class="fl">0.1</span>,
-  timeout <span class="op">=</span> <span class="fl">60</span> <span class="op">*</span> <span class="fl">60</span> <span class="op">*</span> <span class="fl">3</span>,
-  depends_on <span class="op">=</span> <span class="cn">NULL</span>
-<span class="op">)</span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">orderly_runner_</span><span class="op">$</span><span class="fu">submit_task_report</span><span class="op">(</span></span>
+<span>  <span class="va">name</span>,</span>
+<span>  parameters <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  ref <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  instance <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  changelog <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  poll <span class="op">=</span> <span class="fl">0.1</span>,</span>
+<span>  timeout <span class="op">=</span> <span class="fl">60</span> <span class="op">*</span> <span class="fl">60</span> <span class="op">*</span> <span class="fl">3</span>,</span>
+<span>  depends_on <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -260,7 +260,7 @@ can be retrieved from redis using the key.</p>
 <h3 id="method-submit-">Method <code>submit()</code><a class="anchor" aria-label="anchor" href="#method-submit-"></a></h3>
 <p>Submit an arbitrary job on the queue</p><div class="section">
 <h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span class="va">orderly_runner_</span><span class="op">$</span><span class="fu">submit</span><span class="op">(</span><span class="va">expr</span>, depends_on <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">orderly_runner_</span><span class="op">$</span><span class="fu">submit</span><span class="op">(</span><span class="va">expr</span>, depends_on <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -284,13 +284,13 @@ can be retrieved from redis using the key.</p>
 <h3 id="method-submit-workflow-">Method <code>submit_workflow()</code><a class="anchor" aria-label="anchor" href="#method-submit-workflow-"></a></h3>
 <p>Queue a workflow.</p><div class="section">
 <h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span class="va">orderly_runner_</span><span class="op">$</span><span class="fu">submit_workflow</span><span class="op">(</span>
-  <span class="va">reports</span>,
-  ref <span class="op">=</span> <span class="cn">NULL</span>,
-  changelog <span class="op">=</span> <span class="cn">NULL</span>,
-  poll <span class="op">=</span> <span class="fl">0.1</span>,
-  timeout <span class="op">=</span> <span class="fl">60</span> <span class="op">*</span> <span class="fl">60</span> <span class="op">*</span> <span class="fl">3</span>
-<span class="op">)</span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">orderly_runner_</span><span class="op">$</span><span class="fu">submit_workflow</span><span class="op">(</span></span>
+<span>  <span class="va">reports</span>,</span>
+<span>  ref <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  changelog <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  poll <span class="op">=</span> <span class="fl">0.1</span>,</span>
+<span>  timeout <span class="op">=</span> <span class="fl">60</span> <span class="op">*</span> <span class="fl">60</span> <span class="op">*</span> <span class="fl">3</span></span>
+<span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -329,7 +329,7 @@ of the workflow default 3 hours.</p></dd>
 <h3 id="method-status-">Method <code>status()</code><a class="anchor" aria-label="anchor" href="#method-status-"></a></h3>
 <p>Get the status of a job</p><div class="section">
 <h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span class="va">orderly_runner_</span><span class="op">$</span><span class="fu">status</span><span class="op">(</span><span class="va">key</span>, output <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">orderly_runner_</span><span class="op">$</span><span class="fu">status</span><span class="op">(</span><span class="va">key</span>, output <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -354,7 +354,7 @@ output and the position of the job in the queue.</p>
 <h3 id="method-workflow-status-">Method <code>workflow_status()</code><a class="anchor" aria-label="anchor" href="#method-workflow-status-"></a></h3>
 <p>Get the status of a workflow.</p><div class="section">
 <h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span class="va">orderly_runner_</span><span class="op">$</span><span class="fu">workflow_status</span><span class="op">(</span><span class="va">workflow_key</span>, output <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">orderly_runner_</span><span class="op">$</span><span class="fu">workflow_status</span><span class="op">(</span><span class="va">workflow_key</span>, output <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -380,7 +380,7 @@ job in the workflow.</p>
 <p>Get the running and queued tasks in front of key in the queue.</p>
 <p>If <code>key</code> is NULL then includes all queued tasks.</p><div class="section">
 <h4 id="usage-8">Usage<a class="anchor" aria-label="anchor" href="#usage-8"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span class="va">orderly_runner_</span><span class="op">$</span><span class="fu">queue_status</span><span class="op">(</span>key <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">orderly_runner_</span><span class="op">$</span><span class="fu">queue_status</span><span class="op">(</span>key <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -403,7 +403,7 @@ running tasks and any queued tasks in front of key in the queue.</p>
 by the API on a preroute - we check for timeouts everytime someone
 interacts with the API. Not intended to be run directly.</p><div class="section">
 <h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span class="va">orderly_runner_</span><span class="op">$</span><span class="fu">check_timeout</span><span class="op">(</span><span class="op">)</span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">orderly_runner_</span><span class="op">$</span><span class="fu">check_timeout</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -415,7 +415,7 @@ interacts with the API. Not intended to be run directly.</p><div class="section"
 <h3 id="method-kill-">Method <code>kill()</code><a class="anchor" aria-label="anchor" href="#method-kill-"></a></h3>
 <p>Kill a job</p><div class="section">
 <h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span class="va">orderly_runner_</span><span class="op">$</span><span class="fu">kill</span><span class="op">(</span><span class="va">key</span><span class="op">)</span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">orderly_runner_</span><span class="op">$</span><span class="fu">kill</span><span class="op">(</span><span class="va">key</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -431,7 +431,7 @@ interacts with the API. Not intended to be run directly.</p><div class="section"
 <h3 id="method-destroy-">Method <code>destroy()</code><a class="anchor" aria-label="anchor" href="#method-destroy-"></a></h3>
 <p>Destroy the queue. Not expected to be called directly, used in tests.</p><div class="section">
 <h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span class="va">orderly_runner_</span><span class="op">$</span><span class="fu">destroy</span><span class="op">(</span><span class="op">)</span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">orderly_runner_</span><span class="op">$</span><span class="fu">destroy</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 
@@ -440,7 +440,7 @@ interacts with the API. Not intended to be run directly.</p><div class="section"
 <p>Cleanup workers and destroy the queue. Not expected to be called
 directly, gets registered as finaliser of the object.</p><div class="section">
 <h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span class="va">orderly_runner_</span><span class="op">$</span><span class="fu">cleanup</span><span class="op">(</span><span class="op">)</span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">orderly_runner_</span><span class="op">$</span><span class="fu">cleanup</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 
@@ -460,7 +460,7 @@ directly, gets registered as finaliser of the object.</p><div class="section">
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.4.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer></div>
