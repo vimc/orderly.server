@@ -420,7 +420,7 @@ Schema: [`BundleImport.schema.json`](BundleImport.schema.json)
 true
 ```
 
-## GET /report/info
+## GET /reports/info
 
 Get info about a report run. This can either be from a successful or failed run in draft or archive.
 
@@ -664,7 +664,7 @@ Response schema: [`WorkflowStatus.schema.json`](WorkflowStatus.schema.json)
 }
 ```
 
-## GET /report/version/:id/artefacts
+## GET /reports/versions/:id/artefacts
 
 Get information about artefacts for a report.
 
@@ -737,7 +737,7 @@ If a nonexistant key is given the response is
 
 Schema: [`ReportVersionArtefact.schema.json`](ReportVersionArtefact.schema.json)
 
-# GET /report/:name
+# GET /reports/:name
 
 Returns a list of version names for the named report.
 
@@ -753,7 +753,7 @@ Schema: [`VersionIds.schema.json`](VersionIds.schema.json)
   ]
 ```
 
-# GET /report/versions/customFields?versions=
+# GET /reports/versions/customFields?versions=
 
 Get custom fields for a list of version ids.
 
@@ -761,7 +761,7 @@ Response schema: [`CustomFields.schema.json`](CustomFields.schema.json)
 
 # Example
 
-`GET /report/versions/customFields?versions=20210629-231827-d35633fd,20210730-152428-14ad0fe7`
+`GET /reports/versions/customFields?versions=20210629-231827-d35633fd,20210730-152428-14ad0fe7`
 
 ```json
 {
