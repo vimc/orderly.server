@@ -1188,3 +1188,29 @@ test_that("can retrieve custom fields", {
   expect_length(data, 3)
   expect_equal(data, c("author", "comment", "requester"))
 })
+
+
+test_that("can retrieve parameters for versions", {
+  path <- orderly_prepare_orderly_example("demo")
+  id1 <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+                              root = path, echo = FALSE)
+  orderly::orderly_commit(id1, root = path)
+
+  id2 <- orderly::orderly_run("other", parameters = list(nmin = 0.5),
+                              root = path, echo = FALSE)
+  orderly::orderly_commit(id2, root = path)
+
+  ids <- paste(id1, id2, sep = ",")
+  data <- target_report_versions_params(path, ids)
+
+  endpoint <- endpoint_report_versions_params(path)
+  res <- endpoint$run(versions = ids)
+
+  expect_true(res$validated)
+  expect_equal(res$status_code, 200)
+  expect_type(res$data, "list")
+  expect_equal(res$data, data)
+  expect_length(data, 2)
+  expect_equal(data[[1]], list(nmin = scalar("0.1")))
+  expect_equal(data[[2]], list(nmin = scalar("0.5")))
+})
