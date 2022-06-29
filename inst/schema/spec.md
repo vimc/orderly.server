@@ -757,7 +757,7 @@ Schema: [`VersionIds.schema.json`](VersionIds.schema.json)
 
 Get custom fields for a list of version ids.
 
-Response schema: [`CustomFields.schema.json`](CustomFields.schema.json)
+Response schema: [`CustomFieldsForVersions.schema.json`](CustomFieldsForVersions.schema.json)
 
 # Example
 
@@ -790,6 +790,18 @@ If non-existent ids are given the response is
   "errors": null,
   "data": {}
 }
+```
+
+# GET /reports/customFields
+
+Get custom fields for orderly instance
+
+Response schema: [`CustomFields.schema.json`](CustomFields.schema.json)
+
+# Example
+
+```json
+["author", "requester"]
 ```
 
 # GET /reports/versions/parameters?versions=
