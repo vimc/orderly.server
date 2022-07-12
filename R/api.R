@@ -24,7 +24,7 @@ build_api <- function(runner, path, backup_period = NULL,
   api$handle(endpoint_workflow_run(runner))
   api$handle(endpoint_workflow_status(runner))
   api$handle(endpoint_report_versions(path))
-  api$handle(endpoint_report_version_artefact(path))
+  api$handle(endpoint_report_version_artefact_hashes(path))
   api$handle(endpoint_report_versions_custom_fields(path))
   api$handle(endpoint_custom_fields(path))
   api$handle(endpoint_report_versions_params(path))
@@ -452,46 +452,31 @@ check_timeout <- function(runner, rate_limit = 2 * 60) {
 }
 
 
-target_report_version_artefact <- function(path, name, id) {
+target_report_version_artefact_hashes <- function(path, name, id) {
   db <- orderly::orderly_db("destination", root = path)
   get_report_version(db, name, id)
   sql <- paste(
     "select",
-    "       report_version_artefact.'order' as id,",
-    "       report_version_artefact.format,",
-    "       report_version_artefact.description,",
     "       file_artefact.filename,",
-    "       file.size",
-    "  from report_version_artefact",
-    "  join file_artefact",
+    "       file_artefact.file_hash",
+    "  from file_artefact",
+    "  join report_version_artefact",
     "    on file_artefact.artefact = report_version_artefact.id",
-    "  join file",
-    "    on file.hash = file_artefact.file_hash",
-    " where report_version = $1",
-    " order by 'order'",
+    " where report_version_artefact.report_version = $1",
     sep = "\n")
   dat <- DBI::dbGetQuery(db, sql, id)
-
-  ## Bit of a pain to prepare this for serialisation nicely:
-  process <- function(x) {
-    list(id = scalar(x$id[[1]]),
-         format = scalar(x$format[[1]]),
-         description = scalar(x$description[[1]]),
-         files = Map(function(filename, size)
-           list(filename = scalar(filename), size = scalar(size)),
-           x$filename, x$size, USE.NAMES = FALSE))
-  }
-
-  lapply(unname(split(dat, dat$id)), process)
+  res <- lapply(dat[, 2], function(x) scalar(x))
+  names(res) <- dat[, 1]
+  res
 }
 
 
-endpoint_report_version_artefact <- function(path) {
+endpoint_report_version_artefact_hashes <- function(path) {
   porcelain::porcelain_endpoint$new(
     "GET", "/v1/reports/<name>/versions/<id>/artefacts/",
-    target_report_version_artefact,
+    target_report_version_artefact_hashes,
     porcelain::porcelain_state(path = path),
-    returning = returning_json("ReportVersionArtefact.schema"))
+    returning = returning_json("Artefacts.schema"))
 }
 
 

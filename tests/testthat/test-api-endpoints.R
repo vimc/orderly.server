@@ -1094,25 +1094,20 @@ test_that("endpoint_report_info returns parameter info", {
 })
 
 
-test_that("can retrieve information about artefacts", {
+test_that("can retrieve artefact hashes", {
   path <- orderly_prepare_orderly_example("demo")
   id <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
                              root = path, echo = FALSE)
   orderly::orderly_commit(id, root = path)
-  data <- target_report_version_artefact(path, "other", id)
-
-  endpoint <- endpoint_report_version_artefact(path)
+  endpoint <- endpoint_report_version_artefact_hashes(path)
   res <- endpoint$run(name = "other", id = id)
 
   expect_true(res$validated)
   expect_equal(res$status_code, 200)
   expect_type(res$data, "list")
-  ## No need to check the format of the data all over as that's
-  ## duplicated by the schema check.  But here, check the first file
-  ## is indeed first:
-  expect_equal(res$data[[1]]$id, scalar(1L))
-  expect_equal(res$data[[1]]$description, scalar("A summary table"))
-  expect_equal(res$data[[1]]$files[[1]]$filename, scalar("summary.csv"))
+  expect_equal(res$data,
+               list("summary.csv"=scalar("08a4566d063098080bfd318f675926f2"),
+                    "graph.png"=scalar("c00a51d4f397eac73c2833795224ca74")))
 })
 
 
