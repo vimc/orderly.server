@@ -488,7 +488,7 @@ target_report_version_artefact <- function(path, name, id) {
 
 endpoint_report_version_artefact <- function(path) {
   porcelain::porcelain_endpoint$new(
-    "GET", "/v1/reports/<name>/versions/<id>/artefacts",
+    "GET", "/v1/reports/<name>/versions/<id>/artefacts/",
     target_report_version_artefact,
     porcelain::porcelain_state(path = path),
     returning = returning_json("ReportVersionArtefact.schema"))

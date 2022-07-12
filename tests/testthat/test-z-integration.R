@@ -710,8 +710,8 @@ test_that("can get report version artefacts", {
   url <- paste0("/v1/reports/minimal/versions/", id, "/artefacts/")
   r <- content(httr::GET(server$api_url(url)))
   expect_equal(r$status, "success")
-  expect_equal(res$data[[1]]$id, scalar(1L))
-  expect_equal(res$data[[1]]$description, scalar("A graph of things"))
+  expect_equal(r$data[[1]]$id, scalar(1L))
+  expect_equal(r$data[[1]]$description, scalar("A graph of things"))
   expect_equal(r$errors, NULL)
 })
 
