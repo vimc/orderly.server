@@ -23,6 +23,7 @@ build_api <- function(runner, path, backup_period = NULL,
   api$handle(endpoint_workflow_summary(runner))
   api$handle(endpoint_workflow_run(runner))
   api$handle(endpoint_workflow_status(runner))
+  api$handle(endpoint_report_versions(path))
   api$handle(endpoint_report_version_artefact(path))
   api$handle(endpoint_report_versions_custom_fields(path))
   api$handle(endpoint_custom_fields(path))
@@ -451,8 +452,9 @@ check_timeout <- function(runner, rate_limit = 2 * 60) {
 }
 
 
-target_report_version_artefact <- function(path, id) {
+target_report_version_artefact <- function(path, name, id) {
   db <- orderly::orderly_db("destination", root = path)
+  get_report_version(db, name, id)
   sql <- paste(
     "select",
     "       report_version_artefact.'order' as id,",
@@ -486,7 +488,7 @@ target_report_version_artefact <- function(path, id) {
 
 endpoint_report_version_artefact <- function(path) {
   porcelain::porcelain_endpoint$new(
-    "GET", "/v1/reports/versions/<id>/artefacts",
+    "GET", "/v1/reports/<name>/versions/<id>/artefacts",
     target_report_version_artefact,
     porcelain::porcelain_state(path = path),
     returning = returning_json("ReportVersionArtefact.schema"))
@@ -501,13 +503,19 @@ target_report_versions <- function(path, name) {
     "where report_version.report = $1",
     sep = "\n")
   dat <- DBI::dbGetQuery(db, sql, name)
-  dat[, "id"]
+  dat <- dat[, "id"]
+  if (length(dat) == 0) {
+    porcelain::porcelain_stop(sprintf("Unknown report %s", name),
+                              "NONEXISTENT_REPORT",
+                              status_code = 404L)
+  }
+  return(dat)
 }
 
 
 endpoint_report_versions <- function(path) {
   porcelain::porcelain_endpoint$new(
-    "GET", "/v1/reports/<name>",
+    "GET", "/v1/reports/<name>/",
     target_report_versions,
     porcelain::porcelain_state(path = path),
     returning = returning_json("VersionIds.schema"))
