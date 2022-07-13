@@ -1099,11 +1099,10 @@ test_that("can retrieve information about artefacts", {
   id <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
                              root = path, echo = FALSE)
   orderly::orderly_commit(id, root = path)
-
-  data <- target_report_version_artefact(path, id)
+  data <- target_report_version_artefact(path, "other", id)
 
   endpoint <- endpoint_report_version_artefact(path)
-  res <- endpoint$run(id = id)
+  res <- endpoint$run(name = "other", id = id)
 
   expect_true(res$validated)
   expect_equal(res$status_code, 200)
@@ -1140,7 +1139,6 @@ test_that("can retrieve version list", {
   expect_true(res$validated)
   expect_equal(res$status_code, 200)
   expect_equal(res$data, c(id1, id2))
-
 })
 
 

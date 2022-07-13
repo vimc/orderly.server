@@ -56,7 +56,6 @@ orderly_server_background <- R6::R6Class(
         },
         args = list(path = self$path, port = self$port),
         stdout = self$log, stderr = self$log)
-
       message("waiting for server to become responsive")
       wait_while(private$server_not_up)
       message("...OK")
