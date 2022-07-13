@@ -62,13 +62,6 @@
 <!-- badges: start -->
 <p>Server process to orchestrate running reports. This is not in the <a href="https://github.com/vimc/orderly" class="external-link">main package</a> because it drags in some dependencies that will never usually be needed.</p>
 <p>Endpoints are shown in <a href="inst/schema/spec.html">the spec</a></p>
-<p>Current API:</p>
-<pre><code>GET  /
-POST /v1/reports/:name/run/
-GET  /v1/reports/:key/status/
-GET  /v1/reports/git/status/
-POST /v1/reports/git/fetch/
-POST /v1/reports/git/pull/</code></pre>
 <p>All the query stuff is already dealt with in <a href="https://github.com/vimc/montagu-reporting-api" class="external-link">montagu-reporting-api</a> and will not be duplicated here.</p>
 <pre><code>IMAGE=docker.montagu.dide.ic.ac.uk:5000/orderly.server:master
 docker pull $IMAGE
@@ -171,6 +164,7 @@ docker run --rm -p 8321:8321 -v ${PWD}/orderly:/orderly --user ${UID} $IMAGE /or
 <pre><code>./scripts/redis start</code></pre>
 <p>this can then be removed via</p>
 <pre><code>./scripts/redis stop</code></pre>
+<p>For the integration tests, the package must also be installed with <code>R CMD INSTALL .</code></p>
 </div>
 
   </div>
