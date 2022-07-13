@@ -1,5 +1,9 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
     "id": "Artefact",
-    "type": [ "object" ]
+    "type": [ "object" ],
+    "additionalProperties": {
+        "type": "string",
+        "pattern": "[0-9a-f]{32}"
+    }
 }
