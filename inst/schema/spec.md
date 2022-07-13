@@ -669,6 +669,8 @@ Response schema: [`WorkflowStatus.schema.json`](WorkflowStatus.schema.json)
 Get a dictionary of artefact names to hashes.
 Returns a 404 if the provided report name-version combination does not exist.
 
+Schema: [`Artefacts.schema.json`](Artefacts.schema.json)
+
 ## Example
 
 ```json
@@ -680,8 +682,6 @@ Returns a 404 if the provided report name-version combination does not exist.
   }
 }
 ```
-
-Schema: [`Artefacts.schema.json`](Artefacts.schema.json)
 
 # GET /reports/:name
 
