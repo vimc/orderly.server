@@ -1,4 +1,5 @@
 {
+  "$schema": "http://json-schema.org/draft-04/schema#",
   "id": "ReportVersion",
   "type": "object",
   "properties": {
@@ -7,7 +8,7 @@
     "display_name": {"type": [ "string", "null"] },
     "description": {"type": [ "string", "null"] },
     "date": {"type" :"string"},
-    "artefacts": { "type": "array", "items": { "$ref": "Artefact.schema.json"}},
+    "artefacts": { "type": "array", "items": { "$ref": "ReportVersionArtefact.schema.json"}},
     "resources": {"type": "array", "items": {"type": "string"}},
     "data_info": {"type":  "array", "items":  {"$ref": "DataInfo.schema.json"}},
     "parameter_values": {"type":  "object"},

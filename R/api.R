@@ -24,6 +24,7 @@ build_api <- function(runner, path, backup_period = NULL,
   api$handle(endpoint_workflow_run(runner))
   api$handle(endpoint_workflow_status(runner))
   api$handle(endpoint_report_versions(path))
+  api$handle(endpoint_report_version_details(path))
   api$handle(endpoint_report_version_artefact_hashes(path))
   api$handle(endpoint_report_versions_custom_fields(path))
   api$handle(endpoint_custom_fields(path))
@@ -506,6 +507,35 @@ endpoint_report_versions <- function(path) {
     returning = returning_json("VersionIds.schema"))
 }
 
+
+target_report_version_details <- function(path, name, id) {
+  db <- orderly::orderly_db("destination", root = path)
+  report_version <- get_report_version(db, name, id)
+  artefacts <- get_artefacts_for_version(db, id)
+  parameters <- get_parameters_for_versions(db, paste0("'", id, "'"))
+  instances <- get_instances_for_version(db, id)
+  list(id = scalar(id),
+       name = scalar(name),
+       display_name = scalar(report_version$displayname),
+       description = scalar(report_version$description),
+       artefacts = artefacts,
+       resources = list(),
+       date = scalar(report_version$date),
+       data_info = list(),
+       parameter_values = parameters,
+       instances = instances)
+}
+
+
+endpoint_report_version_details <- function(path) {
+  porcelain::porcelain_endpoint$new(
+    "GET", "/v1/reports/<name>/versions/<id>/",
+    target_report_version_details,
+    porcelain::porcelain_state(path = path),
+    returning = returning_json("ReportVersion.schema"))
+}
+
+
 target_report_versions_custom_fields <- function(path, versions) {
   db <- orderly::orderly_db("destination", root = path)
   versions <- paste0("'", paste0(unlist(strsplit(versions, split = ",")),
@@ -567,23 +597,7 @@ target_report_versions_params <- function(path, versions) {
   versions <- paste0("'", paste0(unlist(strsplit(versions, split = ",")),
                                  collapse = "','"),
                      "'")
-  sql <- paste(
-    "select",
-    "       parameters.report_version,",
-    "       parameters.name,",
-    "       parameters.value",
-    "  from parameters",
-    sprintf(" where parameters.report_version in (%s)", versions),
-    sep = "\n")
-  dat <- DBI::dbGetQuery(db, sql)
-
-  process <- function(x) {
-    vals <- lapply(as.list(x$value), function(y) scalar(y))
-    names(vals) <- x$name
-    vals
-  }
-
-  lapply(split(dat, dat$report_version), process)
+  get_parameters_for_versions(db, versions)
 }
 
 
