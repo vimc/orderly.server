@@ -1105,9 +1105,8 @@ test_that("can retrieve artefact hashes", {
   expect_true(res$validated)
   expect_equal(res$status_code, 200)
   expect_type(res$data, "list")
-  expect_equal(res$data,
-               list("summary.csv"=scalar("08a4566d063098080bfd318f675926f2"),
-                    "graph.png"=scalar("c00a51d4f397eac73c2833795224ca74")))
+  expect_equal(names(res$data), c("summary.csv", "graph.png"))
+  expect_equal(res$data[[1]], scalar("08a4566d063098080bfd318f675926f2"))
 })
 
 
