@@ -125,7 +125,7 @@ See https://github.com/vimc/orderly.server/pull/30/commits/29376c630d57c0f74c5d0
 
 # Testing
 
-For local integration testing, bring up redis docker container via
+For local testing, bring up redis docker container via
 ```
 ./scripts/redis start
 ```
@@ -134,4 +134,4 @@ this can then be removed via
 ./scripts/redis stop
 ```
 
-The package must also be installed with `R CMD INSTALL .`
+For the integration tests, the package must also be installed with `R CMD INSTALL .`

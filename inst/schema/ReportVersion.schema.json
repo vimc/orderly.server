@@ -1,0 +1,18 @@
+{
+  "id": "ReportVersion",
+  "type": "object",
+  "properties": {
+    "name": {"type" :"string"},
+    "id": {"type" :"string"},
+    "display_name": {"type": [ "string", "null"] },
+    "description": {"type": [ "string", "null"] },
+    "date": {"type" :"string"},
+    "artefacts": { "type": "array", "items": { "$ref": "Artefact.schema.json"}},
+    "resources": {"type": "array", "items": {"type": "string"}},
+    "data_info": {"type":  "array", "items":  {"$ref": "DataInfo.schema.json"}},
+    "parameter_values": {"type":  "object"},
+    "instances": {"type":  "object"}
+  },
+  "additionalProperties": true,
+  "required": ["name", "id", "display_name", "description", "date", "parameter_values", "instances"]
+}
