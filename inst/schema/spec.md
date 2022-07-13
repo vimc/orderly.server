@@ -664,11 +664,10 @@ Response schema: [`WorkflowStatus.schema.json`](WorkflowStatus.schema.json)
 }
 ```
 
-## GET /reports/versions/:id/artefacts
+## GET /reports/:name/versions/:id/artefacts
 
 Get information about artefacts for a report.
-
-Note that the report name is not needed here.
+Returns a 404 if the provided report name-version combination does not exist.
 
 ## Example
 
@@ -725,21 +724,11 @@ Note that the report name is not needed here.
 }
 ```
 
-If a nonexistant key is given the response is
-
-```json
-{
-  "status": "success",
-  "errors": null,
-  "data": []
-}
-```
-
 Schema: [`ReportVersionArtefact.schema.json`](ReportVersionArtefact.schema.json)
 
 # GET /reports/:name
 
-Returns a list of version names for the named report.
+Returns a list of version names for the named report. Returns 404 if no versions exist.
 
 Schema: [`VersionIds.schema.json`](VersionIds.schema.json)
 

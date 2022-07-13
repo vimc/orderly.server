@@ -505,7 +505,7 @@ target_report_versions <- function(path, name) {
   dat <- DBI::dbGetQuery(db, sql, name)
   dat <- dat[, "id"]
   if (length(dat) == 0) {
-    porcelain::porcelain_stop(sprintf("Unknown report %s", name),
+    porcelain::porcelain_stop(sprintf("Unknown report '%s'", name),
                               "NONEXISTENT_REPORT",
                               status_code = 404L)
   }
