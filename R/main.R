@@ -10,7 +10,6 @@ main_args <- function(args) {
 Options:
   --port=PORT                    Port to run on [default: 8321]
   --host=HOST                    IP address owned by this server [default: 0.0.0.0]
-  --no-ref                       Prevent git reference switching
   --go-signal=PATH               Relative path for go signal
   --identity=NAME                Identity to use
   --queue-id=ID                  rrq ID
