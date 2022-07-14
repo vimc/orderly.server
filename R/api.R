@@ -23,7 +23,13 @@ build_api <- function(runner, path, backup_period = NULL,
   api$handle(endpoint_workflow_summary(runner))
   api$handle(endpoint_workflow_run(runner))
   api$handle(endpoint_workflow_status(runner))
-  api$handle(endpoint_report_version_artefact(runner))
+  ## NOTE: these all use path not runner; there's no good reason for
+  ## this.
+  api$handle(endpoint_report_versions(path))
+  api$handle(endpoint_report_version_artefact_hashes(path))
+  api$handle(endpoint_report_versions_custom_fields(path))
+  api$handle(endpoint_custom_fields(path))
+  api$handle(endpoint_report_versions_params(path))
   api$setDocs(FALSE)
   backup <- orderly_backup(runner$config, backup_period)
   api$registerHook("preroute", backup$check_backup)
@@ -233,7 +239,7 @@ target_report_info <- function(runner, id, name) {
 
 endpoint_report_info <- function(runner) {
   porcelain::porcelain_endpoint$new(
-    "GET", "/v1/report/info", target_report_info,
+    "GET", "/v1/reports/info", target_report_info,
     porcelain::porcelain_input_query(id = "string"),
     porcelain::porcelain_input_query(name = "string"),
     porcelain::porcelain_state(runner = runner),
@@ -269,15 +275,17 @@ endpoint_run <- function(runner) {
 
 target_status <- function(runner, key, output = FALSE) {
   res <- runner$status(key, output)
+  queue <- res$queue
+  if (is.null(queue)) {
+    queue <- list()
+  }
   list(
     key = scalar(res$key),
     status = scalar(res$status),
     version = scalar(res$version),
     start_time = scalar(res$start_time),
     output = res$output,
-    queue = lapply(res$queue, function(item) {
-      lapply(item, scalar)
-    })
+    queue = recursive_scalar(queue)
   )
 }
 
@@ -298,7 +306,7 @@ endpoint_queue_status <- function(runner) {
   porcelain::porcelain_endpoint$new(
     "GET", "/v1/queue/status/", target_queue_status,
     porcelain::porcelain_state(runner = runner),
-    returning = returning_json("QueueStatus.schema"))
+    returning = returning_json("QueueStatusResponse.schema"))
 }
 
 target_kill <- function(runner, key) {
@@ -454,43 +462,146 @@ check_timeout <- function(runner, rate_limit = 2 * 60) {
 }
 
 
-target_report_version_artefact <- function(runner, id) {
-  db <- orderly::orderly_db("destination", root = runner$root)
+target_report_version_artefact_hashes <- function(path, name, id) {
+  db <- orderly::orderly_db("destination", root = path)
+  get_report_version(db, name, id)
   sql <- paste(
     "select",
-    "       report_version_artefact.'order' as id,",
-    "       report_version_artefact.format,",
-    "       report_version_artefact.description,",
     "       file_artefact.filename,",
-    "       file.size",
-    "  from report_version_artefact",
-    "  join file_artefact",
+    "       file_artefact.file_hash",
+    "  from file_artefact",
+    "  join report_version_artefact",
     "    on file_artefact.artefact = report_version_artefact.id",
-    "  join file",
-    "    on file.hash = file_artefact.file_hash",
-    " where report_version = $1",
-    " order by 'order'",
+    " where report_version_artefact.report_version = $1",
     sep = "\n")
   dat <- DBI::dbGetQuery(db, sql, id)
-
-  ## Bit of a pain to prepare this for serialisation nicely:
-  process <- function(x) {
-    list(id = scalar(x$id[[1]]),
-         format = scalar(x$format[[1]]),
-         description = scalar(x$description[[1]]),
-         files = Map(function(filename, size)
-           list(filename = scalar(filename), size = scalar(size)),
-           x$filename, x$size, USE.NAMES = FALSE))
-  }
-
-  lapply(unname(split(dat, dat$id)), process)
+  res <- lapply(dat[, 2], function(x) scalar(x))
+  names(res) <- dat[, 1]
+  res
 }
 
 
-endpoint_report_version_artefact <- function(runner) {
+endpoint_report_version_artefact_hashes <- function(path) {
   porcelain::porcelain_endpoint$new(
-    "GET", "/v1/report/version/<id>/artefacts",
-    target_report_version_artefact,
-    porcelain::porcelain_state(runner = runner),
-    returning = returning_json("ReportVersionArtefact.schema"))
+    "GET", "/v1/reports/<name>/versions/<id>/artefacts/",
+    target_report_version_artefact_hashes,
+    porcelain::porcelain_state(path = path),
+    returning = returning_json("Artefacts.schema"))
+}
+
+
+target_report_versions <- function(path, name) {
+  db <- orderly::orderly_db("destination", root = path)
+  sql <- paste(
+    "select report_version.id",
+    "from report_version",
+    "where report_version.report = $1",
+    sep = "\n")
+  dat <- DBI::dbGetQuery(db, sql, name)
+  dat <- dat[, "id"]
+  if (length(dat) == 0) {
+    porcelain::porcelain_stop(sprintf("Unknown report '%s'", name),
+                              "NONEXISTENT_REPORT",
+                              status_code = 404L)
+  }
+  return(dat)
+}
+
+
+endpoint_report_versions <- function(path) {
+  porcelain::porcelain_endpoint$new(
+    "GET", "/v1/reports/<name>/",
+    target_report_versions,
+    porcelain::porcelain_state(path = path),
+    returning = returning_json("VersionIds.schema"))
+}
+
+target_report_versions_custom_fields <- function(path, versions) {
+  db <- orderly::orderly_db("destination", root = path)
+  versions <- paste0("'", paste0(unlist(strsplit(versions, split = ",")),
+                                collapse = "','"),
+                     "'")
+  sql <- paste(
+    "select",
+    "       report_version_custom_fields.key,",
+    "       report_version_custom_fields.value,",
+    "       report_version_custom_fields.report_version",
+    "  from report_version_custom_fields",
+    sprintf(" where report_version in (%s)", versions),
+    sep = "\n")
+  dat <- DBI::dbGetQuery(db, sql)
+
+  process <- function(x) {
+    vals <- lapply(as.list(x$value), function(y) scalar(y))
+    names(vals) <- x$key
+    vals
+  }
+
+  lapply(split(dat, dat$report_version), process)
+}
+
+
+endpoint_report_versions_custom_fields <- function(path) {
+  porcelain::porcelain_endpoint$new(
+    "GET", "/v1/reports/versions/customFields",
+    target_report_versions_custom_fields,
+    porcelain::porcelain_input_query(versions = "string"),
+    porcelain::porcelain_state(path = path),
+    returning = returning_json("CustomFieldsForVersions.schema"))
+}
+
+
+target_custom_fields <- function(path) {
+  db <- orderly::orderly_db("destination", root = path)
+
+  sql <- paste(
+    "select custom_fields.id",
+    "from custom_fields",
+    sep = "\n")
+  dat <- DBI::dbGetQuery(db, sql)
+  dat[, "id"]
+}
+
+
+endpoint_custom_fields <- function(path) {
+  porcelain::porcelain_endpoint$new(
+    "GET", "/v1/reports/customFields",
+    target_custom_fields,
+    porcelain::porcelain_state(path = path),
+    returning = returning_json("CustomFields.schema"))
+}
+
+
+target_report_versions_params <- function(path, versions) {
+  db <- orderly::orderly_db("destination", root = path)
+  versions <- paste0("'", paste0(unlist(strsplit(versions, split = ",")),
+                                 collapse = "','"),
+                     "'")
+  sql <- paste(
+    "select",
+    "       parameters.report_version,",
+    "       parameters.name,",
+    "       parameters.value",
+    "  from parameters",
+    sprintf(" where parameters.report_version in (%s)", versions),
+    sep = "\n")
+  dat <- DBI::dbGetQuery(db, sql)
+
+  process <- function(x) {
+    vals <- lapply(as.list(x$value), function(y) scalar(y))
+    names(vals) <- x$name
+    vals
+  }
+
+  lapply(split(dat, dat$report_version), process)
+}
+
+
+endpoint_report_versions_params <- function(path) {
+  porcelain::porcelain_endpoint$new(
+    "GET", "/v1/reports/versions/parameters",
+    target_report_versions_params,
+    porcelain::porcelain_input_query(versions = "string"),
+    porcelain::porcelain_state(path = path),
+    returning = returning_json("Parameters.schema"))
 }

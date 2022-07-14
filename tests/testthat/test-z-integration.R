@@ -15,7 +15,7 @@ test_that("error handling: invalid method", {
   server <- start_test_server()
   on.exit(server$stop())
 
-  r <- httr::GET(server$api_url("/v1/reports/rebuild/"))
+  r <- httr::GET(server$api_url("/v1/rebuild/"))
   expect_equal(httr::status_code(r), 404L)
   dat <- content(r)
   expect_equal(dat$status, "failure")
@@ -522,7 +522,7 @@ test_that("can get report info", {
   wait_for_path(dest)
   wait_for_finished(dat$data$key, server)
 
-  r <- httr::GET(server$api_url("/v1/report/info"),
+  r <- httr::GET(server$api_url("/v1/reports/info"),
                  query = list(name = "count_param",
                               id = version))
   expect_equal(httr::status_code(r), 200)
@@ -668,4 +668,66 @@ test_that("Can cancel a running report", {
   expect_equal(dat$status, "success")
   expect_equal(dat$data$killed, FALSE)
   expect_match(dat$data$message, sprintf("Failed to kill '%s'", key))
+})
+
+
+test_that("can get report versions", {
+  path <- orderly_prepare_orderly_git_example()
+  server <- start_test_server(path[["local"]])
+  on.exit(server$stop())
+  id <- orderly::orderly_run("minimal", root = path[["local"]], echo = FALSE)
+  orderly::orderly_commit(id, root = path[["local"]])
+
+  r <- content(httr::GET(server$api_url("/v1/reports/minimal/")))
+  expect_equal(r$status, "success")
+  expect_equal(r$data, id)
+  expect_equal(r$errors, NULL)
+})
+
+
+test_that("Returns 404 if no report versions", {
+  path <- orderly_prepare_orderly_git_example()
+  server <- start_test_server(path[["local"]])
+  on.exit(server$stop())
+  res <- httr::GET(server$api_url("/v1/reports/other/"))
+  expect_equal(res$status_code, 404L)
+  r <- content(res)
+  expect_equal(r$status, "failure")
+  expect_equal(r$data, NULL)
+  expect_equal(r$errors[[1]],
+               list(error = "NONEXISTENT_REPORT",
+                    detail = "Unknown report 'other'"))
+})
+
+
+test_that("can get report version artefacts", {
+  path <- orderly_prepare_orderly_git_example()[["local"]]
+  server <- start_test_server(path)
+  id <- orderly::orderly_run("minimal", root = path, echo = FALSE)
+  orderly::orderly_commit(id, root = path)
+  on.exit(server$stop())
+
+  url <- paste0("/v1/reports/minimal/versions/", id, "/artefacts/")
+  r <- content(httr::GET(server$api_url(url)))
+  expect_equal(r$status, "success")
+  expect_type(r$data, "list")
+  expect_equal(names(r$data), "mygraph.png")
+  expect_equal(r$errors, NULL)
+})
+
+
+test_that("artefacts returns 404 if report version does not exist", {
+  path <- orderly_prepare_orderly_git_example()[["local"]]
+    server <- start_test_server(path)
+  on.exit(server$stop())
+
+  url <- "/v1/reports/minimal/versions/badid/artefacts/"
+  res <- httr::GET(server$api_url(url))
+  expect_equal(res$status_code, 404L)
+  r <- content(res)
+  expect_equal(r$status, "failure")
+  expect_equal(r$data, NULL)
+  expect_equal(r$errors[[1]],
+               list(error = "NONEXISTENT_REPORT_VERSION",
+                    detail = "Unknown report version 'badid'"))
 })

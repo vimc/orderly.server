@@ -420,7 +420,7 @@ Schema: [`BundleImport.schema.json`](BundleImport.schema.json)
 true
 ```
 
-## GET /report/info
+## GET /reports/info
 
 Get info about a report run. This can either be from a successful or failed run in draft or archive.
 
@@ -664,11 +664,12 @@ Response schema: [`WorkflowStatus.schema.json`](WorkflowStatus.schema.json)
 }
 ```
 
-## GET /report/version/:id/artefacts
+## GET /reports/:name/versions/:id/artefacts
 
-Get information about artefacts for a report.
+Get a dictionary of artefact names to hashes.
+Returns a 404 if the provided report name-version combination does not exist.
 
-Note that the report name is not needed here.
+Schema: [`Artefacts.schema.json`](Artefacts.schema.json)
 
 ## Example
 
@@ -676,63 +677,110 @@ Note that the report name is not needed here.
 {
   "status": "success",
   "errors": null,
-  "data": [
-    {
-      "id": 1,
-      "format": "data",
-      "description": "raw export",
-      "files": [
-        {
-          "filename": "all.csv",
-          "size": 801
-        }
-      ]
-    },
-    {
-      "id": 2,
-      "format": "data",
-      "description": "the subset we care most about",
-      "files": [
-        {
-          "filename": "subset.csv",
-          "size": 127
-        }
-      ]
-    },
-    {
-      "id": 3,
-      "format": "staticgraph",
-      "description": "plot of all data",
-      "files": [
-        {
-          "filename": "all.png",
-          "size": 9866
-        }
-      ]
-    },
-    {
-      "id": 4,
-      "format": "staticgraph",
-      "description": "plot of a subset of the data",
-      "files": [
-        {
-          "filename": "subset.png",
-          "size": 4291
-        }
-      ]
-    }
-  ]
+  "data": {
+    "mygraph.png": "7360cb2eed3327ff8a677b3598ed7343"
+  }
 }
 ```
 
-If a nonexistant key is given the response is
+# GET /reports/:name
+
+Returns a list of version names for the named report. Returns 404 if no versions exist.
+
+Schema: [`VersionIds.schema.json`](VersionIds.schema.json)
+
+## Example
+
+```json
+[
+    "20161006-142357-e80edf58",
+    "20161008-123121-59891d61",
+    "20161012-220715-756d55c8"
+  ]
+```
+
+# GET /reports/versions/customFields?versions=
+
+Get custom fields for a list of version ids.
+
+Response schema: [`CustomFieldsForVersions.schema.json`](CustomFieldsForVersions.schema.json)
+
+# Example
+
+`GET /reports/versions/customFields?versions=20210629-231827-d35633fd,20210730-152428-14ad0fe7`
 
 ```json
 {
   "status": "success",
   "errors": null,
-  "data": []
+  "data": {
+    "20210629-231827-d35633fd": {
+      "requester": "Funder McFunderface",
+      "author": "Researcher McResearcherface",
+      "comment": "This is a comment"
+    },
+    "20210730-152428-14ad0fe7": {
+      "requester": "Funder McFunderface",
+      "author": "Researcher McResearcherface",
+      "comment": "This is a comment"
+    }
+  }
 }
 ```
 
-Schema: [`ReportVersionArtefact.schema.json`](ReportVersionArtefact.schema.json)
+If non-existent ids are given the response is
+
+```json
+{
+  "status": "success",
+  "errors": null,
+  "data": {}
+}
+```
+
+# GET /reports/customFields
+
+Get custom fields for orderly instance
+
+Response schema: [`CustomFields.schema.json`](CustomFields.schema.json)
+
+# Example
+
+```json
+["author", "requester"]
+```
+
+# GET /reports/versions/parameters?versions=
+
+Get parameters for a list of version ids.
+
+Response schema: [`Parameters.schema.json`](Parameters.schema.json)
+
+# Example
+
+`GET /reports/versions/parameters?versions=20210629-231827-d35633fd,20210730-152428-14ad0fe7`
+
+```json
+{
+  "status": "success",
+  "errors": null,
+  "data": {
+    "20210629-231827-d35633fd": {
+      "nmin": "0.1"
+    },
+    "20210730-152428-14ad0fe7": {
+      "disease": "YF"
+    }
+  }
+}
+```
+
+If non-existent ids are given the response is
+
+```json
+{
+  "status": "success",
+  "errors": null,
+  "data": {}
+}
+```

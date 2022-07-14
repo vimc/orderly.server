@@ -12,17 +12,6 @@ Server process to orchestrate running reports.  This is not in the [main package
 
 Endpoints are shown in [the spec](inst/schema/spec.md)
 
-Current API:
-
-```
-GET  /
-POST /v1/reports/:name/run/
-GET  /v1/reports/:key/status/
-GET  /v1/reports/git/status/
-POST /v1/reports/git/fetch/
-POST /v1/reports/git/pull/
-```
-
 All the query stuff is already dealt with in [montagu-reporting-api](https://github.com/vimc/montagu-reporting-api) and will not be duplicated here.
 
 ```
@@ -144,3 +133,5 @@ this can then be removed via
 ```
 ./scripts/redis stop
 ```
+
+For the integration tests, the package must also be installed with `R CMD INSTALL .`

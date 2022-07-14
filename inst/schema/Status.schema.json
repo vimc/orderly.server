@@ -40,24 +40,7 @@
                 }
             ]
         },
-        "queue": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "key": {"type": "string"},
-                    "status": {
-                        "$ref": "TaskStatus.schema.json"
-                    },
-                    "name": {"type": "string"},
-                    "version": {
-                        "type": [ "string", "null" ]
-                    }
-                },
-                "required": ["key", "status", "name", "version"],
-                "additionalProperties": false
-            }
-        }
+        "queue": { "$ref": "QueueStatus.schema.json" }
     },
     "required": ["key", "status", "version", "output", "queue"],
     "additionalProperties": false

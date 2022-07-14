@@ -327,14 +327,25 @@ test_that("status - queued", {
       list(
         key = "key-1",
         status = "running",
-        name = "minimal",
-        version = "20210310-123928-fef89bc7"
+        version = "20210310-123928-fef89bc7",
+        inputs = list(
+          name = "minimal",
+          params = list(timeout = 10, poll = 1),
+          ref = NULL,
+          instance = NULL,
+          changelog = "[internal] changelog"
+        )
       ),
       list(
         key = "key-2",
         status = "queued",
-        name = "minimal",
-        version = NULL)))
+        version = NULL,
+        inputs = list(
+          name = "minimal",
+          params = NULL,
+          ref = "123",
+          instance = "production",
+          changelog = NULL))))
 
   runner <- mock_runner(key, status)
 
@@ -350,14 +361,26 @@ test_that("status - queued", {
            list(
              key = scalar("key-1"),
              status = scalar("running"),
-             name = scalar("minimal"),
-             version = scalar("20210310-123928-fef89bc7")
+             version = scalar("20210310-123928-fef89bc7"),
+             inputs = list(
+               name = scalar("minimal"),
+               params = list(timeout = scalar(10), poll = scalar(1)),
+               ref = NULL,
+               instance = NULL,
+               changelog = scalar("[internal] changelog")
+             )
            ),
            list(
              key = scalar("key-2"),
              status = scalar("queued"),
-             name = scalar("minimal"),
-             version = NULL))))
+             version = NULL,
+             inputs = list(
+               name = scalar("minimal"),
+               params = NULL,
+               ref = scalar("123"),
+               instance = scalar("production"),
+               changelog = NULL
+             )))))
   expect_equal(mockery::mock_args(runner$status)[[1]], list(key, FALSE))
 
   ## endpoint
@@ -1082,24 +1105,115 @@ test_that("endpoint_report_info returns parameter info", {
 })
 
 
-test_that("can retrieve information about artefacts", {
+test_that("can retrieve artefact hashes", {
   path <- orderly_prepare_orderly_example("demo")
   id <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
                              root = path, echo = FALSE)
   orderly::orderly_commit(id, root = path)
-  runner <- mock_runner(root = path)
-
-  data <- target_report_version_artefact(runner, id)
-  endpoint <- endpoint_report_version_artefact(runner)
-  res <- endpoint$run(id = id)
+  endpoint <- endpoint_report_version_artefact_hashes(path)
+  res <- endpoint$run(name = "other", id = id)
 
   expect_true(res$validated)
   expect_equal(res$status_code, 200)
   expect_type(res$data, "list")
-  ## No need to check the format of the data all over as that's
-  ## duplicated by the schema check.  But here, check the first file
-  ## is indeed first:
-  expect_equal(res$data[[1]]$id, scalar(1L))
-  expect_equal(res$data[[1]]$description, scalar("A summary table"))
-  expect_equal(res$data[[1]]$files[[1]]$filename, scalar("summary.csv"))
+  expect_equal(names(res$data), c("summary.csv", "graph.png"))
+  expect_equal(res$data[[1]], scalar("08a4566d063098080bfd318f675926f2"))
+})
+
+
+test_that("can retrieve version list", {
+  path <- orderly_prepare_orderly_example("demo")
+  id1 <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+                              root = path, echo = FALSE)
+  orderly::orderly_commit(id1, root = path)
+
+  id2 <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+  root = path, echo = FALSE)
+  orderly::orderly_commit(id2, root = path)
+
+  id3 <- orderly::orderly_run("minimal",
+  root = path, echo = FALSE)
+  orderly::orderly_commit(id3, root = path)
+
+  data <- target_report_versions(path, "other")
+  expect_equal(data, c(id1, id2))
+
+  endpoint <- endpoint_report_versions(path)
+  res <- endpoint$run(name = "other")
+
+  expect_true(res$validated)
+  expect_equal(res$status_code, 200)
+  expect_equal(res$data, c(id1, id2))
+})
+
+
+test_that("can retrieve custom fields for versions", {
+  path <- orderly_prepare_orderly_example("demo")
+  id1 <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+                             root = path, echo = FALSE)
+  orderly::orderly_commit(id1, root = path)
+
+  id2 <- orderly::orderly_run("minimal",
+                              root = path, echo = FALSE)
+  orderly::orderly_commit(id2, root = path)
+
+  ids <- paste(id1, id2, sep = ",")
+  data <- target_report_versions_custom_fields(path, ids)
+
+  endpoint <- endpoint_report_versions_custom_fields(path)
+  res <- endpoint$run(versions = ids)
+
+  expect_true(res$validated)
+  expect_equal(res$status_code, 200)
+  expect_type(res$data, "list")
+  expect_equal(res$data, data)
+  expect_length(data, 2)
+  expect_equal(data[[1]], list(requester = scalar("ACME"),
+                               author = scalar("Dr Serious"),
+                               comment = scalar("This is another comment")))
+
+  expect_equal(data[[2]], list(requester = scalar("Funder McFunderface"),
+                               author = scalar("Researcher McResearcherface"),
+                               comment = scalar("This is a comment")))
+})
+
+
+test_that("can retrieve custom fields", {
+  path <- orderly_prepare_orderly_example("demo")
+  data <- target_custom_fields(path)
+  endpoint <- endpoint_custom_fields(path)
+  res <- endpoint$run()
+
+  expect_true(res$validated)
+  expect_equal(res$status_code, 200)
+  expect_type(res$data, "character")
+  expect_equal(res$data, data)
+  expect_length(data, 3)
+  expect_equal(data, c("author", "comment", "requester"))
+})
+
+
+test_that("can retrieve parameters for versions", {
+  path <- orderly_prepare_orderly_example("demo")
+  id1 <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+                              root = path, echo = FALSE)
+  orderly::orderly_commit(id1, root = path)
+
+  id2 <- orderly::orderly_run("other", parameters = list(nmin = 0.5),
+                              root = path, echo = FALSE)
+  orderly::orderly_commit(id2, root = path)
+
+  ids <- paste(id1, id2, sep = ",")
+  data <- target_report_versions_params(path, ids)
+
+  endpoint <- endpoint_report_versions_params(path)
+  res <- endpoint$run(versions = ids)
+
+  expect_true(res$validated)
+  expect_equal(res$status_code, 200)
+  expect_type(res$data, "list")
+  expect_equal(res$data, data)
+  expect_length(data, 2)
+  expect_equal(data[[1]], list(nmin = scalar("0.1")))
+  expect_equal(data[[2]], list(nmin = scalar("0.5")))
 })
