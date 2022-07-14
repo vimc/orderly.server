@@ -446,7 +446,8 @@ test_that("Can pack, run and import a bundle", {
   expect_equal(filename, paste0(ans$id, ".zip"))
 
   res_up <- httr::POST(server$api_url("/v1/bundle/import"),
-                       body = httr::upload_file(ans$path, "application/octet-stream"))
+                       body = httr::upload_file(ans$path,
+                                                "application/octet-stream"))
   expect_equal(httr::status_code(res), 200L)
   dat <- content(res_up)
   expect_equal(dat$status, "success")
@@ -713,7 +714,8 @@ test_that("can get report version details", {
   expect_equal(r$status, "success")
   expect_type(r$data, "list")
   expect_equal(names(r$data), c("id", "name", "display_name", "description",
-                                "artefacts", "resources", "date", "data_info", "parameter_values", "instances",
+                                "artefacts", "resources", "date", "data_info",
+                                "parameter_values", "instances",
                                 "requester", "author", "comment"))
   expect_equal(r$errors, NULL)
 })

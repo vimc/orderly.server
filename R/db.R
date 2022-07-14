@@ -83,7 +83,7 @@ get_instances_for_version <- function(db, id) {
   res
 }
 
-get_resources_for_version <- function (db, id) {
+get_resources_for_version <- function(db, id) {
   sql <- paste(
     "select",
     "       file_input.filename as name,",
@@ -98,7 +98,7 @@ get_resources_for_version <- function (db, id) {
   dat
 }
 
-get_data_for_version <- function (db, id) {
+get_data_for_version <- function(db, id) {
   sql <- paste(
     "select",
     "       report_version_data.name,",

@@ -1234,8 +1234,9 @@ test_that("can retrieve version details", {
   expect_equal(data$id, scalar(id))
   expect_equal(data$name, scalar("other"))
   expect_equal(data$display_name, scalar("another report"))
-  expect_equal(data$description, scalar(paste("An extended comment field.  This can be quite long.",
-                                   " This is not so long though, but long enough I'm sure.")))
+  desc <- paste("An extended comment field.  This can be quite long.",
+             " This is not so long though, but long enough I'm sure.")
+  expect_equal(data$description, scalar(desc))
 
   expect_equal(data$artefacts[[1]]$id, scalar(1L))
   expect_equal(data$artefacts[[1]]$description, scalar("A summary table"))
@@ -1243,7 +1244,9 @@ test_that("can retrieve version details", {
   expect_equal(data$artefacts[[2]]$id, scalar(2L))
   expect_equal(data$artefacts[[2]]$description, scalar("A summary graph"))
   expect_equal(data$parameter_values, list(nmin = scalar("0.1")))
-  expect_equal(data$data_info, data.frame(name = "extract", csvSize = 751, rdsSize = 559))
+  expect_equal(data$data_info, data.frame(name = "extract",
+                                          csvSize = 751,
+                                          rdsSize = 559))
   expect_equal(data$author, scalar("Dr Serious"))
   expect_equal(data$requester, scalar("ACME"))
   expect_equal(data$comment, scalar("This is another comment"))
