@@ -4,8 +4,8 @@
   "type": "object",
   "properties": {
     "name": { "type": "string"},
-    "csvSize": {"type": "number"},
-    "rdsSize": {"type": "number"}
+    "csv_size": {"type": "number"},
+    "rds_size": {"type": "number"}
   },
   "additionalProperties": false
 }

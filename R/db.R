@@ -102,8 +102,8 @@ get_data_for_version <- function(db, id) {
   sql <- paste(
     "select",
     "       report_version_data.name,",
-    "       data.size_csv as csvSize,",
-    "       data.size_rds as rdsSize",
+    "       data.size_csv as csv_size,",
+    "       data.size_rds as rds_size",
     "  from report_version_data",
     "  inner join data",
     "  on report_version_data.hash = data.hash",
