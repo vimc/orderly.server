@@ -1243,9 +1243,7 @@ test_that("can retrieve version details", {
   expect_equal(data$artefacts[[2]]$id, scalar(2L))
   expect_equal(data$artefacts[[2]]$description, scalar("A summary graph"))
   expect_equal(data$parameter_values, list(nmin = scalar("0.1")))
-  expect_equal(data$data_info, data.frame(name = "extract",
-                                          csvSize = 751,
-                                          rdsSize = 559))
+  expect_equal(data$data_info$name, "extract")
   expect_equal(data$author, scalar("Dr Serious"))
   expect_equal(data$requester, scalar("ACME"))
   expect_equal(data$comment, scalar("This is another comment"))
