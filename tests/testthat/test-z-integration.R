@@ -696,7 +696,7 @@ test_that("can get report version artefacts", {
   r <- content(httr::GET(server$api_url(url)))
   expect_equal(r$status, "success")
   expect_type(r$data, "list")
-  expect_equal(names(r$data), c("summary.csv", "graph.png"))
+  expect_equal(names(r$data), "mygraph.png")
   expect_equal(r$errors, NULL)
 })
 
