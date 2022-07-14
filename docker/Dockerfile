@@ -24,7 +24,7 @@ RUN install2.r --error \
 
 COPY . /src
 
-RUN install_remote vimc/orderly@vimc-6484 mrc-ide/rrq \
+RUN install_remote vimc/orderly mrc-ide/rrq \
         && R CMD INSTALL /src
 
 EXPOSE 8321
