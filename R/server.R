@@ -7,9 +7,6 @@
 ##'
 ##' @param host Optional
 ##'
-##' @param allow_ref Allow git reference changing (passed through to
-##'   \code{orderly_runner}.
-##'
 ##' @param go_signal If given, we poll for a file \code{go_signal}
 ##'   (within \code{path}) before starting.  This is designed
 ##'   primarily for use with docker where the data volume may not be
@@ -31,18 +28,20 @@
 ##'
 ##' @param log_level The "lgr" log level to use
 ##'
+##' @param identity Optional server identity
+##'
 ##' @export
-server <- function(path, port, host = "0.0.0.0", allow_ref = TRUE,
+server <- function(path, port, host = "0.0.0.0",
                    go_signal = NULL, queue_id = NULL, workers = 1,
                    backup_period = 600, timeout_rate_limit = 2 * 60,
-                   log_level = "info") {
+                   log_level = "info", identity = NULL) {
   message("Starting orderly server on port ", port)
   message("Orderly root: ", path)
 
   wait_for_go_signal(path, go_signal)
-  runner <- orderly_runner(path, allow_ref, queue_id = queue_id,
+  runner <- orderly_runner(path, identity, queue_id = queue_id,
                            workers = workers)
-  api <- build_api(runner, runner$root,
+  api <- build_api(runner,
                    backup_period = backup_period,
                    rate_limit = timeout_rate_limit,
                    logger = porcelain::porcelain_logger(log_level))

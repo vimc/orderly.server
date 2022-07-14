@@ -23,14 +23,14 @@ Object for managing backing up orderly db
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-new}{\code{orderly_backup_$new()}}
-\item \href{#method-check_backup}{\code{orderly_backup_$check_backup()}}
-\item \href{#method-do_backup}{\code{orderly_backup_$do_backup()}}
+\item \href{#method-orderly_backup-new}{\code{orderly_backup_$new()}}
+\item \href{#method-orderly_backup-check_backup}{\code{orderly_backup_$check_backup()}}
+\item \href{#method-orderly_backup-do_backup}{\code{orderly_backup_$do_backup()}}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-new"></a>}}
-\if{latex}{\out{\hypertarget{method-new}{}}}
+\if{html}{\out{<a id="method-orderly_backup-new"></a>}}
+\if{latex}{\out{\hypertarget{method-orderly_backup-new}{}}}
 \subsection{Method \code{new()}}{
 Create object, and do first backup.
 \subsection{Usage}{
@@ -57,8 +57,8 @@ tables (as done by OrderlyWeb). If NULL then backup is skipped.}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-check_backup"></a>}}
-\if{latex}{\out{\hypertarget{method-check_backup}{}}}
+\if{html}{\out{<a id="method-orderly_backup-check_backup"></a>}}
+\if{latex}{\out{\hypertarget{method-orderly_backup-check_backup}{}}}
 \subsection{Method \code{check_backup()}}{
 Check if a backup is due to be run, and run it if it is due.
 \subsection{Usage}{
@@ -67,8 +67,8 @@ Check if a backup is due to be run, and run it if it is due.
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-do_backup"></a>}}
-\if{latex}{\out{\hypertarget{method-do_backup}{}}}
+\if{html}{\out{<a id="method-orderly_backup-do_backup"></a>}}
+\if{latex}{\out{\hypertarget{method-orderly_backup-do_backup}{}}}
 \subsection{Method \code{do_backup()}}{
 Backup the orderly database.
 \subsection{Usage}{

@@ -1,28 +1,31 @@
-build_api <- function(runner, path, backup_period = NULL,
+build_api <- function(runner, backup_period = NULL,
                       rate_limit = 2 * 60,
                       logger = NULL) {
   force(runner)
+  path <- runner$root
   api <- porcelain::porcelain$new(logger = logger)
   api$handle(endpoint_root())
-  api$handle(endpoint_git_status(path))
-  api$handle(endpoint_git_fetch(path))
-  api$handle(endpoint_git_pull(path))
-  api$handle(endpoint_git_branches(path))
-  api$handle(endpoint_git_commits(path))
-  api$handle(endpoint_available_reports(path))
-  api$handle(endpoint_report_parameters(path))
+  api$handle(endpoint_git_status(runner))
+  api$handle(endpoint_git_fetch(runner))
+  api$handle(endpoint_git_pull(runner))
+  api$handle(endpoint_git_branches(runner))
+  api$handle(endpoint_git_commits(runner))
+  api$handle(endpoint_available_reports(runner))
+  api$handle(endpoint_report_parameters(runner))
   api$handle(endpoint_bundle_pack(path))
   api$handle(endpoint_bundle_import(path))
-  api$handle(endpoint_report_info(path))
+  api$handle(endpoint_report_info(runner))
   api$handle(endpoint_run(runner))
   api$handle(endpoint_status(runner))
   api$handle(endpoint_queue_status(runner))
   api$handle(endpoint_kill(runner))
-  api$handle(endpoint_dependencies(path))
+  api$handle(endpoint_dependencies(runner))
   api$handle(endpoint_run_metadata(runner))
   api$handle(endpoint_workflow_summary(runner))
   api$handle(endpoint_workflow_run(runner))
   api$handle(endpoint_workflow_status(runner))
+  ## NOTE: these all use path not runner; there's no good reason for
+  ## this.
   api$handle(endpoint_report_versions(path))
   api$handle(endpoint_report_version_artefact_hashes(path))
   api$handle(endpoint_report_versions_custom_fields(path))
@@ -54,7 +57,8 @@ endpoint_root <- function() {
     returning = returning_json("Root.schema"))
 }
 
-target_git_status <- function(path) {
+target_git_status <- function(runner) {
+  path <- runner$root
   ret <- list(
     branch = scalar(git_branch_name(path)),
     hash = scalar(git_ref_to_sha("HEAD", path))
@@ -65,14 +69,15 @@ target_git_status <- function(path) {
   ret
 }
 
-endpoint_git_status <- function(path) {
+endpoint_git_status <- function(runner) {
   endpoint_git_status <- porcelain::porcelain_endpoint$new(
     "GET", "/v1/reports/git/status/", target_git_status,
-    porcelain::porcelain_state(path = path),
+    porcelain::porcelain_state(runner = runner),
     returning = returning_json("GitStatus.schema"))
 }
 
-target_git_fetch <- function(path) {
+target_git_fetch <- function(runner) {
+  path <- runner$root
   res <- git_fetch(path)
   if (length(res$output) > 0L) {
     orderly::orderly_log("fetch", res$output)
@@ -80,70 +85,76 @@ target_git_fetch <- function(path) {
   res$output
 }
 
-endpoint_git_fetch <- function(path) {
+endpoint_git_fetch <- function(runner) {
   porcelain::porcelain_endpoint$new(
     "POST", "/v1/reports/git/fetch/", target_git_fetch,
-    porcelain::porcelain_state(path = path),
+    porcelain::porcelain_state(runner = runner),
     returning = returning_json("GitFetch.schema"))
 }
 
-target_git_pull <- function(path) {
-  res <- git_pull(path)
+target_git_pull <- function(runner) {
+  res <- git_pull(runner$root)
   if (length(res$output) > 0L) {
     orderly::orderly_log("pull", res$output)
   }
   res$output
 }
 
-endpoint_git_pull <- function(path) {
+endpoint_git_pull <- function(runner) {
   porcelain::porcelain_endpoint$new(
     "POST", "/v1/reports/git/pull/", target_git_pull,
-    porcelain::porcelain_state(path = path),
+    porcelain::porcelain_state(runner = runner),
     returning = returning_json("GitPull.schema"))
 }
 
-target_git_branches <- function(path) {
-  git_branches_no_merged(path, include_master = TRUE)
+target_git_branches <- function(runner) {
+  path <- runner$root
+  default_branch <- runner$default_branch
+  git_branches_no_merged(path, include_default = TRUE,
+                         default_branch = default_branch)
 }
 
-endpoint_git_branches <- function(path) {
+endpoint_git_branches <- function(runner) {
   porcelain::porcelain_endpoint$new(
     "GET", "/git/branches", target_git_branches,
-    porcelain::porcelain_state(path = path),
+    porcelain::porcelain_state(runner = runner),
     returning = returning_json("GitBranches.schema"))
 }
 
-target_git_commits <- function(path, branch) {
-  git_commits(branch, path)
+target_git_commits <- function(runner, branch) {
+  git_commits(branch, runner$root, runner$default_branch)
 }
 
-endpoint_git_commits <- function(path) {
+endpoint_git_commits <- function(runner) {
   porcelain::porcelain_endpoint$new(
     "GET", "/git/commits", target_git_commits,
     porcelain::porcelain_input_query(branch = "string"),
-    porcelain::porcelain_state(path = path),
+    porcelain::porcelain_state(runner = runner),
     returning = returning_json("GitCommits.schema"))
 }
 
-target_available_reports <- function(path, branch = NULL, commit = NULL,
+target_available_reports <- function(runner, branch = NULL, commit = NULL,
                                      show_all = FALSE) {
-  get_reports(branch, commit, show_all, path)
+  get_reports(branch, commit, show_all, runner$default_branch, runner$root)
 }
 
-endpoint_available_reports <- function(path) {
+endpoint_available_reports <- function(runner) {
   porcelain::porcelain_endpoint$new(
     "GET", "/reports/source", target_available_reports,
     porcelain::porcelain_input_query(branch = "string"),
     porcelain::porcelain_input_query(commit = "string"),
     porcelain::porcelain_input_query(show_all = "logical"),
-    porcelain::porcelain_state(path = path),
+    porcelain::porcelain_state(runner = runner),
     returning = returning_json("AvailableReports.schema")
   )
 }
 
-target_report_parameters <- function(path, report_id, commit = NULL) {
+target_report_parameters <- function(runner, report_id, commit = NULL) {
+  path <- runner$root
+  default_branch <- runner$default_branch
   tryCatch(
-    parameters <- get_report_parameters(report_id, commit, path),
+    parameters <- get_report_parameters(report_id, commit, path,
+                                        default_branch),
     error = function(e) {
       porcelain::porcelain_stop(e$message, "FAILED_RETRIEVE_PARAMS")
     }
@@ -166,11 +177,11 @@ target_report_parameters <- function(path, report_id, commit = NULL) {
   })
 }
 
-endpoint_report_parameters <- function(path) {
+endpoint_report_parameters <- function(runner) {
   porcelain::porcelain_endpoint$new(
     "GET", "/reports/<report_id>/parameters", target_report_parameters,
     porcelain::porcelain_input_query(commit = "string"),
-    porcelain::porcelain_state(path = path),
+    porcelain::porcelain_state(runner = runner),
     returning = returning_json("ReportParameters.schema")
   )
 }
@@ -218,8 +229,8 @@ endpoint_bundle_import <- function(path, data) {
     returning = returning_json("BundleImport.schema"))
 }
 
-target_report_info <- function(path, id, name) {
-  info <- orderly::orderly_info(id, name, root = path)
+target_report_info <- function(runner, id, name) {
+  info <- orderly::orderly_info(id, name, root = runner$root)
   info <- recursive_scalar(info)
   ## Rename parameters to params for consistency with rest of API
   info <- append(info, list(params = info$parameters))
@@ -227,12 +238,12 @@ target_report_info <- function(path, id, name) {
   info
 }
 
-endpoint_report_info <- function(path) {
+endpoint_report_info <- function(runner) {
   porcelain::porcelain_endpoint$new(
     "GET", "/v1/reports/info", target_report_info,
     porcelain::porcelain_input_query(id = "string"),
     porcelain::porcelain_input_query(name = "string"),
-    porcelain::porcelain_state(path = path),
+    porcelain::porcelain_state(runner = runner),
     returning = returning_json("ReportInfo.schema")
   )
 }
@@ -312,14 +323,14 @@ endpoint_kill <- function(runner) {
     returning = returning_json("Kill.schema"))
 }
 
-target_dependencies <- function(path, name,
+target_dependencies <- function(runner, name,
                                 id = "latest",
                                 direction = "downstream",
                                 propagate = TRUE,
                                 max_depth = 100,
                                 show_all = FALSE,
                                 use = "archive") {
-  get_dependencies(path = path,
+  get_dependencies(path = runner$root,
                    name = name,
                    id = id,
                    direction = direction,
@@ -329,7 +340,7 @@ target_dependencies <- function(path, name,
                    use = use)
 }
 
-endpoint_dependencies <- function(path) {
+endpoint_dependencies <- function(runner) {
   porcelain::porcelain_endpoint$new(
     "GET", "/v1/reports/<name>/dependencies/", target_dependencies,
     porcelain::porcelain_input_query(id = "string",
@@ -338,7 +349,7 @@ endpoint_dependencies <- function(path) {
                                max_depth = "integer",
                                show_all = "logical",
                                use = "string"),
-    porcelain::porcelain_state(path = path),
+    porcelain::porcelain_state(runner = runner),
     returning = returning_json("Dependencies.schema"))
 }
 
@@ -364,7 +375,7 @@ target_run_metadata <- function(runner) {
     instances_supported <- any(lengths(instances) > 0)
   }
 
-  git_supported <- !isTRUE(server_options$master_only)
+  git_supported <- !isTRUE(server_options$default_branch_only)
 
   list(
     name = scalar(runner$config$server_options()$name),

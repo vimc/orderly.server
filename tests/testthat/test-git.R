@@ -105,7 +105,7 @@ test_that("can get unmerged branches from git", {
                "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$")
   expect_type(branches$last_commit_age, "integer")
 
-  branches <- git_branches_no_merged(path[["local"]], include_master = TRUE)
+  branches <- git_branches_no_merged(path[["local"]], include_default = TRUE)
   expect_equal(nrow(branches), 2)
   expect_equal(colnames(branches), c("name", "last_commit", "last_commit_age"))
   expect_equal(branches$name, c("master", "other"))
@@ -196,17 +196,17 @@ test_that("can get report list from git", {
 
   commits <- git_commits("master", path[["local"]])
   expect_equal(nrow(commits), 1)
-  reports <- get_reports("master", commits$id, FALSE, path[["local"]])
+  reports <- get_reports("master", commits$id, FALSE, "master", path[["local"]])
   expect_equal(reports, c("global", "minimal"))
 
   other_commits <- git_commits("other", path[["local"]])
   expect_equal(nrow(other_commits), 1)
   other_reports <- get_reports("other", other_commits$id, FALSE,
-                               path[["local"]])
+                               "master", path[["local"]])
   expect_true("other" %in% other_reports)
 
   ## git_commits works with NULL branch and commit
-  default_reports <- get_reports(NULL, NULL, FALSE, path[["local"]])
+  default_reports <- get_reports(NULL, NULL, FALSE, "master", path[["local"]])
   expect_equal(default_reports, reports)
 })
 
@@ -228,7 +228,7 @@ test_that("report only shows when pushed to remote", {
   other_commits <- git_commits("other", path[["local"]])
   expect_equal(nrow(other_commits), 1)
   other_reports <- get_reports("other", other_commits$id, FALSE,
-                               path[["local"]])
+                               "master", path[["local"]])
   expect_true("other" %in% other_reports)
 
   ## Push to remote
@@ -238,7 +238,7 @@ test_that("report only shows when pushed to remote", {
   other_commits <- git_commits("other", path[["local"]])
   expect_equal(nrow(other_commits), 2)
   other_reports <- get_reports("other", other_commits$id[[1]], FALSE,
-                               path[["local"]])
+                               "master", path[["local"]])
   expect_true(all(c("other", "new-report") %in% other_reports))
 })
 
@@ -275,12 +275,13 @@ test_that("get_reports only shows one sided changes", {
 
   commits <- git_commits("master", path[["local"]])
   expect_equal(nrow(commits), 3)
-  reports <- get_reports("master", commits$id[[1]], FALSE, path[["local"]])
+  reports <- get_reports("master", commits$id[[1]], FALSE, "master",
+                         path[["local"]])
   expect_equal(reports, c("global", "minimal", "new-report"))
 
   other_commits <- git_commits("other", path[["local"]])
   expect_equal(nrow(other_commits), 1)
-  other_reports <- get_reports("other", other_commits$id, FALSE,
+  other_reports <- get_reports("other", other_commits$id, FALSE, "master",
                                path[["local"]])
   expect_true("other" %in% other_reports)
 })
@@ -292,10 +293,11 @@ test_that("get reports can show all reports on a branch", {
   ## with a commit & a branch
   other_commits <- git_commits("other", path[["local"]])
   expect_equal(nrow(other_commits), 1)
-  other_reports <- get_reports("other", other_commits$id, TRUE, path[["local"]])
+  other_reports <- get_reports("other", other_commits$id, TRUE, "master",
+                               path[["local"]])
   expect_true(all(c("global", "minimal", "other") %in% other_reports))
 
-  other_reports <- get_reports("other", other_commits$id, FALSE,
+  other_reports <- get_reports("other", other_commits$id, FALSE, "master",
                                path[["local"]])
   expect_true("other" %in% other_reports)
   expect_true(!any(c("global", "minimal") %in% other_reports))
@@ -306,7 +308,7 @@ test_that("get reports can show all reports on a branch without a commit", {
   path <- orderly_prepare_orderly_git_example()
 
   ## with a commit & a branch
-  other_reports <- get_reports("other", NULL, TRUE, path[["local"]])
+  other_reports <- get_reports("other", NULL, TRUE, "master", path[["local"]])
   expect_true(all(c("global", "minimal", "other") %in% other_reports))
 })
 

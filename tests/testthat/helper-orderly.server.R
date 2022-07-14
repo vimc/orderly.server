@@ -89,7 +89,9 @@ mock_runner <- function(key = NULL, status = NULL,
                         check_timeout = NULL,
                         queue_status = NULL,
                         submit_workflow = NULL,
-                        workflow_status = NULL) {
+                        workflow_status = NULL,
+                        default_branch = "master",
+                        allow_ref = TRUE) {
   list(
     submit_task_report = mockery::mock(key, cycle = TRUE),
     status = mockery::mock(status, cycle = TRUE),
@@ -98,6 +100,8 @@ mock_runner <- function(key = NULL, status = NULL,
                          cycle = TRUE),
     config = config,
     root = root,
+    default_branch = default_branch,
+    allow_ref = allow_ref,
     queue_status = mockery::mock(queue_status, cycle = TRUE),
     submit_workflow = mockery::mock(submit_workflow, cycle = TRUE),
     workflow_status = mockery::mock(workflow_status, cycle = TRUE)

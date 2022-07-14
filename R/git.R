@@ -92,17 +92,19 @@ git_pull <- function(root = NULL) {
   git_run("pull", root = root, check = TRUE)
 }
 
-git_branches_no_merged <- function(root = NULL, include_master = FALSE) {
+git_branches_no_merged <- function(root = NULL, include_default = FALSE,
+                                   default_branch = "master") {
   branches <- git_run(c("for-each-ref", "refs/remotes/origin",
                         "--sort=-committerdate",
                         "--format='%(refname:lstrip=3),%(committerdate:unix)'",
-                        "--no-merged=origin/master"),
+                        sprintf("--no-merged=origin/%s", default_branch)),
                       root = root, check = TRUE)$output
-  if (isTRUE(include_master)) {
-    master <- git_run(c("for-each-ref", "refs/remotes/origin/master",
+  if (isTRUE(include_default)) {
+    default <- git_run(c("for-each-ref",
+                         sprintf("refs/remotes/origin/%s", default_branch),
                         "--format='%(refname:lstrip=3),%(committerdate:unix)'"),
                       root = root, check = TRUE)$output
-    branches <- c(master, branches)
+    branches <- c(default, branches)
   }
   branches <- utils::read.table(text = branches, stringsAsFactors = FALSE,
                                 sep = ",", col.names = c("name", "last_commit"))
@@ -112,10 +114,10 @@ git_branches_no_merged <- function(root = NULL, include_master = FALSE) {
   branches
 }
 
-## This gets last 25 commits from master
-## if not master then gets the unmerged commits (limit 25)
-git_commits <- function(branch, root = NULL) {
-  if (branch == "master") {
+## This gets last 25 commits from default branch
+## if not the default branch then gets the unmerged commits (limit 25)
+git_commits <- function(branch, root = NULL, default_branch = "master") {
+  if (branch == default_branch) {
     args <- c("log", "--pretty='%h,%cd'", "--date=unix", "--max-count=25",
               sprintf("refs/remotes/origin/%s", branch))
   } else {
@@ -127,7 +129,8 @@ git_commits <- function(branch, root = NULL) {
     remote_branch <- sprintf("refs/remotes/origin/%s", branch)
     args <- c("log", "--pretty='%h,%cd'", "--date=unix", "--max-count=25",
               "--right-only", "--cherry-pick",
-              paste0("refs/remotes/origin/master...", remote_branch),
+              sprintf("refs/remotes/origin/%s...%s",
+                      default_branch, remote_branch),
               remote_branch)
   }
   commits <- git_run(args, root = root, check = TRUE)$output
@@ -148,8 +151,8 @@ git_latest_commit <- function(branch = "master", root = NULL) {
   git_run(args, root = root, check = TRUE)$output
 }
 
-get_reports <- function(branch, commit, show_all, root) {
-  list_all <- show_all || identical(branch, "master") || is.null(branch)
+get_reports <- function(branch, commit, show_all, default_branch, root) {
+  list_all <- show_all || identical(branch, default_branch) || is.null(branch)
   if (list_all) {
     if (is.null(commit)) {
       commit <- git_latest_commit(branch, root = root)
@@ -164,7 +167,7 @@ get_reports <- function(branch, commit, show_all, root) {
     ## the porcelain version
     reports <- git_run(
       c("diff", "--name-only", "--relative=src/",
-      paste0("refs/remotes/origin/master...", commit),
+      sprintf("refs/remotes/origin/%s...%s", default_branch, commit),
       "-- src/"),
       root = root, check = TRUE)$output
     ## We only want to return the reports which have changes i.e. the dirname
@@ -174,11 +177,11 @@ get_reports <- function(branch, commit, show_all, root) {
   reports
 }
 
-get_report_parameters <- function(report, commit, root) {
+get_report_parameters <- function(report, commit, root, branch = "master") {
   tryCatch({
-    ## Default to latest commit from master if missing
+    ## Default to latest commit from 'branch' if missing
     if (is.null(commit)) {
-      commit <- git_latest_commit(root = root)
+      commit <- git_latest_commit(branch, root = root)
     }
     yml <- git_run(
       c("show", paste0(commit, file.path(":src", report, "orderly.yml"))),

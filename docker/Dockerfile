@@ -11,20 +11,20 @@ COPY docker/bin /usr/local/bin/
 
 RUN install2.r --error \
         --repos https://cloud.r-project.org \
-        --repos https://vimc.github.io/drat \
+        --repos https://mrc-ide.r-universe.dev \
         callr \
         jsonlite \
+        jsonvalidate \
         lgr \
+        porcelain \
         processx \
         remotes \
+        rrq \
         webutils
 
 COPY . /src
 
-RUN install_remote \
-        mrc-ide/rrq \
-        reside-ic/porcelain \
-        ropensci/jsonvalidate \
+RUN install_remote vimc/orderly mrc-ide/rrq \
         && R CMD INSTALL /src
 
 EXPOSE 8321
