@@ -1,7 +1,8 @@
-build_api <- function(runner, path, backup_period = NULL,
+build_api <- function(runner, backup_period = NULL,
                       rate_limit = 2 * 60,
                       logger = NULL) {
   force(runner)
+  path <- runner$root
   api <- porcelain::porcelain$new(logger = logger)
   api$handle(endpoint_root())
   api$handle(endpoint_git_status(runner))

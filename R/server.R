@@ -41,7 +41,7 @@ server <- function(path, port, host = "0.0.0.0",
   wait_for_go_signal(path, go_signal)
   runner <- orderly_runner(path, identity, queue_id = queue_id,
                            workers = workers)
-  api <- build_api(runner, runner$root,
+  api <- build_api(runner,
                    backup_period = backup_period,
                    rate_limit = timeout_rate_limit,
                    logger = porcelain::porcelain_logger(log_level))
