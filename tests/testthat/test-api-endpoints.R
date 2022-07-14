@@ -1137,6 +1137,19 @@ test_that("can retrieve version list", {
 })
 
 
+test_that("Returns 404 if no report versions", {
+  path <- orderly_prepare_orderly_example("demo")
+  endpoint <- endpoint_report_versions(path)
+  res <- endpoint$run(name = "other")
+
+  expect_equal(res$status_code, 404)
+  expect_equal(res$data, NULL)
+  expect_equal(res$error$data[[1]],
+               list(error = scalar("NONEXISTENT_REPORT"),
+                    detail = scalar("Unknown report 'other'")))
+})
+
+
 test_that("can retrieve custom fields for versions", {
   path <- orderly_prepare_orderly_example("demo")
   id1 <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
@@ -1211,6 +1224,8 @@ test_that("can retrieve parameters for versions", {
 
 test_that("can retrieve version details", {
   path <- orderly_prepare_orderly_example("demo")
+
+  # check report with parameters
   id <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
                              root = path, echo = FALSE)
   orderly::orderly_commit(id, root = path)
@@ -1227,11 +1242,54 @@ test_that("can retrieve version details", {
   expect_equal(data$artefacts[[1]]$files[[1]]$filename, scalar("summary.csv"))
   expect_equal(data$artefacts[[2]]$id, scalar(2L))
   expect_equal(data$artefacts[[2]]$description, scalar("A summary graph"))
-
+  expect_equal(data$parameter_values, list(nmin = scalar("0.1")))
+  expect_equal(data$data_info, data.frame(name = "extract", csvSize = 751, rdsSize = 559))
+  expect_equal(data$author, scalar("Dr Serious"))
+  expect_equal(data$requester, scalar("ACME"))
+  expect_equal(data$comment, scalar("This is another comment"))
   endpoint <- endpoint_report_version_details(path)
   res <- endpoint$run(name = "other", id = id)
 
   expect_true(res$validated)
   expect_equal(res$status_code, 200)
   expect_equal(res$data, data)
+
+  # check report with resources
+  id <- orderly::orderly_run("use_resource",
+                             root = path, echo = FALSE)
+  orderly::orderly_commit(id, root = path)
+
+  data <- target_report_version_details(path, "use_resource", id)
+  expect_equal(data$resources$name, "meta/data.csv")
+  expect_equal(data$resources$size, 18)
+  res <- endpoint$run(name = "use_resource", id = id)
+  expect_true(res$validated)
+  expect_equal(res$status_code, 200)
+  expect_equal(res$data, data)
+})
+
+
+test_that("artefacts returns 404 if report version does not exist", {
+  path <- orderly_prepare_orderly_example("demo")
+  endpoint <- endpoint_report_version_artefact_hashes(path)
+  res <- endpoint$run(name = "other", id = "badid")
+
+  expect_equal(res$status_code, 404)
+  expect_equal(res$data, NULL)
+  expect_equal(res$error$data[[1]],
+               list(error = scalar("NONEXISTENT_REPORT_VERSION"),
+                    detail = scalar("Unknown report version 'badid'")))
+})
+
+
+test_that("version details returns 404 for non-existent version", {
+  path <- orderly_prepare_orderly_example("demo")
+  endpoint <- endpoint_report_version_details(path)
+  res <- endpoint$run(name = "other", id = "badid")
+
+  expect_equal(res$status_code, 404)
+  expect_equal(res$data, NULL)
+  expect_equal(res$error$data[[1]],
+               list(error = scalar("NONEXISTENT_REPORT_VERSION"),
+                    detail = scalar("Unknown report version 'badid'")))
 })

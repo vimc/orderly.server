@@ -58,7 +58,6 @@ get_parameters_for_versions <- function(db, versions) {
     "  from parameters",
     sprintf(" where parameters.report_version in (%s)", versions),
     sep = "\n")
-  browser()
   dat <- DBI::dbGetQuery(db, sql)
 
   process <- function(x) {
@@ -82,4 +81,54 @@ get_instances_for_version <- function(db, id) {
   res <- lapply(dat[, 1], function(x) scalar(x))
   names(res) <- dat[, 2]
   res
+}
+
+get_resources_for_version <- function (db, id) {
+  sql <- paste(
+    "select",
+    "       file_input.filename as name,",
+    "       file.size",
+    "  from file_input",
+    "  inner join file",
+    "  on file_input.file_hash = file.hash",
+    " where file_input.report_version = $1",
+    " and file_input.file_purpose = 'resource'",
+    sep = "\n")
+  dat <- DBI::dbGetQuery(db, sql, id)
+  dat
+}
+
+get_data_for_version <- function (db, id) {
+  sql <- paste(
+    "select",
+    "       report_version_data.name,",
+    "       data.size_csv as csvSize,",
+    "       data.size_rds as rdsSize",
+    "  from report_version_data",
+    "  inner join data",
+    "  on report_version_data.hash = data.hash",
+    " where report_version_data.report_version = $1",
+    sep = "\n")
+  dat <- DBI::dbGetQuery(db, sql, id)
+  dat
+}
+
+get_custom_fields_for_versions <- function(db, versions) {
+  sql <- paste(
+    "select",
+    "       report_version_custom_fields.key,",
+    "       report_version_custom_fields.value,",
+    "       report_version_custom_fields.report_version",
+    "  from report_version_custom_fields",
+    sprintf(" where report_version in (%s)", versions),
+    sep = "\n")
+  dat <- DBI::dbGetQuery(db, sql)
+
+  process <- function(x) {
+    vals <- lapply(as.list(x$value), function(y) scalar(y))
+    names(vals) <- x$key
+    vals
+  }
+
+  lapply(split(dat, dat$report_version), process)
 }
