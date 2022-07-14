@@ -18,7 +18,7 @@ Object for managing running jobs on the redis queue"><!-- mathjax --><script src
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">orderly.server</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.3.25</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.3.26</span>
       </span>
     </div>
 
@@ -60,6 +60,10 @@ Object for managing running jobs on the redis queue"><!-- mathjax --><script src
 <dd><p>Allow git to change branch/ref for run</p></dd>
 
 
+<dt><code>default_branch</code></dt>
+<dd><p>Default git branch</p></dd>
+
+
 <dt><code>con</code></dt>
 <dd><p>Redis connection</p></dd>
 
@@ -89,26 +93,26 @@ and task_id</p></dd>
 <div class="section">
 <h3 id="public-methods">Public methods<a class="anchor" aria-label="anchor" href="#public-methods"></a></h3>
 
-<ul><li><p><a href="#method-new"><code>orderly_runner_$new()</code></a></p></li>
-<li><p><a href="#method-start_workers"><code>orderly_runner_$start_workers()</code></a></p></li>
-<li><p><a href="#method-assert_ref_switching_allowed"><code>orderly_runner_$assert_ref_switching_allowed()</code></a></p></li>
-<li><p><a href="#method-submit_task_report"><code>orderly_runner_$submit_task_report()</code></a></p></li>
-<li><p><a href="#method-submit"><code>orderly_runner_$submit()</code></a></p></li>
-<li><p><a href="#method-submit_workflow"><code>orderly_runner_$submit_workflow()</code></a></p></li>
-<li><p><a href="#method-status"><code>orderly_runner_$status()</code></a></p></li>
-<li><p><a href="#method-workflow_status"><code>orderly_runner_$workflow_status()</code></a></p></li>
-<li><p><a href="#method-queue_status"><code>orderly_runner_$queue_status()</code></a></p></li>
-<li><p><a href="#method-check_timeout"><code>orderly_runner_$check_timeout()</code></a></p></li>
-<li><p><a href="#method-kill"><code>orderly_runner_$kill()</code></a></p></li>
-<li><p><a href="#method-destroy"><code>orderly_runner_$destroy()</code></a></p></li>
-<li><p><a href="#method-cleanup"><code>orderly_runner_$cleanup()</code></a></p></li>
-</ul></div><p></p><hr><a id="method-new"></a><div class="section">
+<ul><li><p><a href="#method-orderly_runner-new"><code>orderly_runner_$new()</code></a></p></li>
+<li><p><a href="#method-orderly_runner-start_workers"><code>orderly_runner_$start_workers()</code></a></p></li>
+<li><p><a href="#method-orderly_runner-assert_ref_switching_allowed"><code>orderly_runner_$assert_ref_switching_allowed()</code></a></p></li>
+<li><p><a href="#method-orderly_runner-submit_task_report"><code>orderly_runner_$submit_task_report()</code></a></p></li>
+<li><p><a href="#method-orderly_runner-submit"><code>orderly_runner_$submit()</code></a></p></li>
+<li><p><a href="#method-orderly_runner-submit_workflow"><code>orderly_runner_$submit_workflow()</code></a></p></li>
+<li><p><a href="#method-orderly_runner-status"><code>orderly_runner_$status()</code></a></p></li>
+<li><p><a href="#method-orderly_runner-workflow_status"><code>orderly_runner_$workflow_status()</code></a></p></li>
+<li><p><a href="#method-orderly_runner-queue_status"><code>orderly_runner_$queue_status()</code></a></p></li>
+<li><p><a href="#method-orderly_runner-check_timeout"><code>orderly_runner_$check_timeout()</code></a></p></li>
+<li><p><a href="#method-orderly_runner-kill"><code>orderly_runner_$kill()</code></a></p></li>
+<li><p><a href="#method-orderly_runner-destroy"><code>orderly_runner_$destroy()</code></a></p></li>
+<li><p><a href="#method-orderly_runner-cleanup"><code>orderly_runner_$cleanup()</code></a></p></li>
+</ul></div><p></p><hr><a id="method-orderly_runner-new"></a><div class="section">
 <h3 id="method-new-">Method <code>new()</code><a class="anchor" aria-label="anchor" href="#method-new-"></a></h3>
 <p>Create object, read configuration and setup redis connection.</p><div class="section">
 <h4 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va"><a href="../reference/orderly_runner_.html">orderly_runner_</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
 <span>  <span class="va">root</span>,</span>
-<span>  allow_ref <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">identity</span>,</span>
 <span>  <span class="va">queue_id</span>,</span>
 <span>  <span class="va">workers</span>,</span>
 <span>  cleanup_on_exit <span class="op">=</span> <span class="va">workers</span> <span class="op">&gt;</span> <span class="fl">0</span>,</span>
@@ -122,12 +126,8 @@ and task_id</p></dd>
 <dd><p>Orderly root.</p></dd>
 
 
-<dt><code>allow_ref</code></dt>
-<dd><p>Allow git to change branches/ref for run.  If not
-given, then we will look to see if the orderly configuration
-disallows branch changes (based on the
-<code>ORDERLY_API_SERVER_IDENTITY</code> environment variable and the
-<code>master_only</code> setting of the relevant server block.</p></dd>
+<dt><code>identity</code></dt>
+<dd><p>Remote identity, as listed in orderly_config.yml</p></dd>
 
 
 <dt><code>queue_id</code></dt>
@@ -151,7 +151,7 @@ killed. Expect this is only finite during local testing.</p></dd>
 </dl><p></p></div>
 </div>
 
-</div><p></p><hr><a id="method-start_workers"></a><div class="section">
+</div><p></p><hr><a id="method-orderly_runner-start_workers"></a><div class="section">
 <h3 id="method-start-workers-">Method <code>start_workers()</code><a class="anchor" aria-label="anchor" href="#method-start-workers-"></a></h3>
 <p>Start n workers for this queue and optionally set a timeout.</p><div class="section">
 <h4 id="usage-1">Usage<a class="anchor" aria-label="anchor" href="#usage-1"></a></h4>
@@ -176,7 +176,7 @@ killed. Expect this is only finite during local testing.</p></dd>
 <p>TRUE, called for side effects.</p>
 </div>
 
-</div><p></p><hr><a id="method-assert_ref_switching_allowed"></a><div class="section">
+</div><p></p><hr><a id="method-orderly_runner-assert_ref_switching_allowed"></a><div class="section">
 <h3 id="method-assert-ref-switching-allowed-">Method <code>assert_ref_switching_allowed()</code><a class="anchor" aria-label="anchor" href="#method-assert-ref-switching-allowed-"></a></h3>
 <p>Check if ref switching is allowed in this runner. Errors if
 ref is non NULL and ref switching disallowed, otherwise
@@ -198,7 +198,7 @@ does nothing.</p><div class="section">
 <p>TRUE, called for side effects.</p>
 </div>
 
-</div><p></p><hr><a id="method-submit_task_report"></a><div class="section">
+</div><p></p><hr><a id="method-orderly_runner-submit_task_report"></a><div class="section">
 <h3 id="method-submit-task-report-">Method <code>submit_task_report()</code><a class="anchor" aria-label="anchor" href="#method-submit-task-report-"></a></h3>
 <p>Queue a job to run an orderly report.</p><div class="section">
 <h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
@@ -256,7 +256,7 @@ does nothing.</p><div class="section">
 can be retrieved from redis using the key.</p>
 </div>
 
-</div><p></p><hr><a id="method-submit"></a><div class="section">
+</div><p></p><hr><a id="method-orderly_runner-submit"></a><div class="section">
 <h3 id="method-submit-">Method <code>submit()</code><a class="anchor" aria-label="anchor" href="#method-submit-"></a></h3>
 <p>Submit an arbitrary job on the queue</p><div class="section">
 <h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
@@ -280,7 +280,7 @@ can be retrieved from redis using the key.</p>
 <p>Task id</p>
 </div>
 
-</div><p></p><hr><a id="method-submit_workflow"></a><div class="section">
+</div><p></p><hr><a id="method-orderly_runner-submit_workflow"></a><div class="section">
 <h3 id="method-submit-workflow-">Method <code>submit_workflow()</code><a class="anchor" aria-label="anchor" href="#method-submit-workflow-"></a></h3>
 <p>Queue a workflow.</p><div class="section">
 <h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
@@ -325,7 +325,7 @@ of the workflow default 3 hours.</p></dd>
 <p>The key for the workflow and each individual report</p>
 </div>
 
-</div><p></p><hr><a id="method-status"></a><div class="section">
+</div><p></p><hr><a id="method-orderly_runner-status"></a><div class="section">
 <h3 id="method-status-">Method <code>status()</code><a class="anchor" aria-label="anchor" href="#method-status-"></a></h3>
 <p>Get the status of a job</p><div class="section">
 <h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
@@ -350,7 +350,7 @@ of the workflow default 3 hours.</p></dd>
 output and the position of the job in the queue.</p>
 </div>
 
-</div><p></p><hr><a id="method-workflow_status"></a><div class="section">
+</div><p></p><hr><a id="method-orderly_runner-workflow_status"></a><div class="section">
 <h3 id="method-workflow-status-">Method <code>workflow_status()</code><a class="anchor" aria-label="anchor" href="#method-workflow-status-"></a></h3>
 <p>Get the status of a workflow.</p><div class="section">
 <h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
@@ -375,7 +375,7 @@ output and the position of the job in the queue.</p>
 job in the workflow.</p>
 </div>
 
-</div><p></p><hr><a id="method-queue_status"></a><div class="section">
+</div><p></p><hr><a id="method-orderly_runner-queue_status"></a><div class="section">
 <h3 id="method-queue-status-">Method <code>queue_status()</code><a class="anchor" aria-label="anchor" href="#method-queue-status-"></a></h3>
 <p>Get the running and queued tasks in front of key in the queue.</p>
 <p>If <code>key</code> is NULL then includes all queued tasks.</p><div class="section">
@@ -397,7 +397,7 @@ job in the workflow.</p>
 running tasks and any queued tasks in front of key in the queue.</p>
 </div>
 
-</div><p></p><hr><a id="method-check_timeout"></a><div class="section">
+</div><p></p><hr><a id="method-orderly_runner-check_timeout"></a><div class="section">
 <h3 id="method-check-timeout-">Method <code>check_timeout()</code><a class="anchor" aria-label="anchor" href="#method-check-timeout-"></a></h3>
 <p>Check if any running tasks have passed their timeouts. This is run
 by the API on a preroute - we check for timeouts everytime someone
@@ -411,7 +411,7 @@ interacts with the API. Not intended to be run directly.</p><div class="section"
 <p>List of killed reports.</p>
 </div>
 
-</div><p></p><hr><a id="method-kill"></a><div class="section">
+</div><p></p><hr><a id="method-orderly_runner-kill"></a><div class="section">
 <h3 id="method-kill-">Method <code>kill()</code><a class="anchor" aria-label="anchor" href="#method-kill-"></a></h3>
 <p>Kill a job</p><div class="section">
 <h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
@@ -427,7 +427,7 @@ interacts with the API. Not intended to be run directly.</p><div class="section"
 </dl><p></p></div>
 </div>
 
-</div><p></p><hr><a id="method-destroy"></a><div class="section">
+</div><p></p><hr><a id="method-orderly_runner-destroy"></a><div class="section">
 <h3 id="method-destroy-">Method <code>destroy()</code><a class="anchor" aria-label="anchor" href="#method-destroy-"></a></h3>
 <p>Destroy the queue. Not expected to be called directly, used in tests.</p><div class="section">
 <h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
@@ -435,7 +435,7 @@ interacts with the API. Not intended to be run directly.</p><div class="section"
 </div>
 
 
-</div><p></p><hr><a id="method-cleanup"></a><div class="section">
+</div><p></p><hr><a id="method-orderly_runner-cleanup"></a><div class="section">
 <h3 id="method-cleanup-">Method <code>cleanup()</code><a class="anchor" aria-label="anchor" href="#method-cleanup-"></a></h3>
 <p>Cleanup workers and destroy the queue. Not expected to be called
 directly, gets registered as finaliser of the object.</p><div class="section">

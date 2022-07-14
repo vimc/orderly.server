@@ -21,7 +21,7 @@ only for creating automated tools for use with orderly."><!-- mathjax --><script
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">orderly.server</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.3.25</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.3.26</span>
       </span>
     </div>
 
@@ -52,7 +52,7 @@ only for creating automated tools for use with orderly.</p>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">orderly_runner</span><span class="op">(</span><span class="va">path</span>, allow_ref <span class="op">=</span> <span class="cn">NULL</span>, queue_id <span class="op">=</span> <span class="cn">NULL</span>, workers <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">orderly_runner</span><span class="op">(</span><span class="va">path</span>, identity <span class="op">=</span> <span class="cn">NULL</span>, queue_id <span class="op">=</span> <span class="cn">NULL</span>, workers <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -61,12 +61,14 @@ only for creating automated tools for use with orderly.</p>
 <dd><p>Path to use</p></dd>
 
 
-<dt>allow_ref</dt>
-<dd><p>Allow git to change branches/ref for run.  If not
-given, then we will look to see if the orderly configuration
-disallows branch changes (based on the
-<code>ORDERLY_API_SERVER_IDENTITY</code> environment variable and the
-<code>master_only</code> setting of the relevant server block.</p></dd>
+<dt>identity</dt>
+<dd><p>The name of the server identity, as listed in
+orderly_config.yml's remote section. If not given, then we will
+look to see if the orderly configuration disallows branch
+changes (based on the <code>ORDERLY_API_SERVER_IDENTITY</code>
+environment variable. Used to set configuration specific to this
+server (e.g., host, port, teams notification URL, default branch
+name, etc).</p></dd>
 
 
 <dt>queue_id</dt>
@@ -92,12 +94,14 @@ if NULL</p></dd>
 <span class="r-in"><span>  <span class="va">path</span> <span class="op">&lt;-</span> <span class="fu">orderly</span><span class="fu">:::</span><span class="fu">prepare_orderly_git_example</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="va">runner</span> <span class="op">&lt;-</span> <span class="fu">orderly.server</span><span class="fu">::</span><span class="fu">orderly_runner</span><span class="op">(</span><span class="va">path</span><span class="op">[[</span><span class="st">"local"</span><span class="op">]</span><span class="op">]</span>, workers <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Writing to '/tmp/Rtmp0iOX3C/file407e17f92f3e/demo/.gitignore'</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Writing to '/tmp/Rtmpspmqor/file3fd03c077057/demo/.gitignore'</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> [ <span style="color: #5FAFD7; font-weight: bold;">git       </span> ]  checkout other; was master</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> [ <span style="color: #5FAFD7; font-weight: bold;">git       </span> ]  checkout master; was other</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> [ <span style="color: #5FAFD7; font-weight: bold;">git       </span> ]  checkout master; was master</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> [ <span style="color: #5FAFD7; font-weight: bold;">git       </span> ]  checkout master; was master</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> [ <span style="color: #5FAFD7; font-weight: bold;">git       </span> ]  fetch</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Default git branch: master</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Allowing reference switching in runner</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Connecting to redis at redis://127.0.0.1:6379</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Starting queue</span>
 </code></pre></div>
