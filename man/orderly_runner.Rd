@@ -10,12 +10,12 @@ orderly_runner(path, identity = NULL, queue_id = NULL, workers = 1)
 \item{path}{Path to use}
 
 \item{identity}{The name of the server identity, as listed in
-
-Allow git to change branches/ref for run.  If not
-  given, then we will look to see if the orderly configuration
-  disallows branch changes (based on the
-  \code{ORDERLY_API_SERVER_IDENTITY} environment variable and the
-  \code{default_branch_only} setting of the relevant server block.}
+orderly_config.yml's remote section. If not given, then we will
+look to see if the orderly configuration disallows branch
+changes (based on the \code{ORDERLY_API_SERVER_IDENTITY}
+environment variable. Used to set configuration specific to this
+server (e.g., host, port, teams notification URL, default branch
+name, etc).}
 
 \item{queue_id}{ID of an existing queue to connect to, creates a new one
 if NULL}
