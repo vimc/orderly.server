@@ -893,33 +893,3 @@ test_that("status translation", {
   expect_equal(rrq_to_orderly_status(rrq:::TASK_RUNNING), "running")
   expect_equal(rrq_to_orderly_status(rrq:::TASK_TIMEOUT), "timeout")
 })
-
-
-test_that("change default branch", {
-  testthat::skip_on_cran()
-  skip_on_windows()
-  skip_if_no_redis()
-  path <- orderly_prepare_orderly_git_example(default_branch = "main")
-
-  cfg <- list(
-    database = list(
-      source = list(
-        driver = "RSQLite::SQLite",
-        args = list(
-          dbname = "dbname: source.sqlite"))),
-    remote = list(
-      main = list(
-        driver = "orderly::orderly_remote_path",
-        primary = TRUE,
-        default_branch_only = TRUE,
-        default_branch = "main",
-        args = list(root = path[["origin"]])),
-      other = list(
-        driver = "orderly::orderly_remote_path",
-        default_branch = "main",
-        args = list(root = path[["origin"]]))))
-  path_local <- path[["local"]]
-  writeLines(yaml::as.yaml(cfg), file.path(path_local, "orderly_config.yml"))
-
-  runner <- orderly_runner(path_local, "main")
-})
