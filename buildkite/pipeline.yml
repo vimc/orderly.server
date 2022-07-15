@@ -62,7 +62,7 @@ steps:
     build:
       branch: main
 
-  - trigger: "inference-data-orderly"
+  - trigger: "inference-data-orderly-image"
     label: ":rocket: inference-data orderly image (from orderly.server) :perfection:"
     branches: "master"
     build:
