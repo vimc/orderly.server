@@ -26,6 +26,7 @@ build_api <- function(runner, path, backup_period = NULL,
   api$handle(endpoint_report_versions(path))
   api$handle(endpoint_report_version_details(path))
   api$handle(endpoint_report_version_artefact_hashes(path))
+  api$handle(endpoint_report_version_data_hashes(path))
   api$handle(endpoint_report_versions_custom_fields(path))
   api$handle(endpoint_custom_fields(path))
   api$handle(endpoint_report_versions_params(path))
@@ -475,7 +476,7 @@ endpoint_report_version_artefact_hashes <- function(path) {
     "GET", "/v1/reports/<name>/versions/<id>/artefacts/",
     target_report_version_artefact_hashes,
     porcelain::porcelain_state(path = path),
-    returning = returning_json("Artefacts.schema"))
+    returning = returning_json("HashDictionary.schema"))
 }
 
 target_report_versions <- function(path, name) {
@@ -584,4 +585,28 @@ endpoint_report_versions_params <- function(path) {
     porcelain::porcelain_input_query(versions = "string"),
     porcelain::porcelain_state(path = path),
     returning = returning_json("Parameters.schema"))
+}
+
+target_report_version_data_hashes <- function(path, name, id) {
+  db <- orderly::orderly_db("destination", root = path)
+  get_report_version(db, name, id)
+  sql <- paste(
+    "select",
+    "       report_version_data.name,",
+    "       report_version_data.hash",
+    "  from report_version_data",
+    " where report_version_data.report_version = $1",
+    sep = "\n")
+  dat <- DBI::dbGetQuery(db, sql, id)
+  res <- lapply(dat[, 2], function(x) scalar(x))
+  names(res) <- dat[, 1]
+  res
+}
+
+endpoint_report_version_data_hashes <- function(path) {
+  porcelain::porcelain_endpoint$new(
+    "GET", "/v1/reports/<name>/versions/<id>/data/",
+    target_report_version_data_hashes,
+    porcelain::porcelain_state(path = path),
+    returning = returning_json("HashDictionary.schema"))
 }
