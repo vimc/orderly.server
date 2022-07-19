@@ -491,7 +491,9 @@ endpoint_report_version_artefact_hashes <- function(path) {
 }
 
 target_reports <- function(path, reports = NULL) {
-  reports <- unlist(strsplit(reports, split = ","))
+  if (!is.null(reports)) {
+    reports <- unlist(strsplit(reports, split = ","))
+  }
   db <- orderly::orderly_db("destination", root = path)
   get_all_reports(db, reports)
 }
