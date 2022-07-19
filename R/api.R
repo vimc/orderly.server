@@ -490,7 +490,8 @@ endpoint_report_version_artefact_hashes <- function(path) {
     returning = returning_json("Artefacts.schema"))
 }
 
-target_reports <- function(path, reports) {
+target_reports <- function(path, reports = NULL) {
+  reports <- unlist(strsplit(reports, split = ","))
   db <- orderly::orderly_db("destination", root = path)
   get_all_reports(db, reports)
 }
@@ -501,7 +502,7 @@ endpoint_reports <- function(path) {
     target_reports,
     porcelain::porcelain_input_query(reports = "string"),
     porcelain::porcelain_state(path = path),
-    returning = returning_json("VersionIds.schema"))
+    returning = returning_json("Reports.schema"))
 }
 
 target_report_versions <- function(path, name) {

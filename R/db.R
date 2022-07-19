@@ -144,7 +144,7 @@ generate_latest_versions_for_report <- function(db, reports = NULL) {
     "  from report_version",
     sep = "\n")
   if (!is.null(reports)) {
-    sql <- paste(sql, sprintf("where report_version.report in (%s);",
+    sql <- paste(sql, sprintf("where report_version.report in (%s)",
                               paste(squote(reports), collapse = ", ")),
                  sep = "\n")
   }
@@ -157,7 +157,7 @@ get_all_reports <- function(db, reports = NULL) {
   generate_latest_versions_for_report(db, reports)
   sql <- paste(
     "select report_version.report as 'name',",
-    "report_version.displayname,",
+    "report_version.displayname as 'display_name',",
     "report_version.id as 'latest_version'",
     "from report_version",
     "join latest_versions_for_reports",
