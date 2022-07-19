@@ -27,6 +27,7 @@ build_api <- function(runner, path, backup_period = NULL,
   api$handle(endpoint_report_version_details(path))
   api$handle(endpoint_report_version_artefact_hashes(path))
   api$handle(endpoint_report_version_data_hashes(path))
+  api$handle(endpoint_report_version_resource_hashes(path))
   api$handle(endpoint_report_versions_custom_fields(path))
   api$handle(endpoint_custom_fields(path))
   api$handle(endpoint_report_versions_params(path))
@@ -607,6 +608,31 @@ endpoint_report_version_data_hashes <- function(path) {
   porcelain::porcelain_endpoint$new(
     "GET", "/v1/reports/<name>/versions/<id>/data/",
     target_report_version_data_hashes,
+    porcelain::porcelain_state(path = path),
+    returning = returning_json("HashDictionary.schema"))
+}
+
+target_report_version_resource_hashes <- function(path, name, id) {
+  db <- orderly::orderly_db("destination", root = path)
+  get_report_version(db, name, id)
+  sql <- paste(
+    "select",
+    "       file_input.filename,",
+    "       file_input.file_hash",
+    "  from file_input",
+    " where file_input.report_version = $1",
+    " and file_input.file_purpose = 'resource'",
+    sep = "\n")
+  dat <- DBI::dbGetQuery(db, sql, id)
+  res <- lapply(dat[, 2], function(x) scalar(x))
+  names(res) <- dat[, 1]
+  res
+}
+
+endpoint_report_version_resource_hashes <- function(path) {
+  porcelain::porcelain_endpoint$new(
+    "GET", "/v1/reports/<name>/versions/<id>/resources/",
+    target_report_version_resource_hashes,
     porcelain::porcelain_state(path = path),
     returning = returning_json("HashDictionary.schema"))
 }

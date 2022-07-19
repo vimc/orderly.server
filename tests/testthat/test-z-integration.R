@@ -721,7 +721,7 @@ test_that("can get report version details", {
 })
 
 
-test_that("can get report version data", {
+test_that("can get report version data hashes", {
   path <- orderly_prepare_orderly_git_example()[["local"]]
   server <- start_test_server(path)
   id <- orderly::orderly_run("minimal", root = path, echo = FALSE)
@@ -733,5 +733,21 @@ test_that("can get report version data", {
   expect_equal(r$status, "success")
   expect_type(r$data, "list")
   expect_equal(names(r$data), "dat")
+  expect_equal(r$errors, NULL)
+})
+
+
+test_that("can get report version resource hashes", {
+  path <- orderly_prepare_orderly_git_example()[["local"]]
+  server <- start_test_server(path)
+  id <- orderly::orderly_run("use_resource", root = path, echo = FALSE)
+  orderly::orderly_commit(id, root = path)
+  on.exit(server$stop())
+
+  url <- paste0("/v1/reports/use_resource/versions/", id, "/resources/")
+  r <- content(httr::GET(server$api_url(url)))
+  expect_equal(r$status, "success")
+  expect_type(r$data, "list")
+  expect_equal(names(r$data), "meta/data.csv")
   expect_equal(r$errors, NULL)
 })
