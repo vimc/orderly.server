@@ -134,3 +134,35 @@ get_custom_fields_for_versions <- function(db, versions) {
 
   lapply(split(dat, dat$report_version), process)
 }
+
+generate_latest_versions_for_report <- function(db, reports = NULL) {
+  sql <- paste(
+    "create temporary table latest_versions_for_reports as",
+    "select report_version.report,",
+    "       report_version.id as latestVersion,",
+    "       max(report_version.date) as maxDate",
+    "  from report_version",
+    sep = "\n")
+  if (!is.null(reports)) {
+    sql <- paste(sql, sprintf("where report_version.report in (%s);",
+                              paste(squote(reports), collapse = ", ")),
+                 sep = "\n")
+  }
+
+  sql <- paste(sql, "group by report_version.report", sep = "\n")
+  DBI::dbExecute(db, sql)
+}
+
+get_all_reports <- function(db, reports = NULL) {
+  generate_latest_versions_for_report(db, reports)
+  sql <- paste(
+    "select report_version.report as 'name',",
+    "report_version.displayname,",
+    "report_version.id as 'latest_version'",
+    "from report_version",
+    "join latest_versions_for_reports",
+    "on report_version.id = latest_versions_for_reports.latestVersion",
+    "order by report_version.report",
+    sep = "\n")
+  dat <- DBI::dbGetQuery(db, sql)
+}

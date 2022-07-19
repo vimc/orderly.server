@@ -1304,3 +1304,26 @@ test_that("version details returns 404 for non-existent version", {
                list(error = scalar("NONEXISTENT_REPORT_VERSION"),
                     detail = scalar("Unknown report version 'badid'")))
 })
+
+
+test_that("can retrieve report list", {
+  path <- orderly_prepare_orderly_example("demo")
+  id <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+                             root = path, echo = FALSE)
+  orderly::orderly_commit(id, root = path)
+  id2 <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+                             root = path, echo = FALSE)
+  orderly::orderly_commit(id2, root = path)
+  id3 <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+                             root = path, echo = FALSE)
+  orderly::orderly_commit(id3, root = path)
+  id <- orderly::orderly_run("minimal",
+                             root = path, echo = FALSE)
+  orderly::orderly_commit(id, root = path)
+  data <- target_reports(path, NULL)
+  expect_equal(nrow(data), 2)
+  expect_equal(data[1, "name"], "minimal")
+  expect_equal(data[1, "latest_version"], id)
+  expect_equal(data[2, "name"], "other")
+  expect_equal(data[2, "latest_version"], id3)
+})
