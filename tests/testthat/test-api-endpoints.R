@@ -713,7 +713,7 @@ test_that("run-metadata pulls information from runner", {
            "    public: false",
            "  external:",
            "    public: true"
-           )
+  )
   writeLines(yml, file.path(path, "orderly_config.yml"))
   runner <- orderly_runner(path, workers = 0)
   expect_equal(target_run_metadata(runner), list(
@@ -1049,13 +1049,13 @@ test_that("can get dependencies", {
   # Check response
   expect_equal(res$status_code, 200)
   expected_json <- paste(sep = "",
-                        "{\"status\":\"success\",\"errors\":null,\"data\":",
-                          "{\"direction\":\"upstream\",\"dependency_tree\":",
-                            "{\"name\":\"use_dependency\",\"id\":\"latest\",",
-                               "\"out_of_date\":false,\"dependencies\":[",
-                                 "{\"name\":\"other\",\"id\":\"latest\",",
-                                    "\"out_of_date\":false,\"dependencies\":[]",
-                                "}]}}}")
+                         "{\"status\":\"success\",\"errors\":null,\"data\":",
+                         "{\"direction\":\"upstream\",\"dependency_tree\":",
+                         "{\"name\":\"use_dependency\",\"id\":\"latest\",",
+                         "\"out_of_date\":false,\"dependencies\":[",
+                         "{\"name\":\"other\",\"id\":\"latest\",",
+                         "\"out_of_date\":false,\"dependencies\":[]",
+                         "}]}}}")
   expect_equal(res$body, expected_json)
 })
 
@@ -1084,7 +1084,7 @@ test_that("endpoint_report_info can return info from report run", {
   expect_true(length(info$data$error$trace) > 5)
   expect_match(as.character(
     info$data$error$trace[length(info$data$error$trace)]),
-    "some error")
+               "some error")
 })
 
 test_that("endpoint_report_info returns parameter info", {
@@ -1128,11 +1128,11 @@ test_that("can retrieve version list", {
   orderly::orderly_commit(id1, root = path)
 
   id2 <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
-  root = path, echo = FALSE)
+                              root = path, echo = FALSE)
   orderly::orderly_commit(id2, root = path)
 
   id3 <- orderly::orderly_run("minimal",
-  root = path, echo = FALSE)
+                              root = path, echo = FALSE)
   orderly::orderly_commit(id3, root = path)
 
   data <- target_report_versions(path, "other")
@@ -1147,10 +1147,23 @@ test_that("can retrieve version list", {
 })
 
 
+test_that("Returns 404 if no report versions", {
+  path <- orderly_prepare_orderly_example("demo")
+  endpoint <- endpoint_report_versions(path)
+  res <- endpoint$run(name = "other")
+
+  expect_equal(res$status_code, 404)
+  expect_equal(res$data, NULL)
+  expect_equal(res$error$data[[1]],
+               list(error = scalar("NONEXISTENT_REPORT"),
+                    detail = scalar("Unknown report 'other'")))
+})
+
+
 test_that("can retrieve custom fields for versions", {
   path <- orderly_prepare_orderly_example("demo")
   id1 <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
-                             root = path, echo = FALSE)
+                              root = path, echo = FALSE)
   orderly::orderly_commit(id1, root = path)
 
   id2 <- orderly::orderly_run("minimal",
@@ -1216,4 +1229,78 @@ test_that("can retrieve parameters for versions", {
   expect_length(data, 2)
   expect_equal(data[[1]], list(nmin = scalar("0.1")))
   expect_equal(data[[2]], list(nmin = scalar("0.5")))
+})
+
+
+test_that("can retrieve version details", {
+  path <- orderly_prepare_orderly_example("demo")
+
+  # check report with parameters
+  id <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+                             root = path, echo = FALSE)
+  orderly::orderly_commit(id, root = path)
+
+  data <- target_report_version_details(path, "other", id)
+  expect_equal(data$id, scalar(id))
+  expect_equal(data$name, scalar("other"))
+  expect_equal(data$display_name, scalar("another report"))
+  desc <- paste("An extended comment field.  This can be quite long.",
+             " This is not so long though, but long enough I'm sure.")
+  expect_equal(data$description, scalar(desc))
+
+  expect_equal(data$artefacts[[1]]$id, scalar(1L))
+  expect_equal(data$artefacts[[1]]$description, scalar("A summary table"))
+  expect_equal(data$artefacts[[1]]$files[[1]]$filename, scalar("summary.csv"))
+  expect_equal(data$artefacts[[2]]$id, scalar(2L))
+  expect_equal(data$artefacts[[2]]$description, scalar("A summary graph"))
+  expect_equal(data$parameter_values, list(nmin = scalar("0.1")))
+  expect_equal(data$data_info$name, "extract")
+  expect_equal(data$author, scalar("Dr Serious"))
+  expect_equal(data$requester, scalar("ACME"))
+  expect_equal(data$comment, scalar("This is another comment"))
+  endpoint <- endpoint_report_version_details(path)
+  res <- endpoint$run(name = "other", id = id)
+
+  expect_true(res$validated)
+  expect_equal(res$status_code, 200)
+  expect_equal(res$data, data)
+
+  # check report with resources
+  id <- orderly::orderly_run("use_resource",
+                             root = path, echo = FALSE)
+  orderly::orderly_commit(id, root = path)
+
+  data <- target_report_version_details(path, "use_resource", id)
+  expect_equal(data$resources$name, "meta/data.csv")
+  expect_equal(data$resources$size, 18)
+  res <- endpoint$run(name = "use_resource", id = id)
+  expect_true(res$validated)
+  expect_equal(res$status_code, 200)
+  expect_equal(res$data, data)
+})
+
+
+test_that("artefacts returns 404 if report version does not exist", {
+  path <- orderly_prepare_orderly_example("demo")
+  endpoint <- endpoint_report_version_artefact_hashes(path)
+  res <- endpoint$run(name = "other", id = "badid")
+
+  expect_equal(res$status_code, 404)
+  expect_equal(res$data, NULL)
+  expect_equal(res$error$data[[1]],
+               list(error = scalar("NONEXISTENT_REPORT_VERSION"),
+                    detail = scalar("Unknown report version 'badid'")))
+})
+
+
+test_that("version details returns 404 for non-existent version", {
+  path <- orderly_prepare_orderly_example("demo")
+  endpoint <- endpoint_report_version_details(path)
+  res <- endpoint$run(name = "other", id = "badid")
+
+  expect_equal(res$status_code, 404)
+  expect_equal(res$data, NULL)
+  expect_equal(res$error$data[[1]],
+               list(error = scalar("NONEXISTENT_REPORT_VERSION"),
+                    detail = scalar("Unknown report version 'badid'")))
 })

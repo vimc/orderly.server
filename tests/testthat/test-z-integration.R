@@ -446,7 +446,8 @@ test_that("Can pack, run and import a bundle", {
   expect_equal(filename, paste0(ans$id, ".zip"))
 
   res_up <- httr::POST(server$api_url("/v1/bundle/import"),
-    body = httr::upload_file(ans$path, "application/octet-stream"))
+                       body = httr::upload_file(ans$path,
+                                                "application/octet-stream"))
   expect_equal(httr::status_code(res), 200L)
   dat <- content(res_up)
   expect_equal(dat$status, "success")
@@ -484,7 +485,7 @@ test_that("Can get dependencies", {
   server <- start_test_server()
   on.exit(server$stop())
   r <- httr::GET(server$api_url("/v1/reports/count/dependencies/"),
-                  query = list(direction = "upstream", use = "src"))
+                 query = list(direction = "upstream", use = "src"))
   dat <- content(r)
   expect_equal(httr::status_code(r), 200)
   expect_equal(dat$data$direction, "upstream")
@@ -558,7 +559,7 @@ test_that("can get missing dependencies of a workflow", {
                       )
                     )
                   ),
-                  ref = scalar(sha)),
+                              ref = scalar(sha)),
                   encode = "json")
 
   expect_equal(httr::status_code(r), 200)
@@ -598,7 +599,7 @@ test_that("workflow can be run", {
                       name = scalar("minimal")
                     )
                   ),
-                  ref = scalar(sha)),
+                              ref = scalar(sha)),
                   encode = "json")
 
   expect_equal(httr::status_code(r), 200)
@@ -612,7 +613,7 @@ test_that("workflow can be run", {
 
   report_1_status <- httr::GET(server$api_url(
     sprintf("/v1/reports/%s/status/", dat$data$reports[[1]]$key)),
-    query = list(output = TRUE))
+                               query = list(output = TRUE))
   expect_equal(httr::status_code(report_1_status), 200)
   status_1 <- content(report_1_status)
   expect_equal(status_1$status, "success")
@@ -621,7 +622,7 @@ test_that("workflow can be run", {
 
   report_2_status <- httr::GET(server$api_url(
     sprintf("/v1/reports/%s/status/", dat$data$reports[[2]]$key)),
-    query = list(output = TRUE))
+                               query = list(output = TRUE))
   expect_equal(httr::status_code(report_2_status), 200)
   status_2 <- content(report_2_status)
   expect_equal(status_2$status, "success")
@@ -631,7 +632,7 @@ test_that("workflow can be run", {
   ## Can get workflow status
   workflow_status <- httr::GET(server$api_url(
     sprintf("/v1/workflow/%s/status/", dat$data$workflow_key)),
-    query = list(output = TRUE))
+                               query = list(output = TRUE))
   expect_equal(httr::status_code(workflow_status), 200)
   status <- content(workflow_status)
   expect_equal(status$status, "success")
@@ -685,21 +686,6 @@ test_that("can get report versions", {
 })
 
 
-test_that("Returns 404 if no report versions", {
-  path <- orderly_prepare_orderly_git_example()
-  server <- start_test_server(path[["local"]])
-  on.exit(server$stop())
-  res <- httr::GET(server$api_url("/v1/reports/other/"))
-  expect_equal(res$status_code, 404L)
-  r <- content(res)
-  expect_equal(r$status, "failure")
-  expect_equal(r$data, NULL)
-  expect_equal(r$errors[[1]],
-               list(error = "NONEXISTENT_REPORT",
-                    detail = "Unknown report 'other'"))
-})
-
-
 test_that("can get report version artefacts", {
   path <- orderly_prepare_orderly_git_example()[["local"]]
   server <- start_test_server(path)
@@ -716,18 +702,20 @@ test_that("can get report version artefacts", {
 })
 
 
-test_that("artefacts returns 404 if report version does not exist", {
+test_that("can get report version details", {
   path <- orderly_prepare_orderly_git_example()[["local"]]
-    server <- start_test_server(path)
+  server <- start_test_server(path)
+  id <- orderly::orderly_run("minimal", root = path, echo = FALSE)
+  orderly::orderly_commit(id, root = path)
   on.exit(server$stop())
 
-  url <- "/v1/reports/minimal/versions/badid/artefacts/"
-  res <- httr::GET(server$api_url(url))
-  expect_equal(res$status_code, 404L)
-  r <- content(res)
-  expect_equal(r$status, "failure")
-  expect_equal(r$data, NULL)
-  expect_equal(r$errors[[1]],
-               list(error = "NONEXISTENT_REPORT_VERSION",
-                    detail = "Unknown report version 'badid'"))
+  url <- paste0("/v1/reports/minimal/versions/", id, "/")
+  r <- content(httr::GET(server$api_url(url)))
+  expect_equal(r$status, "success")
+  expect_type(r$data, "list")
+  expect_equal(names(r$data), c("id", "name", "display_name", "description",
+                                "artefacts", "resources", "date", "data_info",
+                                "parameter_values", "instances",
+                                "requester", "author", "comment"))
+  expect_equal(r$errors, NULL)
 })

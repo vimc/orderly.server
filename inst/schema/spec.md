@@ -664,6 +664,69 @@ Response schema: [`WorkflowStatus.schema.json`](WorkflowStatus.schema.json)
 }
 ```
 
+# GET /reports/:name
+
+Returns a list of version names for the named report. Returns 404 if no versions exist.
+
+Schema: [`VersionIds.schema.json`](VersionIds.schema.json)
+
+## Example
+
+```json
+[
+    "20161006-142357-e80edf58",
+    "20161008-123121-59891d61",
+    "20161012-220715-756d55c8"
+  ]
+```
+
+## GET /reports/:name/versions/:version/
+
+Returns metadata about a single report version, including custom fields
+
+Schema: [`ReportVersion.schema.json`](VersionDetails.schema.json)
+
+### Example
+
+```json
+{
+  "id": "20161006-142357-e80edf58",
+  "name": "minimal",
+  "displayname": null,
+  "description": null,
+  "artefacts": [
+    {
+      "format": "staticgraph",
+      "description": "A graph of things",
+      "files": [
+        "mygraph.png"
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "name": "source/inputdata.csv",
+      "size": 20
+    }
+  ],
+  "date": "2016-10-06 14:23:57.0",
+  "data_info": {
+    "name": "extract",
+    "csvSize": 751,
+    "rdsSize": 559
+  },
+  "parameter_values": {
+    "param1": "paramValue1",
+    "param2": "paramValue2"
+  },
+  "instances": {
+    "source": "science"
+  },
+  "requester": "Funder McFunderface",
+  "author": "Researcher McResearcherface"
+}
+```
+
 ## GET /reports/:name/versions/:id/artefacts
 
 Get a dictionary of artefact names to hashes.
@@ -681,22 +744,6 @@ Schema: [`Artefacts.schema.json`](Artefacts.schema.json)
     "mygraph.png": "7360cb2eed3327ff8a677b3598ed7343"
   }
 }
-```
-
-# GET /reports/:name
-
-Returns a list of version names for the named report. Returns 404 if no versions exist.
-
-Schema: [`VersionIds.schema.json`](VersionIds.schema.json)
-
-## Example
-
-```json
-[
-    "20161006-142357-e80edf58",
-    "20161008-123121-59891d61",
-    "20161012-220715-756d55c8"
-  ]
 ```
 
 # GET /reports/versions/customFields?versions=

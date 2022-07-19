@@ -27,6 +27,7 @@ build_api <- function(runner, backup_period = NULL,
   ## NOTE: these all use path not runner; there's no good reason for
   ## this.
   api$handle(endpoint_report_versions(path))
+  api$handle(endpoint_report_version_details(path))
   api$handle(endpoint_report_version_artefact_hashes(path))
   api$handle(endpoint_report_versions_custom_fields(path))
   api$handle(endpoint_custom_fields(path))
@@ -462,7 +463,6 @@ check_timeout <- function(runner, rate_limit = 2 * 60) {
   throttle(runner$check_timeout, rate_limit)
 }
 
-
 target_report_version_artefact_hashes <- function(path, name, id) {
   db <- orderly::orderly_db("destination", root = path)
   get_report_version(db, name, id)
@@ -481,7 +481,6 @@ target_report_version_artefact_hashes <- function(path, name, id) {
   res
 }
 
-
 endpoint_report_version_artefact_hashes <- function(path) {
   porcelain::porcelain_endpoint$new(
     "GET", "/v1/reports/<name>/versions/<id>/artefacts/",
@@ -489,7 +488,6 @@ endpoint_report_version_artefact_hashes <- function(path) {
     porcelain::porcelain_state(path = path),
     returning = returning_json("Artefacts.schema"))
 }
-
 
 target_report_versions <- function(path, name) {
   db <- orderly::orderly_db("destination", root = path)
@@ -508,7 +506,6 @@ target_report_versions <- function(path, name) {
   return(dat)
 }
 
-
 endpoint_report_versions <- function(path) {
   porcelain::porcelain_endpoint$new(
     "GET", "/v1/reports/<name>/",
@@ -517,30 +514,46 @@ endpoint_report_versions <- function(path) {
     returning = returning_json("VersionIds.schema"))
 }
 
-target_report_versions_custom_fields <- function(path, versions) {
+
+target_report_version_details <- function(path, name, id) {
   db <- orderly::orderly_db("destination", root = path)
-  versions <- paste0("'", paste0(unlist(strsplit(versions, split = ",")),
-                                collapse = "','"),
-                     "'")
-  sql <- paste(
-    "select",
-    "       report_version_custom_fields.key,",
-    "       report_version_custom_fields.value,",
-    "       report_version_custom_fields.report_version",
-    "  from report_version_custom_fields",
-    sprintf(" where report_version in (%s)", versions),
-    sep = "\n")
-  dat <- DBI::dbGetQuery(db, sql)
+  report_version <- get_report_version(db, name, id)
+  artefacts <- get_artefacts_for_version(db, id)
+  parameters <- get_parameters_for_versions(db, id)
+  instances <- get_instances_for_version(db, id)
+  resources <- get_resources_for_version(db, id)
+  data_info <- get_data_for_version(db, id)
+  custom_fields <- get_custom_fields_for_versions(db, id)
 
-  process <- function(x) {
-    vals <- lapply(as.list(x$value), function(y) scalar(y))
-    names(vals) <- x$key
-    vals
+  if (is.null(parameters[[id]])) {
+    params <- parameters
+  } else {
+    params <- parameters[[id]]
   }
-
-  lapply(split(dat, dat$report_version), process)
+  c(list(id = scalar(id),
+       name = scalar(name),
+       display_name = scalar(report_version$displayname),
+       description = scalar(report_version$description),
+       artefacts = artefacts,
+       resources = resources,
+       date = scalar(report_version$date),
+       data_info = data_info,
+       parameter_values = params,
+       instances = instances), custom_fields[[id]])
 }
 
+endpoint_report_version_details <- function(path) {
+  porcelain::porcelain_endpoint$new(
+    "GET", "/v1/reports/<name>/versions/<id>/",
+    target_report_version_details,
+    porcelain::porcelain_state(path = path),
+    returning = returning_json("ReportVersion.schema"))
+}
+
+target_report_versions_custom_fields <- function(path, versions) {
+  db <- orderly::orderly_db("destination", root = path)
+  get_custom_fields_for_versions(db, unlist(strsplit(versions, split = ",")))
+}
 
 endpoint_report_versions_custom_fields <- function(path) {
   porcelain::porcelain_endpoint$new(
@@ -550,7 +563,6 @@ endpoint_report_versions_custom_fields <- function(path) {
     porcelain::porcelain_state(path = path),
     returning = returning_json("CustomFieldsForVersions.schema"))
 }
-
 
 target_custom_fields <- function(path) {
   db <- orderly::orderly_db("destination", root = path)
@@ -563,7 +575,6 @@ target_custom_fields <- function(path) {
   dat[, "id"]
 }
 
-
 endpoint_custom_fields <- function(path) {
   porcelain::porcelain_endpoint$new(
     "GET", "/v1/reports/customFields",
@@ -572,31 +583,10 @@ endpoint_custom_fields <- function(path) {
     returning = returning_json("CustomFields.schema"))
 }
 
-
 target_report_versions_params <- function(path, versions) {
   db <- orderly::orderly_db("destination", root = path)
-  versions <- paste0("'", paste0(unlist(strsplit(versions, split = ",")),
-                                 collapse = "','"),
-                     "'")
-  sql <- paste(
-    "select",
-    "       parameters.report_version,",
-    "       parameters.name,",
-    "       parameters.value",
-    "  from parameters",
-    sprintf(" where parameters.report_version in (%s)", versions),
-    sep = "\n")
-  dat <- DBI::dbGetQuery(db, sql)
-
-  process <- function(x) {
-    vals <- lapply(as.list(x$value), function(y) scalar(y))
-    names(vals) <- x$name
-    vals
-  }
-
-  lapply(split(dat, dat$report_version), process)
+  get_parameters_for_versions(db, unlist(strsplit(versions, split = ",")))
 }
-
 
 endpoint_report_versions_params <- function(path) {
   porcelain::porcelain_endpoint$new(

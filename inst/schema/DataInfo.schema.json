@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "DataInfo",
+  "type": "object",
+  "properties": {
+    "name": { "type": "string"},
+    "csv_size": {"type": "number"},
+    "rds_size": {"type": "number"}
+  },
+  "additionalProperties": false
+}
