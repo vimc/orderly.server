@@ -732,7 +732,7 @@ Schema: [`ReportVersion.schema.json`](VersionDetails.schema.json)
 Get a dictionary of artefact names to hashes.
 Returns a 404 if the provided report name-version combination does not exist.
 
-Schema: [`Artefacts.schema.json`](Artefacts.schema.json)
+Schema: [`HashDictionary.schema.json`](HashDictionary.schema.json)
 
 ## Example
 
@@ -746,13 +746,32 @@ Schema: [`Artefacts.schema.json`](Artefacts.schema.json)
 }
 ```
 
-# GET /reports/versions/customFields?versions=
+## GET /reports/:name/versions/:id/data
+
+Get a dictionary of data names to hashes.
+Returns a 404 if the provided report name-version combination does not exist.
+
+Schema: [`HashDictionary.schema.json`](HashDictionary.schema.json)
+
+## Example
+
+```json
+{
+  "status": "success",
+  "errors": null,
+  "data": {
+    "dat": "7360cb2eed3327ff8a677b3598ed7343"
+  }
+}
+```
+
+## GET /reports/versions/customFields?versions=
 
 Get custom fields for a list of version ids.
 
 Response schema: [`CustomFieldsForVersions.schema.json`](CustomFieldsForVersions.schema.json)
 
-# Example
+## Example
 
 `GET /reports/versions/customFields?versions=20210629-231827-d35633fd,20210730-152428-14ad0fe7`
 
@@ -785,25 +804,25 @@ If non-existent ids are given the response is
 }
 ```
 
-# GET /reports/customFields
+## GET /reports/customFields
 
 Get custom fields for orderly instance
 
 Response schema: [`CustomFields.schema.json`](CustomFields.schema.json)
 
-# Example
+## Example
 
 ```json
 ["author", "requester"]
 ```
 
-# GET /reports/versions/parameters?versions=
+## GET /reports/versions/parameters?versions=
 
 Get parameters for a list of version ids.
 
 Response schema: [`Parameters.schema.json`](Parameters.schema.json)
 
-# Example
+## Example
 
 `GET /reports/versions/parameters?versions=20210629-231827-d35633fd,20210730-152428-14ad0fe7`
 
