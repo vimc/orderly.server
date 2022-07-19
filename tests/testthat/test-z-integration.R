@@ -738,7 +738,7 @@ test_that("can get report version data hashes", {
 
 
 test_that("can get report version resource hashes", {
-  path <- orderly_prepare_orderly_git_example()[["local"]]
+  path <- orderly_prepare_orderly_example(name = "demo", git = TRUE)
   server <- start_test_server(path)
   id <- orderly::orderly_run("use_resource", root = path, echo = FALSE)
   orderly::orderly_commit(id, root = path)
