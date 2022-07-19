@@ -56,7 +56,8 @@ get_parameters_for_versions <- function(db, versions) {
     "       parameters.name,",
     "       parameters.value",
     "  from parameters",
-    sprintf(" where parameters.report_version in (%s)", versions),
+    sprintf(" where parameters.report_version in (%s)",
+            paste(squote(versions), collapse = ", ")),
     sep = "\n")
   dat <- DBI::dbGetQuery(db, sql)
 
@@ -120,7 +121,8 @@ get_custom_fields_for_versions <- function(db, versions) {
     "       report_version_custom_fields.value,",
     "       report_version_custom_fields.report_version",
     "  from report_version_custom_fields",
-    sprintf(" where report_version in (%s)", versions),
+    sprintf(" where report_version in (%s)",
+            paste(squote(versions), collapse = ", ")),
     sep = "\n")
   dat <- DBI::dbGetQuery(db, sql)
 

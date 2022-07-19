@@ -181,3 +181,5 @@ key_value_collector <- function(init = list()) {
        get_all = function() env$res,
        get = function(keys) unlist(lapply(keys, get), recursive = FALSE))
 }
+
+squote <- function(x) sprintf("'%s'", x)

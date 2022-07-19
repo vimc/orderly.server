@@ -508,11 +508,11 @@ target_report_version_details <- function(path, name, id) {
   db <- orderly::orderly_db("destination", root = path)
   report_version <- get_report_version(db, name, id)
   artefacts <- get_artefacts_for_version(db, id)
-  parameters <- get_parameters_for_versions(db, paste0("'", id, "'"))
+  parameters <- get_parameters_for_versions(db, id)
   instances <- get_instances_for_version(db, id)
   resources <- get_resources_for_version(db, id)
   data_info <- get_data_for_version(db, id)
-  custom_fields <- get_custom_fields_for_versions(db, paste0("'", id, "'"))
+  custom_fields <- get_custom_fields_for_versions(db, id)
 
   if (is.null(parameters[[id]])) {
     params <- parameters
@@ -541,10 +541,7 @@ endpoint_report_version_details <- function(path) {
 
 target_report_versions_custom_fields <- function(path, versions) {
   db <- orderly::orderly_db("destination", root = path)
-  versions <- paste0("'", paste0(unlist(strsplit(versions, split = ",")),
-                                collapse = "','"),
-                     "'")
-  get_custom_fields_for_versions(db, versions)
+  get_custom_fields_for_versions(db, unlist(strsplit(versions, split = ",")))
 }
 
 endpoint_report_versions_custom_fields <- function(path) {
@@ -577,10 +574,7 @@ endpoint_custom_fields <- function(path) {
 
 target_report_versions_params <- function(path, versions) {
   db <- orderly::orderly_db("destination", root = path)
-  versions <- paste0("'", paste0(unlist(strsplit(versions, split = ",")),
-                                 collapse = "','"),
-                     "'")
-  get_parameters_for_versions(db, versions)
+  get_parameters_for_versions(db, unlist(strsplit(versions, split = ",")))
 }
 
 endpoint_report_versions_params <- function(path) {
