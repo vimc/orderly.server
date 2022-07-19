@@ -18,6 +18,8 @@ Object for managing running jobs on the redis queue
 
 \item{\code{allow_ref}}{Allow git to change branch/ref for run}
 
+\item{\code{default_branch}}{Default git branch}
+
 \item{\code{con}}{Redis connection}
 
 \item{\code{cleanup_on_exit}}{If TRUE workers are killed on exit}
@@ -34,30 +36,30 @@ and task_id}
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-new}{\code{orderly_runner_$new()}}
-\item \href{#method-start_workers}{\code{orderly_runner_$start_workers()}}
-\item \href{#method-assert_ref_switching_allowed}{\code{orderly_runner_$assert_ref_switching_allowed()}}
-\item \href{#method-submit_task_report}{\code{orderly_runner_$submit_task_report()}}
-\item \href{#method-submit}{\code{orderly_runner_$submit()}}
-\item \href{#method-submit_workflow}{\code{orderly_runner_$submit_workflow()}}
-\item \href{#method-status}{\code{orderly_runner_$status()}}
-\item \href{#method-workflow_status}{\code{orderly_runner_$workflow_status()}}
-\item \href{#method-queue_status}{\code{orderly_runner_$queue_status()}}
-\item \href{#method-check_timeout}{\code{orderly_runner_$check_timeout()}}
-\item \href{#method-kill}{\code{orderly_runner_$kill()}}
-\item \href{#method-destroy}{\code{orderly_runner_$destroy()}}
-\item \href{#method-cleanup}{\code{orderly_runner_$cleanup()}}
+\item \href{#method-orderly_runner-new}{\code{orderly_runner_$new()}}
+\item \href{#method-orderly_runner-start_workers}{\code{orderly_runner_$start_workers()}}
+\item \href{#method-orderly_runner-assert_ref_switching_allowed}{\code{orderly_runner_$assert_ref_switching_allowed()}}
+\item \href{#method-orderly_runner-submit_task_report}{\code{orderly_runner_$submit_task_report()}}
+\item \href{#method-orderly_runner-submit}{\code{orderly_runner_$submit()}}
+\item \href{#method-orderly_runner-submit_workflow}{\code{orderly_runner_$submit_workflow()}}
+\item \href{#method-orderly_runner-status}{\code{orderly_runner_$status()}}
+\item \href{#method-orderly_runner-workflow_status}{\code{orderly_runner_$workflow_status()}}
+\item \href{#method-orderly_runner-queue_status}{\code{orderly_runner_$queue_status()}}
+\item \href{#method-orderly_runner-check_timeout}{\code{orderly_runner_$check_timeout()}}
+\item \href{#method-orderly_runner-kill}{\code{orderly_runner_$kill()}}
+\item \href{#method-orderly_runner-destroy}{\code{orderly_runner_$destroy()}}
+\item \href{#method-orderly_runner-cleanup}{\code{orderly_runner_$cleanup()}}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-new"></a>}}
-\if{latex}{\out{\hypertarget{method-new}{}}}
+\if{html}{\out{<a id="method-orderly_runner-new"></a>}}
+\if{latex}{\out{\hypertarget{method-orderly_runner-new}{}}}
 \subsection{Method \code{new()}}{
 Create object, read configuration and setup redis connection.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{orderly_runner_$new(
   root,
-  allow_ref = NULL,
+  identity,
   queue_id,
   workers,
   cleanup_on_exit = workers > 0,
@@ -70,11 +72,7 @@ Create object, read configuration and setup redis connection.
 \describe{
 \item{\code{root}}{Orderly root.}
 
-\item{\code{allow_ref}}{Allow git to change branches/ref for run.  If not
-given, then we will look to see if the orderly configuration
-disallows branch changes (based on the
-\code{ORDERLY_API_SERVER_IDENTITY} environment variable and the
-\code{master_only} setting of the relevant server block.}
+\item{\code{identity}}{Remote identity, as listed in orderly_config.yml}
 
 \item{\code{queue_id}}{ID of an existing queue to connect to, creates a new one
 if NULL.}
@@ -90,8 +88,8 @@ killed. Expect this is only finite during local testing.}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-start_workers"></a>}}
-\if{latex}{\out{\hypertarget{method-start_workers}{}}}
+\if{html}{\out{<a id="method-orderly_runner-start_workers"></a>}}
+\if{latex}{\out{\hypertarget{method-orderly_runner-start_workers}{}}}
 \subsection{Method \code{start_workers()}}{
 Start n workers for this queue and optionally set a timeout.
 \subsection{Usage}{
@@ -113,8 +111,8 @@ TRUE, called for side effects.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-assert_ref_switching_allowed"></a>}}
-\if{latex}{\out{\hypertarget{method-assert_ref_switching_allowed}{}}}
+\if{html}{\out{<a id="method-orderly_runner-assert_ref_switching_allowed"></a>}}
+\if{latex}{\out{\hypertarget{method-orderly_runner-assert_ref_switching_allowed}{}}}
 \subsection{Method \code{assert_ref_switching_allowed()}}{
 Check if ref switching is allowed in this runner. Errors if
 ref is non NULL and ref switching disallowed, otherwise
@@ -135,8 +133,8 @@ TRUE, called for side effects.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-submit_task_report"></a>}}
-\if{latex}{\out{\hypertarget{method-submit_task_report}{}}}
+\if{html}{\out{<a id="method-orderly_runner-submit_task_report"></a>}}
+\if{latex}{\out{\hypertarget{method-orderly_runner-submit_task_report}{}}}
 \subsection{Method \code{submit_task_report()}}{
 Queue a job to run an orderly report.
 \subsection{Usage}{
@@ -179,8 +177,8 @@ can be retrieved from redis using the key.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-submit"></a>}}
-\if{latex}{\out{\hypertarget{method-submit}{}}}
+\if{html}{\out{<a id="method-orderly_runner-submit"></a>}}
+\if{latex}{\out{\hypertarget{method-orderly_runner-submit}{}}}
 \subsection{Method \code{submit()}}{
 Submit an arbitrary job on the queue
 \subsection{Usage}{
@@ -201,8 +199,8 @@ Task id
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-submit_workflow"></a>}}
-\if{latex}{\out{\hypertarget{method-submit_workflow}{}}}
+\if{html}{\out{<a id="method-orderly_runner-submit_workflow"></a>}}
+\if{latex}{\out{\hypertarget{method-orderly_runner-submit_workflow}{}}}
 \subsection{Method \code{submit_workflow()}}{
 Queue a workflow.
 \subsection{Usage}{
@@ -238,8 +236,8 @@ The key for the workflow and each individual report
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-status"></a>}}
-\if{latex}{\out{\hypertarget{method-status}{}}}
+\if{html}{\out{<a id="method-orderly_runner-status"></a>}}
+\if{latex}{\out{\hypertarget{method-orderly_runner-status}{}}}
 \subsection{Method \code{status()}}{
 Get the status of a job
 \subsection{Usage}{
@@ -261,8 +259,8 @@ output and the position of the job in the queue.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-workflow_status"></a>}}
-\if{latex}{\out{\hypertarget{method-workflow_status}{}}}
+\if{html}{\out{<a id="method-orderly_runner-workflow_status"></a>}}
+\if{latex}{\out{\hypertarget{method-orderly_runner-workflow_status}{}}}
 \subsection{Method \code{workflow_status()}}{
 Get the status of a workflow.
 \subsection{Usage}{
@@ -284,8 +282,8 @@ job in the workflow.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-queue_status"></a>}}
-\if{latex}{\out{\hypertarget{method-queue_status}{}}}
+\if{html}{\out{<a id="method-orderly_runner-queue_status"></a>}}
+\if{latex}{\out{\hypertarget{method-orderly_runner-queue_status}{}}}
 \subsection{Method \code{queue_status()}}{
 Get the running and queued tasks in front of key in the queue.
 
@@ -307,8 +305,8 @@ running tasks and any queued tasks in front of key in the queue.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-check_timeout"></a>}}
-\if{latex}{\out{\hypertarget{method-check_timeout}{}}}
+\if{html}{\out{<a id="method-orderly_runner-check_timeout"></a>}}
+\if{latex}{\out{\hypertarget{method-orderly_runner-check_timeout}{}}}
 \subsection{Method \code{check_timeout()}}{
 Check if any running tasks have passed their timeouts. This is run
 by the API on a preroute - we check for timeouts everytime someone
@@ -322,8 +320,8 @@ List of killed reports.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-kill"></a>}}
-\if{latex}{\out{\hypertarget{method-kill}{}}}
+\if{html}{\out{<a id="method-orderly_runner-kill"></a>}}
+\if{latex}{\out{\hypertarget{method-orderly_runner-kill}{}}}
 \subsection{Method \code{kill()}}{
 Kill a job
 \subsection{Usage}{
@@ -339,8 +337,8 @@ Kill a job
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-destroy"></a>}}
-\if{latex}{\out{\hypertarget{method-destroy}{}}}
+\if{html}{\out{<a id="method-orderly_runner-destroy"></a>}}
+\if{latex}{\out{\hypertarget{method-orderly_runner-destroy}{}}}
 \subsection{Method \code{destroy()}}{
 Destroy the queue. Not expected to be called directly, used in tests.
 \subsection{Usage}{
@@ -349,8 +347,8 @@ Destroy the queue. Not expected to be called directly, used in tests.
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-cleanup"></a>}}
-\if{latex}{\out{\hypertarget{method-cleanup}{}}}
+\if{html}{\out{<a id="method-orderly_runner-cleanup"></a>}}
+\if{latex}{\out{\hypertarget{method-orderly_runner-cleanup}{}}}
 \subsection{Method \code{cleanup()}}{
 Cleanup workers and destroy the queue. Not expected to be called
 directly, gets registered as finaliser of the object.

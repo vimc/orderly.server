@@ -102,7 +102,7 @@ test_that("can get workflow summary", {
 
   ## api
   with_mock("orderly.server:::workflow_summary" = mock_workflow_summary, {
-    api <- build_api(runner, path)
+    api <- build_api(runner)
     res_api <- api$request("POST", "/v1/workflow/summary/",
                            body = readLines(t))
   })
@@ -175,7 +175,7 @@ test_that("workflow job can be submitted", {
   expect_equal(args[[2]][[3]], "[internal] changelog 1")
 
   ## api
-  api <- build_api(runner, path)
+  api <- build_api(runner)
   res_api <- api$request("POST", "/v1/workflow/run/",
                          body = body)
   expect_equal(res_api$status, 200)
@@ -222,7 +222,7 @@ test_that("additional parameters are passed to task run", {
     changelog = changelog
   ))
 
-  api <- build_api(runner, path)
+  api <- build_api(runner)
   res_api <- api$request("POST", "/v1/workflow/run/",
                          body = body)
   keys <- jsonlite::fromJSON(res_api$body)$data$reports$key
@@ -314,7 +314,7 @@ test_that("report can be included in a workflow twice", {
     ref = scalar(ref)
   ))
 
-  api <- build_api(runner, path)
+  api <- build_api(runner)
   res_api <- api$request("POST", "/v1/workflow/run/",
                          body = body)
   keys <- jsonlite::fromJSON(res_api$body)$data$reports$key
@@ -380,7 +380,7 @@ test_that("workflow status", {
                list(workflow_key, FALSE))
 
   ## api
-  api <- build_api(runner, "path")
+  api <- build_api(runner)
   res_api <- api$request("GET",
                          sprintf("/v1/workflow/%s/status/", workflow_key))
   expect_equal(res_api$status, 200L)
@@ -500,10 +500,10 @@ test_that("mrc-2626: workflow can be queued on new branch", {
   git_checkout_branch(master, root = path)
 
   ## Pull to represent someone hitting "refresh git" button in OW
-  target_git_pull(path)
+  target_git_pull(runner)
 
   ## Get commits
-  commits <- target_git_commits(path, "example")
+  commits <- target_git_commits(runner, "example")
   expect_equal(nrow(commits), 1)
 
   multiple_deps <- list(

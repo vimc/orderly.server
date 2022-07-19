@@ -55,3 +55,15 @@ steps:
     branches: "master"
     build:
       branch: main
+ 
+  - trigger: "threemc-orderly-image"
+    label: ":rocket: threemc orderly image (from orderly.server) :scissors:"
+    branches: "master"
+    build:
+      branch: main
+
+  - trigger: "inference-data-orderly-image"
+    label: ":rocket: inference-data orderly image (from orderly.server) :perfection:"
+    branches: "master"
+    build:
+      branch: main

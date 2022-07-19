@@ -8,11 +8,13 @@
 ##'
 ##' @param path Path to use
 ##'
-##' @param allow_ref Allow git to change branches/ref for run.  If not
-##'   given, then we will look to see if the orderly configuration
-##'   disallows branch changes (based on the
-##'   \code{ORDERLY_API_SERVER_IDENTITY} environment variable and the
-##'   \code{master_only} setting of the relevant server block.
+##' @param identity The name of the server identity, as listed in
+##'   orderly_config.yml's remote section. If not given, then we will
+##'   look to see if the orderly configuration disallows branch
+##'   changes (based on the \code{ORDERLY_API_SERVER_IDENTITY}
+##'   environment variable. Used to set configuration specific to this
+##'   server (e.g., host, port, teams notification URL, default branch
+##'   name, etc).
 ##'
 ##' @param queue_id ID of an existing queue to connect to, creates a new one
 ##'   if NULL
@@ -27,9 +29,9 @@
 ##'   path <- orderly:::prepare_orderly_git_example()
 ##'   runner <- orderly.server::orderly_runner(path[["local"]], workers = 0)
 ##' }
-orderly_runner <- function(path, allow_ref = NULL, queue_id = NULL,
+orderly_runner <- function(path, identity = NULL, queue_id = NULL,
                            workers = 1) {
-  orderly_runner_$new(path, allow_ref, queue_id, workers)
+  orderly_runner_$new(path, identity, queue_id, workers)
 }
 
 runner_run <- function(key_report_id, key, root, name, parameters, instance,
@@ -127,6 +129,8 @@ orderly_runner_ <- R6::R6Class(
     config = NULL,
     #' @field allow_ref Allow git to change branch/ref for run
     allow_ref = FALSE,
+    #' @field default_branch Default git branch
+    default_branch = NULL,
 
     #' @field con Redis connection
     con = NULL,
@@ -144,30 +148,34 @@ orderly_runner_ <- R6::R6Class(
     #' Create object, read configuration and setup redis connection.
     #'
     #' @param root Orderly root.
-    #' @param allow_ref Allow git to change branches/ref for run.  If not
-    #'   given, then we will look to see if the orderly configuration
-    #'   disallows branch changes (based on the
-    #'   \code{ORDERLY_API_SERVER_IDENTITY} environment variable and the
-    #'   \code{master_only} setting of the relevant server block.
+    #' @param identity Remote identity, as listed in orderly_config.yml
     #' @param queue_id ID of an existing queue to connect to, creates a new one
     #'   if NULL.
     #' @param workers Number of workers to spawn.
     #' @param cleanup_on_exit If TRUE workers are killed on exit.
     #' @param worker_timeout How long worker should live for before it is
     #' killed. Expect this is only finite during local testing.
-    initialize = function(root, allow_ref = NULL, queue_id,
+    initialize = function(root, identity, queue_id,
                           workers, cleanup_on_exit = workers > 0,
                           worker_timeout = Inf) {
-      self$config <- orderly::orderly_config(root)
+      if (is.null(identity)) {
+        self$config <- orderly::orderly_config(root)
+      } else {
+        self$config <- withr::with_envvar(
+          c(ORDERLY_API_SERVER_IDENTITY = identity),
+          orderly::orderly_config(root))
+      }
       self$root <- self$config$root
       if (!runner_has_git(self$root)) {
         stop("Not starting server as orderly root is not version controlled")
       }
 
-      self$allow_ref <- runner_allow_ref(allow_ref, self$config)
-      if (!self$allow_ref) {
-        message("Disallowing reference switching in runner")
-      }
+      opts <- self$config$server_options()
+      self$allow_ref <- !isTRUE(opts$default_branch_only)
+      self$default_branch <- opts$default_branch %||% "master"
+      message(sprintf("Default git branch: %s", self$default_branch))
+      message(sprintf("%s reference switching in runner",
+                      if (self$allow_ref) "Allowing" else "Disallowing"))
 
       ## This ensures that the index will be present, which will be
       ## useful if something else wants to access the database!
@@ -564,18 +572,6 @@ rrq_to_orderly_status <- function(status) {
          "CANCELLED" = "interrupted",
          "DIED" = "orphan",
          tolower(status))
-}
-
-
-runner_allow_ref <- function(allow_ref, config) {
-  if (is.null(allow_ref)) {
-    allow_ref <- !(config$server_options()$master_only %||% FALSE)
-  }
-  if (allow_ref) {
-    res <- git_run(c("rev-parse", "HEAD"), root = config$root, check = FALSE)
-    allow_ref <- res$success
-  }
-  allow_ref
 }
 
 

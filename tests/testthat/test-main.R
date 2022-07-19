@@ -3,7 +3,7 @@ context("main")
 test_that("defaults", {
   expect_equal(
     main_args("path"),
-    list(path = "path", port = 8321, host = "0.0.0.0", allow_ref = TRUE,
+    list(path = "path", port = 8321, host = "0.0.0.0", identity = NULL,
          go_signal = NULL, queue_id = NULL, workers = 0, backup_period = 600,
          log_level = "info"))
 })
@@ -12,7 +12,7 @@ test_that("defaults", {
 test_that("set port", {
   expect_equal(
     main_args(c("path", "--port", "8888")),
-    list(path = "path", port = 8888, host = "0.0.0.0", allow_ref = TRUE,
+    list(path = "path", port = 8888, host = "0.0.0.0", identity = NULL,
          go_signal = NULL, queue_id = NULL, workers = 0, backup_period = 600,
          log_level = "info"))
 })
@@ -21,7 +21,7 @@ test_that("set port", {
 test_that("set host", {
   expect_equal(
     main_args(c("path", "--host", "127.0.0.1")),
-    list(path = "path", port = 8321, host = "127.0.0.1", allow_ref = TRUE,
+    list(path = "path", port = 8321, host = "127.0.0.1", identity = NULL,
          go_signal = NULL, queue_id = NULL, workers = 0, backup_period = 600,
          log_level = "info"))
 })
@@ -29,8 +29,8 @@ test_that("set host", {
 
 test_that("prevent reference switch", {
   expect_equal(
-    main_args(c("path", "--no-ref")),
-    list(path = "path", port = 8321, host = "0.0.0.0", allow_ref = FALSE,
+    main_args(c("path", "--identity=main")),
+    list(path = "path", port = 8321, host = "0.0.0.0", identity = "main",
          go_signal = NULL, queue_id = NULL, workers = 0, backup_period = 600,
          log_level = "info"))
 })
@@ -39,7 +39,7 @@ test_that("prevent reference switch", {
 test_that("Set go signal", {
   expect_equal(
     main_args(c("path", "--go-signal", "somewhere")),
-    list(path = "path", port = 8321, host = "0.0.0.0", allow_ref = TRUE,
+    list(path = "path", port = 8321, host = "0.0.0.0", identity = NULL,
          go_signal = "somewhere", queue_id = NULL, workers = 0,
          backup_period = 600, log_level = "info"))
 })
@@ -48,7 +48,7 @@ test_that("Set go signal", {
 test_that("Set workers", {
   expect_equal(
     main_args(c("path", "--workers", "2")),
-    list(path = "path", port = 8321, host = "0.0.0.0", allow_ref = TRUE,
+    list(path = "path", port = 8321, host = "0.0.0.0", identity = NULL,
          go_signal = NULL, queue_id = NULL, workers = 2, backup_period = 600,
          log_level = "info"))
 })
@@ -57,7 +57,7 @@ test_that("Set workers", {
 test_that("Set queue id", {
   expect_equal(
     main_args(c("path", "--queue-id", "orderly")),
-    list(path = "path", port = 8321, host = "0.0.0.0", allow_ref = TRUE,
+    list(path = "path", port = 8321, host = "0.0.0.0", identity = NULL,
          go_signal = NULL, queue_id = "orderly", workers = 0,
          backup_period = 600, log_level = "info"))
 })
@@ -65,7 +65,7 @@ test_that("Set queue id", {
 test_that("Set backup period", {
   expect_equal(
     main_args(c("path", "--backup-period", "0")),
-    list(path = "path", port = 8321, host = "0.0.0.0", allow_ref = TRUE,
+    list(path = "path", port = 8321, host = "0.0.0.0", identity = NULL,
          go_signal = NULL, queue_id = NULL, workers = 0, backup_period = NULL,
          log_level = "info"))
 })
@@ -73,7 +73,7 @@ test_that("Set backup period", {
 test_that("Set log level", {
   expect_equal(
     main_args(c("path", "--log-level", "trace")),
-    list(path = "path", port = 8321, host = "0.0.0.0", allow_ref = TRUE,
+    list(path = "path", port = 8321, host = "0.0.0.0", identity = NULL,
          go_signal = NULL, queue_id = NULL, workers = 0, backup_period = 600,
          log_level = "trace"))
 })
