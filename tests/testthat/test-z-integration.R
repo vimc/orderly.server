@@ -719,3 +719,19 @@ test_that("can get report version details", {
                                 "requester", "author", "comment"))
   expect_equal(r$errors, NULL)
 })
+
+
+test_that("can get report version data", {
+  path <- orderly_prepare_orderly_git_example()[["local"]]
+  server <- start_test_server(path)
+  id <- orderly::orderly_run("minimal", root = path, echo = FALSE)
+  orderly::orderly_commit(id, root = path)
+  on.exit(server$stop())
+
+  url <- paste0("/v1/reports/minimal/versions/", id, "/data/")
+  r <- content(httr::GET(server$api_url(url)))
+  expect_equal(r$status, "success")
+  expect_type(r$data, "list")
+  expect_equal(names(r$data), "dat")
+  expect_equal(r$errors, NULL)
+})

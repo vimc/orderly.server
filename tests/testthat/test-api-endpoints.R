@@ -1121,6 +1121,35 @@ test_that("can retrieve artefact hashes", {
 })
 
 
+test_that("can retrieve data hashes", {
+  path <- orderly_prepare_orderly_example("demo")
+  id <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+                             root = path, echo = FALSE)
+  orderly::orderly_commit(id, root = path)
+  endpoint <- endpoint_report_version_data_hashes(path)
+  res <- endpoint$run(name = "other", id = id)
+
+  expect_true(res$validated)
+  expect_equal(res$status_code, 200)
+  expect_type(res$data, "list")
+  expect_equal(res$data,
+               list("extract" = scalar("f8cf9742d998e323f7f852482963c369")))
+})
+
+
+test_that("data returns 404 if report version does not exist", {
+  path <- orderly_prepare_orderly_example("demo")
+  endpoint <- endpoint_report_version_data_hashes(path)
+  res <- endpoint$run(name = "other", id = "badid")
+
+  expect_equal(res$status_code, 404)
+  expect_equal(res$data, NULL)
+  expect_equal(res$error$data[[1]],
+               list(error = scalar("NONEXISTENT_REPORT_VERSION"),
+                    detail = scalar("Unknown report version 'badid'")))
+})
+
+
 test_that("can retrieve version list", {
   path <- orderly_prepare_orderly_example("demo")
   id1 <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
