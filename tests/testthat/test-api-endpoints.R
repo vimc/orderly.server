@@ -1426,3 +1426,59 @@ test_that("Artefact download returns 404 if file does not exist", {
                list(error = scalar("NONEXISTENT_ARTEFACT"),
                     detail = scalar("Unknown artefact 'badfilename'")))
 })
+
+
+test_that("can retrieve report list with latest version", {
+  path <- orderly_prepare_orderly_example("demo")
+  id <- orderly::orderly_run("minimal",
+                             root = path, echo = FALSE)
+  orderly::orderly_commit(id, root = path)
+
+  id_oldest <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+                             root = path, echo = FALSE)
+  orderly::orderly_commit(id_oldest, root = path)
+  Sys.sleep(1)
+  id_old <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+                             root = path, echo = FALSE)
+  orderly::orderly_commit(id_old, root = path)
+  Sys.sleep(1)
+  id_latest <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+                             root = path, echo = FALSE)
+  orderly::orderly_commit(id_latest, root = path)
+
+  data <- target_reports(path, NULL)
+  expect_equal(nrow(data), 2)
+  expect_equal(data[1, "name"], "minimal")
+  expect_equal(data[1, "latest_version"], id)
+  expect_equal(data[1, "display_name"], NA_character_)
+  expect_equal(data[2, "name"], "other")
+  expect_equal(data[2, "latest_version"], id_latest)
+  expect_equal(data[2, "display_name"], "another report")
+
+  endpoint <- endpoint_reports(path)
+  res <- endpoint$run()
+  expect_true(res$validated)
+  expect_equal(res$status_code, 200)
+  expect_equal(res$data, data)
+})
+
+
+test_that("can retrieve report list filtered to report names", {
+  path <- orderly_prepare_orderly_example("demo")
+  id_minimal <- orderly::orderly_run("minimal",
+                             root = path, echo = FALSE)
+  orderly::orderly_commit(id_minimal, root = path)
+
+  id_other <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+                                    root = path, echo = FALSE)
+  orderly::orderly_commit(id_other, root = path)
+
+  id_use_resource <- orderly::orderly_run("use_resource",
+                             root = path, echo = FALSE)
+  orderly::orderly_commit(id_use_resource, root = path)
+
+  data <- target_reports(path, "minimal,use_resource")
+  expect_equal(nrow(data), 2)
+  expect_equal(data[1, "name"], "minimal")
+  expect_equal(data[2, "name"], "use_resource")
+})

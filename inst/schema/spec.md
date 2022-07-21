@@ -664,7 +664,25 @@ Response schema: [`WorkflowStatus.schema.json`](WorkflowStatus.schema.json)
 }
 ```
 
-# GET /reports/:name
+## GET /reports/
+
+Return a list of all reports with minimal metadata - the id, human readable name and latest version of each.
+Optionally pass a query string `reports` with a list of report names to filter to.
+
+### Example
+
+`GET /reports/?reports=minimal,use_resource`
+
+```json
+
+  [
+    {"name": "minimal", "display_name": "Minimal example", "latest_version": "20161010-121958-d5f0ea63"},
+    {"name": "use_resource", "display_name": "Use resources example", "latest_version": "20171011-121958-effh734"}       
+  ]
+
+```
+
+## GET /reports/:name
 
 Returns a list of version names for the named report. Returns 404 if no versions exist.
 
@@ -677,7 +695,7 @@ Schema: [`VersionIds.schema.json`](VersionIds.schema.json)
     "20161006-142357-e80edf58",
     "20161008-123121-59891d61",
     "20161012-220715-756d55c8"
-  ]
+]
 ```
 
 ## GET /reports/:name/versions/:version/
