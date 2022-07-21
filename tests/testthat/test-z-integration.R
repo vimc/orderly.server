@@ -735,3 +735,22 @@ test_that("can get report version data", {
   expect_equal(names(r$data), "dat")
   expect_equal(r$errors, NULL)
 })
+
+
+test_that("can download artefact", {
+  path <- orderly_prepare_orderly_git_example()[["local"]]
+  server <- start_test_server(path)
+  id <- orderly::orderly_run("minimal", root = path, echo = FALSE)
+  orderly::orderly_commit(id, root = path)
+  on.exit(server$stop())
+
+  url <- paste0("/v1/reports/minimal/versions/", id, "/artefacts/mygraph.png?inline=true")
+  r <- httr::GET(server$api_url(url))
+  expect_equal(r$status_code, 200L)
+
+  hash_url <- paste0("/v1/reports/minimal/versions/", id, "/artefacts/")
+  hash <- content(httr::GET(server$api_url(hash_url)))$data[["mygraph.png"]]
+  expect_equal(unclass(paste(openssl::md5(httr::content(r)))), unclass(hash))
+  expected_header <- sprintf("attachment; filename=\"minimal/%s/mygraph.png\"", id)
+  expect_equal(r$headers[["content-disposition"]], expected_header)
+})

@@ -149,7 +149,7 @@ test_that("can get parameters for a report & commit", {
     "    default: test",
     "  c:",
     "    default: 2"),
-    file.path(path[["origin"]], "src", "minimal", "orderly.yml"))
+             file.path(path[["origin"]], "src", "minimal", "orderly.yml"))
   gert::git_add(".", repo = path[["origin"]])
   ref <- gert::git_commit("add parameters", repo = path[["origin"]])
 
@@ -202,7 +202,7 @@ test_that("Invalid format of parameters throws an error", {
   endpoint <- endpoint_report_parameters(runner)
 
   writeLines(c("parameters:", "  - a", "  - b"),
-    file.path(path[["origin"]], "src", "minimal", "orderly.yml"))
+             file.path(path[["origin"]], "src", "minimal", "orderly.yml"))
   gert::git_add(".", repo = path[["origin"]])
   ref <- gert::git_commit("add parameters", repo = path[["origin"]])
 
@@ -1274,7 +1274,7 @@ test_that("can retrieve version details", {
   expect_equal(data$name, scalar("other"))
   expect_equal(data$display_name, scalar("another report"))
   desc <- paste("An extended comment field.  This can be quite long.",
-             " This is not so long though, but long enough I'm sure.")
+                " This is not so long though, but long enough I'm sure.")
   expect_equal(data$description, scalar(desc))
 
   expect_equal(data$artefacts[[1]]$id, scalar(1L))
@@ -1332,4 +1332,62 @@ test_that("version details returns 404 for non-existent version", {
   expect_equal(res$error$data[[1]],
                list(error = scalar("NONEXISTENT_REPORT_VERSION"),
                     detail = scalar("Unknown report version 'badid'")))
+})
+
+
+test_that("can stream artefact", {
+  path <- orderly_prepare_orderly_example("demo")
+  id <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+                             root = path, echo = FALSE)
+  orderly::orderly_commit(id, root = path)
+  endpoint <- endpoint_download_artefact(path)
+  res <- endpoint$run("other", id, "graph.png")
+  hash <- target_report_version_artefact_hashes(path, "other", id)[["graph.png"]]
+  expect_equal(unclass(paste(openssl::md5(res$data))), unclass(hash))
+  expect_null(res$headers)
+  expect_equal(res$status_code, 200L)
+})
+
+
+test_that("can download artefact as attachment if inline = TRUE", {
+  path <- orderly_prepare_orderly_example("demo")
+  id <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+                             root = path, echo = FALSE)
+  orderly::orderly_commit(id, root = path)
+  endpoint <- endpoint_download_artefact(path)
+  res <- endpoint$run("other", id, "graph.png", inline = TRUE)
+  hash <- target_report_version_artefact_hashes(path, "other", id)[["graph.png"]]
+  expect_equal(unclass(paste(openssl::md5(res$data))), unclass(hash))
+  expected_header <- sprintf("attachment; filename=\"other/%s/graph.png\"", id)
+  expect_equal(res$headers, list("Content-Disposition" = expected_header))
+  expect_equal(res$status_code, 200L)
+})
+
+
+test_that("Artefact download returns 404 if report does not exist", {
+  path <- orderly_prepare_orderly_example("demo")
+  endpoint <- endpoint_download_artefact(path)
+  res <- endpoint$run("other", "badid", "graph.png")
+
+  expect_equal(res$status_code, 404)
+  expect_equal(res$data, NULL)
+  expect_equal(res$error$data[[1]],
+               list(error = scalar("NONEXISTENT_REPORT_VERSION"),
+                    detail = scalar("Unknown report version 'badid'")))
+})
+
+
+test_that("Artefact download returns 404 if file does not exist", {
+  path <- orderly_prepare_orderly_example("demo")
+  id <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+                             root = path, echo = FALSE)
+  orderly::orderly_commit(id, root = path)
+  endpoint <- endpoint_download_artefact(path)
+  res <- endpoint$run("other", id, "badfilename")
+
+  expect_equal(res$status_code, 404)
+  expect_equal(res$data, NULL)
+  expect_equal(res$error$data[[1]],
+               list(error = scalar("NONEXISTENT_ARTEFACT"),
+                    detail = scalar("Unknown artefact 'badfilename'")))
 })

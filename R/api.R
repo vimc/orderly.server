@@ -33,6 +33,7 @@ build_api <- function(runner, backup_period = NULL,
   api$handle(endpoint_report_versions_custom_fields(path))
   api$handle(endpoint_custom_fields(path))
   api$handle(endpoint_report_versions_params(path))
+  api$handle(endpoint_download_artefact(path))
   api$setDocs(FALSE)
   backup <- orderly_backup(runner$config, backup_period)
   api$registerHook("preroute", backup$check_backup)
@@ -620,4 +621,36 @@ endpoint_report_version_data_hashes <- function(path) {
     target_report_version_data_hashes,
     porcelain::porcelain_state(path = path),
     returning = returning_json("HashDictionary.schema"))
+}
+
+target_download_artefact <- function(path, name, version, artefact, inline = NULL) {
+  db <- orderly::orderly_db("destination", root = path)
+  get_report_version(db, name, version)
+  filename <- file.path(name, version, artefact)
+  artefact_path <- file.path(path, "archive", filename)
+  if (!file.exists(artefact_path)) {
+    porcelain::porcelain_stop(
+      sprintf("Unknown artefact '%s'", artefact),
+      "NONEXISTENT_ARTEFACT",
+      status_code = 404L)
+  }
+  bytes <- readBin(artefact_path, "raw", n = file.size(artefact_path))
+  if (!is.null(inline) && inline)
+  {
+    header <- sprintf("attachment; filename=\"%s\"", filename)
+    bytes <- porcelain::porcelain_add_headers(
+      bytes,
+      list("Content-Disposition" = header)
+    )
+  }
+  bytes
+}
+
+endpoint_download_artefact <- function(path) {
+  porcelain::porcelain_endpoint$new(
+    "GET", "/v1/reports/<name>/versions/<version>/artefacts/<artefact>",
+    target_download_artefact,
+    porcelain::porcelain_input_query(inline = "logical"),
+    porcelain::porcelain_state(path = path),
+    returning = porcelain::porcelain_returning_binary())
 }
