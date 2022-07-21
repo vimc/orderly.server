@@ -746,6 +746,11 @@ Schema: [`HashDictionary.schema.json`](HashDictionary.schema.json)
 }
 ```
 
+## GET /reports/:name/versions/:version/artefacts/:artefact
+
+Downloads an artefact. Throws 404 if the report version or the artefact doesn't exist.
+Accepts query parameter `inline`, which if TRUE returns an attachment header.
+
 ## GET /reports/:name/versions/:id/data
 
 Get a dictionary of data names to hashes.
