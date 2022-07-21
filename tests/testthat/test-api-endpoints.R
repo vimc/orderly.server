@@ -1372,7 +1372,9 @@ test_that("can stream artefact", {
   orderly::orderly_commit(id, root = path)
   endpoint <- endpoint_download_artefact(path)
   res <- endpoint$run("other", id, "graph.png")
-  hash <- target_report_version_artefact_hashes(path, "other", id)[["graph.png"]]
+  hash <- target_report_version_artefact_hashes(path,
+                                                "other",
+                                                id)[["graph.png"]]
   expect_equal(unclass(paste(openssl::md5(res$data))), unclass(hash))
   expect_null(res$headers)
   expect_equal(res$status_code, 200L)
@@ -1386,9 +1388,12 @@ test_that("can download artefact as attachment if inline = TRUE", {
   orderly::orderly_commit(id, root = path)
   endpoint <- endpoint_download_artefact(path)
   res <- endpoint$run("other", id, "graph.png", inline = TRUE)
-  hash <- target_report_version_artefact_hashes(path, "other", id)[["graph.png"]]
+  hash <- target_report_version_artefact_hashes(path,
+                                                "other",
+                                                id)[["graph.png"]]
   expect_equal(unclass(paste(openssl::md5(res$data))), unclass(hash))
-  expected_header <- sprintf("attachment; filename=\"other/%s/graph.png\"", id)
+  expected_header <- sprintf("attachment; filename=\"other/%s/graph.png\"",
+                             id)
   expect_equal(res$headers, list("Content-Disposition" = expected_header))
   expect_equal(res$status_code, 200L)
 })

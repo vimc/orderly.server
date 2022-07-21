@@ -624,7 +624,8 @@ endpoint_report_version_data_hashes <- function(path) {
     returning = returning_json("HashDictionary.schema"))
 }
 
-target_download_artefact <- function(path, name, version, artefact, inline = NULL) {
+target_download_artefact <- function(path, name, version,
+                                     artefact, inline = NULL) {
   db <- orderly::orderly_db("destination", root = path)
   get_report_version(db, name, version)
   filename <- file.path(name, version, artefact)
@@ -636,8 +637,7 @@ target_download_artefact <- function(path, name, version, artefact, inline = NUL
       status_code = 404L)
   }
   bytes <- readBin(artefact_path, "raw", n = file.size(artefact_path))
-  if (!is.null(inline) && inline)
-  {
+  if (!is.null(inline) && inline) {
     header <- sprintf("attachment; filename=\"%s\"", filename)
     bytes <- porcelain::porcelain_add_headers(
       bytes,
