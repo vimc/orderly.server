@@ -765,6 +765,25 @@ Schema: [`HashDictionary.schema.json`](HashDictionary.schema.json)
 }
 ```
 
+## GET /reports/:name/versions/:id/resources
+
+Get a dictionary of resource names to hashes.
+Returns a 404 if the provided report name-version combination does not exist.
+
+Schema: [`HashDictionary.schema.json`](HashDictionary.schema.json)
+
+## Example
+
+```json
+{
+  "status": "success",
+  "errors": null,
+  "data": {
+    "meta/data.csv": "7360cb2eed3327ff8a677b3598ed7343"
+  }
+}
+```
+
 ## GET /reports/versions/customFields?versions=
 
 Get custom fields for a list of version ids.
