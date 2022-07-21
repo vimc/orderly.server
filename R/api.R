@@ -26,6 +26,7 @@ build_api <- function(runner, backup_period = NULL,
   api$handle(endpoint_workflow_status(runner))
   ## NOTE: these all use path not runner; there's no good reason for
   ## this.
+  api$handle(endpoint_reports(path))
   api$handle(endpoint_report_versions(path))
   api$handle(endpoint_report_version_details(path))
   api$handle(endpoint_report_version_artefact_hashes(path))
@@ -491,6 +492,23 @@ endpoint_report_version_artefact_hashes <- function(path) {
     returning = returning_json("HashDictionary.schema"))
 }
 
+target_reports <- function(path, reports = NULL) {
+  if (!is.null(reports)) {
+    reports <- unlist(strsplit(reports, split = ","))
+  }
+  db <- orderly::orderly_db("destination", root = path)
+  get_all_reports(db, reports)
+}
+
+endpoint_reports <- function(path) {
+  porcelain::porcelain_endpoint$new(
+    "GET", "/v1/reports/",
+    target_reports,
+    porcelain::porcelain_input_query(reports = "string"),
+    porcelain::porcelain_state(path = path),
+    returning = returning_json("Reports.schema"))
+}
+
 target_report_versions <- function(path, name) {
   db <- orderly::orderly_db("destination", root = path)
   sql <- paste(
@@ -515,7 +533,6 @@ endpoint_report_versions <- function(path) {
     porcelain::porcelain_state(path = path),
     returning = returning_json("VersionIds.schema"))
 }
-
 
 target_report_version_details <- function(path, name, id) {
   db <- orderly::orderly_db("destination", root = path)

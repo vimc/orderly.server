@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "Reports",
+  "definitions": {
+    "report":
+      {
+        "id": "Report",
+        "type": "object",
+        "properties": {
+          "name": {"type" :"string"},
+          "display_name": {"type": [ "string", "null"] },
+          "latest_version": { "type": "string" }
+        },
+        "required": ["name", "latest_version", "display_name"]
+      }
+  },
+  "type": "array",
+  "items": { "$ref": "#/definitions/report" }
+}
