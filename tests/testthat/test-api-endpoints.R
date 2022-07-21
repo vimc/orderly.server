@@ -1150,6 +1150,36 @@ test_that("data returns 404 if report version does not exist", {
 })
 
 
+test_that("can return resource hashes", {
+  path <- orderly_prepare_orderly_example("demo")
+  id <- orderly::orderly_run("use_resource",
+                             root = path, echo = FALSE)
+  orderly::orderly_commit(id, root = path)
+  endpoint <- endpoint_report_version_resource_hashes(path)
+  res <- endpoint$run(name = "use_resource", id = id)
+
+  expect_true(res$validated)
+  expect_equal(res$status_code, 200)
+  expect_type(res$data, "list")
+  expect_equal(res$data,
+               list("meta/data.csv" =
+                      scalar("0bec5bf6f93c547bc9c6774acaf85e1a")))
+})
+
+
+test_that("resources returns 404 if report version does not exist", {
+  path <- orderly_prepare_orderly_example("demo")
+  endpoint <- endpoint_report_version_resource_hashes(path)
+  res <- endpoint$run(name = "use_resource", id = "badid")
+
+  expect_equal(res$status_code, 404)
+  expect_equal(res$data, NULL)
+  expect_equal(res$error$data[[1]],
+               list(error = scalar("NONEXISTENT_REPORT_VERSION"),
+                    detail = scalar("Unknown report version 'badid'")))
+})
+
+
 test_that("can retrieve version list", {
   path <- orderly_prepare_orderly_example("demo")
   id1 <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
