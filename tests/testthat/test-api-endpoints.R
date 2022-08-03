@@ -1482,3 +1482,16 @@ test_that("can get public changelogs for report version", {
   expect_equal(res$status_code, 200)
   expect_equal(res$data, data)
 })
+
+
+test_that("version changelog returns 404 for non-existent version", {
+  path <- orderly_prepare_orderly_example("demo")
+  endpoint <- endpoint_report_version_changelog(path)
+  res <- endpoint$run(name = "other", id = "badid")
+
+  expect_equal(res$status_code, 404)
+  expect_equal(res$data, NULL)
+  expect_equal(res$error$data[[1]],
+               list(error = scalar("NONEXISTENT_REPORT_VERSION"),
+                    detail = scalar("Unknown report version 'badid'")))
+})
