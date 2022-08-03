@@ -666,7 +666,10 @@ endpoint_report_version_resource_hashes <- function(path) {
     returning = returning_json("HashDictionary.schema"))
 }
 
-target_report_version_changelog <- function(path, name, id, public_only = FALSE) {
+target_report_version_changelog <- function(path,
+                                            name,
+                                            id,
+                                            public_only = FALSE) {
   db <- orderly::orderly_db("destination", root = path)
   version <- get_report_version(db, name, id)
   if (public_only) {
@@ -674,8 +677,7 @@ target_report_version_changelog <- function(path, name, id, public_only = FALSE)
     extra_clause <- paste(" and changelog_label.public = 1",
                           " and changelog.report_version_public is not null",
                           sep = "\n")
-  }
-  else {
+  } else {
     version_field <- "changelog.report_version"
     extra_clause <- NULL
   }
