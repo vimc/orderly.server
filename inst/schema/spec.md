@@ -802,6 +802,37 @@ Schema: [`HashDictionary.schema.json`](HashDictionary.schema.json)
 }
 ```
 
+## GET /reports/:name/versions/:id/changelog
+
+Returns the changelog for a report version, the report creator's record of changes made during the development of this version.
+Returns a 404 if the provided report name-version combination does not exist.
+Accepts a query parameter `public_only` which restricts results to public entries.
+
+Schema: [`Changelog.schema.json`](Changelog.schema.json)
+
+## Example
+
+`GET /reports/other/20171220-234033-f97cc4f3/changelog?public_only=true`
+
+```json
+[
+  {
+    "label": "public",
+    "value": "Added graphs",
+    "from_file": true,
+    "report_version": "20171220-234033-f97cc4f3",
+    "public": true
+  },
+  {
+    "label": "public",
+    "value": "Fixed typos in text",
+    "from_file": true,
+    "report_version": "20171202-074745-4f66ded4",
+    "public": true
+  }
+]
+```
+
 ## GET /reports/versions/customFields?versions=
 
 Get custom fields for a list of version ids.

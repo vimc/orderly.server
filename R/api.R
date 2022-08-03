@@ -32,6 +32,7 @@ build_api <- function(runner, backup_period = NULL,
   api$handle(endpoint_report_version_artefact_hashes(path))
   api$handle(endpoint_report_version_data_hashes(path))
   api$handle(endpoint_report_version_resource_hashes(path))
+  api$handle(endpoint_report_version_changelog(path))
   api$handle(endpoint_report_versions_custom_fields(path))
   api$handle(endpoint_custom_fields(path))
   api$handle(endpoint_report_versions_params(path))
@@ -209,7 +210,7 @@ endpoint_bundle_pack <- function(path) {
     "POST", "/v1/bundle/pack/<name>", target_bundle_pack,
     porcelain::porcelain_input_query(instance = "string"),
     porcelain::porcelain_input_body_json("parameters", "Parameters.schema",
-                                   schema_root()),
+                                         schema_root()),
     porcelain::porcelain_state(path = path),
     returning = porcelain::porcelain_returning_binary())
 }
@@ -270,8 +271,8 @@ endpoint_run <- function(runner) {
   porcelain::porcelain_endpoint$new(
     "POST", "/v1/reports/<name>/run/", target_run,
     porcelain::porcelain_input_query(ref = "string",
-                               instance = "string",
-                               timeout = "integer"),
+                                     instance = "string",
+                                     timeout = "integer"),
     porcelain::porcelain_input_body_json("body", "RunRequest.schema",
                                          schema_root()),
     porcelain::porcelain_state(runner = runner),
@@ -348,11 +349,11 @@ endpoint_dependencies <- function(runner) {
   porcelain::porcelain_endpoint$new(
     "GET", "/v1/reports/<name>/dependencies/", target_dependencies,
     porcelain::porcelain_input_query(id = "string",
-                               direction = "string",
-                               propagate = "logical",
-                               max_depth = "integer",
-                               show_all = "logical",
-                               use = "string"),
+                                     direction = "string",
+                                     propagate = "logical",
+                                     max_depth = "integer",
+                                     show_all = "logical",
+                                     use = "string"),
     porcelain::porcelain_state(runner = runner),
     returning = returning_json("Dependencies.schema"))
 }
@@ -391,11 +392,11 @@ target_run_metadata <- function(runner) {
 }
 
 endpoint_run_metadata <- function(runner) {
- porcelain::porcelain_endpoint$new(
-   "GET", "/run-metadata", target_run_metadata,
-   porcelain::porcelain_state(runner = runner),
-   returning = returning_json("RunMetadata.schema")
- )
+  porcelain::porcelain_endpoint$new(
+    "GET", "/run-metadata", target_run_metadata,
+    porcelain::porcelain_state(runner = runner),
+    returning = returning_json("RunMetadata.schema")
+  )
 }
 
 target_workflow_summary <- function(runner, body) {
@@ -550,15 +551,15 @@ target_report_version_details <- function(path, name, id) {
     params <- parameters[[id]]
   }
   c(list(id = scalar(id),
-       name = scalar(name),
-       display_name = scalar(report_version$displayname),
-       description = scalar(report_version$description),
-       artefacts = artefacts,
-       resources = resources,
-       date = scalar(report_version$date),
-       data_info = data_info,
-       parameter_values = params,
-       instances = instances), custom_fields[[id]])
+         name = scalar(name),
+         display_name = scalar(report_version$displayname),
+         description = scalar(report_version$description),
+         artefacts = artefacts,
+         resources = resources,
+         date = scalar(report_version$date),
+         data_info = data_info,
+         parameter_values = params,
+         instances = instances), custom_fields[[id]])
 }
 
 endpoint_report_version_details <- function(path) {
@@ -663,4 +664,51 @@ endpoint_report_version_resource_hashes <- function(path) {
     target_report_version_resource_hashes,
     porcelain::porcelain_state(path = path),
     returning = returning_json("HashDictionary.schema"))
+}
+
+target_report_version_changelog <- function(path, name, id, public_only = FALSE) {
+  db <- orderly::orderly_db("destination", root = path)
+  version <- get_report_version(db, name, id)
+  if (public_only) {
+    version_field <- "changelog.report_version_public"
+    extra_clause <- paste(" and changelog_label.public = 1",
+                          " and changelog.report_version_public is not null",
+                          sep = "\n")
+  }
+  else {
+    version_field <- "changelog.report_version"
+    extra_clause <- NULL
+  }
+  sql <- sprintf(paste(
+    "select",
+    "   %s as 'report_version',",
+    "   changelog.label,",
+    "   changelog.value,",
+    "   changelog.from_file,",
+    "   changelog_label.public",
+    "from changelog",
+    " join changelog_label",
+    "on changelog.label = changelog_label.id",
+    " join report_version",
+    "on %s = report_version.id",
+    "where (",
+    " report_version.report = $1",
+    " and report_version.date <= $2",
+    extra_clause,
+    ")",
+    "order by changelog.ordering desc",
+    sep = "\n"), version_field, version_field)
+  dat <- DBI::dbGetQuery(db, sql, list(name, version$date))
+  dat$from_file <- as.logical(dat$from_file)
+  dat$public <- as.logical(dat$public)
+  dat
+}
+
+endpoint_report_version_changelog <- function(path) {
+  porcelain::porcelain_endpoint$new(
+    "GET", "/v1/reports/<name>/versions/<id>/changelog/",
+    target_report_version_changelog,
+    porcelain::porcelain_state(path = path),
+    porcelain::porcelain_input_query(public_only = "logical"),
+    returning = returning_json("Changelog.schema"))
 }

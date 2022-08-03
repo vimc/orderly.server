@@ -1419,3 +1419,66 @@ test_that("can retrieve report list filtered to report names", {
   expect_equal(data[1, "name"], "minimal")
   expect_equal(data[2, "name"], "use_resource")
 })
+
+
+test_that("can get all changelog for report version", {
+  path <- orderly_prepare_orderly_example("demo")
+  id <- orderly::orderly_run("changelog",
+                                     root = path, echo = FALSE)
+  orderly::orderly_commit(id, root = path)
+  db <- orderly::orderly_db("destination", root = path)
+  data <- target_report_version_changelog(path, "changelog", id)
+  expect_equal(nrow(data), 2)
+  expect_equal(data$label, c("public", "internal"))
+  expect_equal(data$public, c(TRUE, FALSE))
+
+  endpoint <- endpoint_report_version_changelog(path)
+  res <- endpoint$run(name = "changelog", id = id)
+  expect_true(res$validated)
+  expect_equal(res$status_code, 200)
+  expect_equal(res$data, data)
+})
+
+
+test_that("can get public changelogs for report version", {
+  path <- orderly_prepare_orderly_example("demo")
+  id_older <- orderly::orderly_run("changelog",
+                             root = path, echo = FALSE)
+  orderly::orderly_commit(id_older, root = path)
+  Sys.sleep(1)
+  id <- orderly::orderly_run("changelog",
+                             root = path, echo = FALSE)
+  orderly::orderly_commit(id, root = path)
+  id_diff <- orderly::orderly_run("minimal",
+                                  root = path, echo = FALSE)
+  orderly::orderly_commit(id_diff, root = path)
+  Sys.sleep(1)
+  id_later <- orderly::orderly_run("changelog",
+                             root = path, echo = FALSE)
+  orderly::orderly_commit(id_later, root = path)
+
+  db <- orderly::orderly_db("destination", root = path)
+
+  insert_changelog(db, list(1, "public", "blah blah", 1, id), TRUE)
+  # shouldn't return for non-public
+  insert_changelog(db, list(2, "internal", "blah blah", 1, id), FALSE)
+  # shouldn't return for later versions
+  insert_changelog(db, list(3, "public", "blah blah later", 1, id_later), TRUE)
+  # but should return for older public versions
+  insert_changelog(db, list(4, "public", "blah blah older", 1, id_older), TRUE)
+  # shouldn't return for other reports
+  insert_changelog(db, list(5, "public", "blah blah diff", 1, id_diff), TRUE)
+
+  data <- target_report_version_changelog(path, "changelog", id,
+                                           public_only = TRUE)
+  expect_equal(nrow(data), 2)
+  expect_equal(data$label, c("public", "public"))
+  expect_equal(data$public, c(TRUE, TRUE))
+  expect_equal(data$value, c("blah blah", "blah blah older"))
+
+  endpoint <- endpoint_report_version_changelog(path)
+  res <- endpoint$run(name = "changelog", id = id, public_only = TRUE)
+  expect_true(res$validated)
+  expect_equal(res$status_code, 200)
+  expect_equal(res$data, data)
+})
