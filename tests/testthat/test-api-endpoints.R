@@ -1500,12 +1500,12 @@ test_that("version changelog returns 404 for non-existent version", {
 test_that("can get all versions", {
   path <- orderly_prepare_orderly_example("demo")
   ids <- c(orderly_run_with_wait(root = path, name = "minimal", echo = FALSE),
-           orderly_run_with_wait(root = path, name ="other",
+           orderly_run_with_wait(root = path, name = "other",
                          parameters = list(nmin = 0.1),
                          echo = FALSE),
-           orderly_run_with_wait(root = path, name ="changelog", echo = FALSE),
-           orderly_run_with_wait(root = path, name ="minimal",echo = FALSE),
-           orderly_run_with_wait(root = path, name ="other",
+           orderly_run_with_wait(root = path, name = "changelog", echo = FALSE),
+           orderly_run_with_wait(root = path, name = "minimal", echo = FALSE),
+           orderly_run_with_wait(root = path, name = "other",
                          parameters = list(nmin = 0.2),
                          echo = FALSE),
            orderly_run_with_wait(root = path, name ="changelog", echo = FALSE))
@@ -1520,9 +1520,10 @@ test_that("can get all versions", {
   expect_equal(data[[5]]$name, scalar("other"))
   expect_equal(data[[5]]$display_name, scalar("another report"))
   expect_equal(data[[5]]$latest_version, scalar(ids[5]))
-  expect_equal(data[[5]]$custom_fields, list(requester = scalar("ACME"),
-                                            author = scalar("Dr Serious"),
-                                            comment = scalar("This is another comment")))
+  expected_custom_fields <- list(requester = scalar("ACME"),
+                          author = scalar("Dr Serious"),
+                          comment = scalar("This is another comment"))
+  expect_equal(data[[5]]$custom_fields, expected_custom_fields)
   expect_equal(data[[5]]$parameter_values, list(nmin = scalar("0.1")))
 
   # ordering by report name then version
