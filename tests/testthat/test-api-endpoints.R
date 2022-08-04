@@ -1508,7 +1508,7 @@ test_that("can get all versions", {
            orderly_run_with_wait(root = path, name = "other",
                          parameters = list(nmin = 0.2),
                          echo = FALSE),
-           orderly_run_with_wait(root = path, name ="changelog", echo = FALSE))
+           orderly_run_with_wait(root = path, name = "changelog", echo = FALSE))
 
   lapply(ids, function(id) orderly::orderly_commit(id, root = path))
 
