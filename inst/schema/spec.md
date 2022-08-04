@@ -918,3 +918,77 @@ If non-existent ids are given the response is
   "data": {}
 }
 ```
+
+## GET /reports/versions/parameters?versions=
+
+Get parameters for a list of version ids.
+
+Response schema: [`Parameters.schema.json`](Parameters.schema.json)
+
+## Example
+
+`GET /reports/versions/parameters?versions=20210629-231827-d35633fd,20210730-152428-14ad0fe7`
+
+```json
+{
+  "status": "success",
+  "errors": null,
+  "data": {
+    "20210629-231827-d35633fd": {
+      "nmin": "0.1"
+    },
+    "20210730-152428-14ad0fe7": {
+      "disease": "YF"
+    }
+  }
+}
+```
+
+If non-existent ids are given the response is
+
+```json
+{
+  "status": "success",
+  "errors": null,
+  "data": {}
+}
+```
+
+## GET /versions/
+
+Gets metadata of all report versions accessible to the user.
+
+## Example
+
+```json
+[
+  {
+    "id": "20161006-142357-e80edf58",
+    "name": "minimal",
+    "display_name": null,  
+    "description": "a minimal report",
+    "latest_version": "20161006-142357-e80edf58",
+    "date": "2016-10-06 14:23:57.0",   
+    "custom_fields": {
+        "requester": "Funder McFunderface",
+        "author": "Researcher McResearcherface"
+    },
+    "parameter_values": {
+        "nmin": 0.1
+    }
+  },
+  {
+      "id": "20161106-152357-e80edf92",
+      "name": "another name",
+      "display_name": null,  
+      "descriptions": "another report",
+      "latest_version": "20161106-152357-e80edf92",
+      "date": "2016-11-06 15:23:57.0",   
+      "custom_fields": {
+        "requester": "Funder McFunderface",
+        "author": "Researcher McResearcherface"
+      },
+      "parameter_values": null
+    }
+]
+```
