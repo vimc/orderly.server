@@ -136,6 +136,11 @@ orderly_path_orderly_run_rds <- orderly:::path_orderly_run_rds
 orderly_git_checkout_branch <- orderly:::git_checkout_branch
 ## nolint end
 
+orderly_run_with_wait <- function(root, wait = 1, ...) {
+  Sys.sleep(wait)
+  orderly::orderly_run(root = root, ...)
+}
+
 orderly_git_example <- function(name, path = tempfile(), testing = FALSE) {
   orderly_prepare_orderly_example(name, path, testing = testing, git = TRUE)
 }

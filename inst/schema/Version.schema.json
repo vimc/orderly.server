@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "Version",
+  "type": "object",
+  "properties": {
+    "name": {"type" : "string"},
+    "id": { "$ref": "OrderlyId.schema.json" },
+    "display_name": {"type": [ "string", "null"] },
+    "description": {"type": [ "string", "null"] },
+    "latest_version": { "$ref": "OrderlyId.schema.json" },
+    "date": {"type" :"string"},
+    "custom_fields": { "type": [ "object", "null"], "items": { "type": "string"}},
+    "parameter_values": { "type": [ "object", "null"], "items": { "type": "string"}}
+  },
+  "additionalProperties": false,
+  "required": ["name", "id", "display_name", "description", "latest_version",
+    "date", "custom_fields", "parameter_values"]
+}

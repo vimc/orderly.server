@@ -166,3 +166,20 @@ get_all_reports <- function(db, reports = NULL) {
     sep = "\n")
   dat <- DBI::dbGetQuery(db, sql)
 }
+
+get_all_versions <- function(db) {
+  generate_latest_versions_for_report(db)
+  sql <- paste(
+    "select report_version.report as 'name',",
+    "report_version.displayname as 'display_name',",
+    "report_version.id,",
+    "report_version.date,",
+    "report_version.description,",
+    "latest_versions_for_reports.latestVersion as 'latest_version'",
+    "from report_version",
+    "join latest_versions_for_reports",
+    "on report_version.report = latest_versions_for_reports.report",
+    "order by report_version.report, report_version.id",
+    sep = "\n")
+  dat <- DBI::dbGetQuery(db, sql)
+}
