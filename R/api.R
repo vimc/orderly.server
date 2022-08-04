@@ -36,6 +36,7 @@ build_api <- function(runner, backup_period = NULL,
   api$handle(endpoint_report_versions_custom_fields(path))
   api$handle(endpoint_custom_fields(path))
   api$handle(endpoint_report_versions_params(path))
+  api$handle(endpoint_all_versions(path))
   api$setDocs(FALSE)
   backup <- orderly_backup(runner$config, backup_period)
   api$registerHook("preroute", backup$check_backup)
