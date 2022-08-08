@@ -36,6 +36,7 @@ build_api <- function(runner, backup_period = NULL,
   api$handle(endpoint_report_versions_custom_fields(path))
   api$handle(endpoint_custom_fields(path))
   api$handle(endpoint_report_versions_params(path))
+  api$handle(endpoint_all_versions(path))
   api$setDocs(FALSE)
   backup <- orderly_backup(runner$config, backup_period)
   api$registerHook("preroute", backup$check_backup)
@@ -713,4 +714,32 @@ endpoint_report_version_changelog <- function(path) {
     porcelain::porcelain_state(path = path),
     porcelain::porcelain_input_query(public_only = "logical"),
     returning = returning_json("Changelog.schema"))
+}
+
+build_version <- function(v, custom_fields, params) {
+  id <- v[["id"]]
+  list(id = scalar(id),
+       date = scalar(v[["date"]]),
+       description = scalar(v[["description"]]),
+       name = scalar(v[["name"]]),
+       display_name = scalar(v[["display_name"]]),
+       latest_version = scalar(v[["latest_version"]]),
+       custom_fields = custom_fields[[id]],
+       parameter_values = params[[id]])
+}
+
+target_all_versions <- function(path) {
+  db <- orderly::orderly_db("destination", root = path)
+  versions <- get_all_versions(db)
+  custom_fields <- get_custom_fields_for_versions(db, versions$id)
+  params <- get_parameters_for_versions(db, versions$id)
+  apply(versions, 1, build_version, custom_fields, params)
+}
+
+endpoint_all_versions <- function(path) {
+  porcelain::porcelain_endpoint$new(
+    "GET", "/v1/versions/",
+    target_all_versions,
+    porcelain::porcelain_state(path = path),
+    returning = returning_json("Versions.schema"))
 }

@@ -1495,3 +1495,48 @@ test_that("version changelog returns 404 for non-existent version", {
                list(error = scalar("NONEXISTENT_REPORT_VERSION"),
                     detail = scalar("Unknown report version 'badid'")))
 })
+
+
+test_that("can get all versions", {
+  path <- orderly_prepare_orderly_example("demo")
+  ids <- c(orderly_run_with_wait(root = path, name = "minimal", echo = FALSE),
+           orderly_run_with_wait(root = path, name = "other",
+                         parameters = list(nmin = 0.1),
+                         echo = FALSE),
+           orderly_run_with_wait(root = path, name = "changelog", echo = FALSE),
+           orderly_run_with_wait(root = path, name = "minimal", echo = FALSE),
+           orderly_run_with_wait(root = path, name = "other",
+                         parameters = list(nmin = 0.2),
+                         echo = FALSE),
+           orderly_run_with_wait(root = path, name = "changelog", echo = FALSE))
+
+  lapply(ids, function(id) orderly::orderly_commit(id, root = path))
+
+  data <- target_all_versions(path)
+  expect_equal(length(data), 6)
+
+  # check one item for all properties
+  expect_equal(data[[5]]$id, scalar(ids[2]))
+  expect_equal(data[[5]]$name, scalar("other"))
+  expect_equal(data[[5]]$display_name, scalar("another report"))
+  expect_equal(data[[5]]$latest_version, scalar(ids[5]))
+  expected_custom_fields <- list(requester = scalar("ACME"),
+                          author = scalar("Dr Serious"),
+                          comment = scalar("This is another comment"))
+  expect_equal(data[[5]]$custom_fields, expected_custom_fields)
+  expect_equal(data[[5]]$parameter_values, list(nmin = scalar("0.1")))
+
+  # ordering by report name then version
+  expect_equal(data[[1]]$id, scalar(ids[3]))
+  expect_equal(data[[2]]$id, scalar(ids[6]))
+  expect_equal(data[[3]]$id, scalar(ids[1]))
+  expect_equal(data[[4]]$id, scalar(ids[4]))
+  expect_equal(data[[5]]$id, scalar(ids[2]))
+  expect_equal(data[[6]]$id, scalar(ids[5]))
+
+  endpoint <- endpoint_all_versions(path)
+  res <- endpoint$run()
+  expect_true(res$validated)
+  expect_equal(res$status_code, 200)
+  expect_equal(res$data, data)
+})

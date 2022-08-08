@@ -768,3 +768,21 @@ test_that("can get report version changelog", {
                c("report_version", "label", "value", "from_file", "public"))
   expect_equal(r$errors, NULL)
 })
+
+
+test_that("can get all versions", {
+  path <- orderly_prepare_orderly_example(name = "demo", git = TRUE)
+  server <- start_test_server(path)
+  id <- orderly::orderly_run("changelog", root = path, echo = FALSE)
+  orderly::orderly_commit(id, root = path)
+  on.exit(server$stop())
+
+  url <- paste0("/v1/versions/")
+  r <- content(httr::GET(server$api_url(url)))
+  expect_equal(r$status, "success")
+  expect_type(r$data, "list")
+  expect_equal(names(r$data[[1]]),
+               c("id", "date", "description", "name", "display_name",
+                 "latest_version", "custom_fields", "parameter_values"))
+  expect_equal(r$errors, NULL)
+})
