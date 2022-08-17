@@ -16,6 +16,7 @@ RUN install2.r --error \
         jsonlite \
         jsonvalidate \
         lgr \
+        orderly \
         porcelain \
         processx \
         remotes \
@@ -24,8 +25,7 @@ RUN install2.r --error \
 
 COPY . /src
 
-RUN install_remote vimc/orderly mrc-ide/rrq \
-        && R CMD INSTALL /src
+RUN R CMD INSTALL /src
 
 EXPOSE 8321
 ENV ORDERLY_SERVER_QUEUE_ID=orderly.server
