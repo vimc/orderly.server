@@ -4,7 +4,7 @@
     "type": "object",
     "properties": {
         "reports": { "$ref": "WorkflowReports.schema.json" },
-        "ref": { "type": "string" },
+        "ref": { "type": [ "string", "null" ] },
         "missing_dependencies": {
             "type": "object",
             "additionalProperties": {
