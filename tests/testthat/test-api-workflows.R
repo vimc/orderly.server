@@ -112,6 +112,87 @@ test_that("can get workflow summary", {
   mockery::expect_called(mock_workflow_summary, 3)
 })
 
+test_that("workflow summary can take null ref", {
+  testthat::skip_on_cran()
+  skip_on_windows()
+  skip_if_no_redis()
+  path <- orderly_git_example("minimal")
+  runner <- orderly_runner(path)
+  t <- tempfile()
+  writeLines(jsonlite::toJSON(list(
+    reports = list(
+      list(
+        name = scalar("preprocess"),
+        instance = scalar("production"),
+        params = list(
+          nmin = scalar(0.5),
+          nmax = scalar(2)
+        )
+      ),
+      list(
+        name = scalar("process"),
+        instance = scalar("production")
+      ),
+      list(
+        name = scalar("postprocess"),
+        instance = scalar("production")
+      )
+    ),
+    ref = scalar(NA)  ## Serializes to json null
+  )), t)
+
+  workflow <- list(
+    reports = list(
+      list(
+        name = "preprocess",
+        instance = "production",
+        params = list(
+          nmin = 0.5,
+          nmax = 2
+        ),
+        depends_on = c()
+      ),
+      list(
+        name = "process",
+        instance = "production",
+        depends_on = c("preprocess")
+      ),
+      list(
+        name = "postprocess",
+        instance = "production",
+        depends_on = c("preprocess", "process")
+      )
+    ),
+    ref = NULL,
+    missing_dependencies = list(
+      preprocess = list(),
+      process = list(),
+      postprocess = list()
+    )
+  )
+  mock_workflow_summary <- mockery::mock(workflow, cycle = TRUE)
+
+  ## endpoint
+  with_mock("orderly.server:::workflow_summary" = mock_workflow_summary, {
+    endpoint <- endpoint_workflow_summary(runner)
+    res_endpoint <- endpoint$run(t)
+  })
+  expect_equal(res_endpoint$status_code, 200)
+  expect_null(res_endpoint$data$ref)
+  mockery::expect_called(mock_workflow_summary, 1)
+
+  ## api
+  with_mock("orderly.server:::workflow_summary" = mock_workflow_summary, {
+    api <- build_api(runner)
+    res_api <- api$request("POST", "/v1/workflow/summary/",
+                           body = readLines(t))
+  })
+  expect_equal(res_api$status, 200L)
+  expect_equal(res_api$headers[["Content-Type"]], "application/json")
+  expect_equal(res_api$body, as.character(res_endpoint$body))
+  mockery::expect_called(mock_workflow_summary, 2)
+})
+
 test_that("workflow job can be submitted", {
   path <- orderly_git_example("depends", testing = TRUE)
   runner <- mock_runner(submit_workflow = list(
