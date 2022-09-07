@@ -152,10 +152,12 @@ git_latest_commit <- function(branch = "master", root = NULL) {
 }
 
 get_reports <- function(branch, commit, show_all, default_branch, root) {
-  list_all <- show_all || identical(branch, default_branch) ||
-    is.null(branch) || !nzchar(branch)
+  list_all <- show_all || identical(branch, default_branch) || is_empty(branch)
   if (list_all) {
-    if (is.null(commit) || !nzchar(commit)) {
+    if (is_empty(commit)) {
+      if (is_empty(branch)) {
+        branch <- default_branch
+      }
       commit <- git_latest_commit(branch, root = root)
     }
     reports <- git_run(c("ls-tree", "--name-only", "-d",
