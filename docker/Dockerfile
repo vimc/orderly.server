@@ -16,7 +16,6 @@ RUN install2.r --error \
         jsonlite \
         jsonvalidate \
         lgr \
-        orderly \
         porcelain \
         processx \
         remotes \
