@@ -183,7 +183,7 @@ get_reports <- function(branch, commit, show_all, default_branch, root) {
 get_report_parameters <- function(report, commit, root, branch = "master") {
   tryCatch({
     ## Default to latest commit from 'branch' if missing
-    if (is.null(commit)) {
+    if (is_empty(commit)) {
       commit <- git_latest_commit(branch, root = root)
     }
     yml <- git_run(
