@@ -137,6 +137,20 @@ test_that("can get available reports for a branch & commit", {
   expect_equal(res$data, c("global", "minimal"))
 })
 
+test_that("can get available reports with empty or NA branch & commit", {
+  path <- orderly_prepare_orderly_git_example()
+  runner <- mock_runner(root = path[["origin"]])
+  endpoint <- endpoint_available_reports(runner)
+
+  res <- endpoint$run("", "", TRUE)
+  expect_equal(res$status_code, 200)
+  expect_equal(res$data, c("global", "minimal"))
+
+  res <- endpoint$run(NA, NA)
+  expect_equal(res$status_code, 200)
+  expect_equal(res$data, c("global", "minimal"))
+})
+
 test_that("can get parameters for a report & commit", {
   path <- orderly_prepare_orderly_git_example()
   runner <- mock_runner(root = path[["origin"]])

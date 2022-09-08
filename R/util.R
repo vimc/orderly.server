@@ -183,3 +183,7 @@ key_value_collector <- function(init = list()) {
 }
 
 squote <- function(x) sprintf("'%s'", x)
+
+is_empty <- function(x) {
+  is.null(x) || is.na(x) || !nzchar(x)
+}
