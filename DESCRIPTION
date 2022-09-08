@@ -13,7 +13,7 @@ Imports:
     ids,
     jsonlite,
     lgr,
-    orderly (>= 1.4.9),
+    orderly (>= 1.4.10),
     porcelain (>= 0.1.9),
     processx,
     redux,

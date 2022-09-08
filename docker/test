@@ -20,9 +20,18 @@ function cleanup {
 trap cleanup EXIT
 
 rm -rf orderly-demo
-git clone https://github.com/vimc/orderly-demo $PACKAGE_ROOT/orderly-demo
-mkdir -p $PACKAGE_ROOT/orderly-demo/runner/log
-mkdir -p $PACKAGE_ROOT/orderly-demo/runner/id
+
+mkdir orderly-demo
+
+docker run --entrypoint create_orderly_demo.sh \
+  --env HOME=/tmp \
+  --user $(id -u) \
+  -v $PACKAGE_ROOT/orderly-demo:/orderly \
+  -w /orderly $TAG_SHA \
+  .
+
+mkdir -p $PACKAGE_ROOT/orderly-demo/demo/runner/log
+mkdir -p $PACKAGE_ROOT/orderly-demo/demo/runner/id
 
 docker network create $NAME_NETWORK
 
@@ -32,12 +41,12 @@ docker run --rm -d --network=$NAME_NETWORK --network-alias=redis \
 docker run --rm -d --network=$NAME_NETWORK \
     -e REDIS_URL=redis://redis:6379 \
     -p 8321:8321 \
-    --mount type=bind,src=$PACKAGE_ROOT/orderly-demo,dst=/demo \
+    --mount type=bind,src=$PACKAGE_ROOT/orderly-demo/demo,dst=/demo \
     --name $NAME_SERVER $TAG_SHA --backup-period=0 demo
 
 docker run --rm -d --network=$NAME_NETWORK \
     -e REDIS_URL=redis://redis:6379 \
-    --mount type=bind,src=$PACKAGE_ROOT/orderly-demo,dst=/demo \
+    --mount type=bind,src=$PACKAGE_ROOT/orderly-demo/demo,dst=/demo \
     --entrypoint /usr/local/bin/orderly_worker \
     --name $NAME_WORKER $TAG_SHA
 
