@@ -27,7 +27,7 @@ docker run --entrypoint create_orderly_demo.sh \
   --env HOME=/tmp \
   --user $(id -u) \
   -v $PACKAGE_ROOT/orderly-demo:/orderly \
-  -w /orderly vimc/orderly:vimc-2929 \
+  -w /orderly vimc/orderly:master \
   .
 
 mkdir -p $PACKAGE_ROOT/orderly-demo/demo/runner/log
