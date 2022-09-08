@@ -152,9 +152,12 @@ git_latest_commit <- function(branch = "master", root = NULL) {
 }
 
 get_reports <- function(branch, commit, show_all, default_branch, root) {
-  list_all <- show_all || identical(branch, default_branch) || is.null(branch)
+  list_all <- show_all || identical(branch, default_branch) || is_empty(branch)
   if (list_all) {
-    if (is.null(commit)) {
+    if (is_empty(commit)) {
+      if (is_empty(branch)) {
+        branch <- default_branch
+      }
       commit <- git_latest_commit(branch, root = root)
     }
     reports <- git_run(c("ls-tree", "--name-only", "-d",
@@ -180,7 +183,7 @@ get_reports <- function(branch, commit, show_all, default_branch, root) {
 get_report_parameters <- function(report, commit, root, branch = "master") {
   tryCatch({
     ## Default to latest commit from 'branch' if missing
-    if (is.null(commit)) {
+    if (is_empty(commit)) {
       commit <- git_latest_commit(branch, root = root)
     }
     yml <- git_run(

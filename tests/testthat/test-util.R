@@ -175,3 +175,10 @@ test_that("ordered_map_to_list", {
                "Corrupt ordered map (this should never happen)",
                fixed = TRUE)
 })
+
+test_that("is_empty", {
+  expect_true(is_empty(NULL))
+  expect_true(is_empty(NA))
+  expect_true(is_empty(""))
+  expect_false(is_empty("text"))
+})

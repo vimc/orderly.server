@@ -337,6 +337,11 @@ test_that("can get available reports", {
   server <- start_test_server(path[["local"]])
   on.exit(server$stop())
 
+  url <- "/reports/source?branch=&commit="
+  reports <- content(httr::GET(server$api_url(url)))
+  expect_equal(reports$status, "success")
+  expect_equal(reports$data, c("global", "minimal"))
+
   r <- content(httr::GET(server$api_url("/git/commits?branch=master")))
   expect_equal(r$status, "success")
 
