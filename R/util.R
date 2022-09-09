@@ -187,3 +187,41 @@ squote <- function(x) sprintf("'%s'", x)
 is_empty <- function(x) {
   is.null(x) || is.na(x) || !nzchar(x)
 }
+
+is_na <- function(x) {
+  ## Returns FALSE when x is NULL instead of logical(0)
+  ## returns FALSE when x is anything other than a vector or list, to avoid
+  ## warnings from is.na
+  (is.list(x) || is.vector(x)) && isTRUE(is.na(x))
+}
+
+#' Replace any NA values in named list of args with default value from function
+#'
+#' @param func Name of a function to get default values from
+#' @param args List of args to replace NA with defaults in
+#'
+#' @return The updated args, or error if some args are still NA
+#'
+#' @keywords internal
+set_param_defaults <- function(func, args) {
+  fmls <- formals(func)
+  defaults <- fmls[vlapply(fmls, function(x) !is.symbol(x))]
+
+  for (arg_name in names(args)) {
+    if (is_na(args[[arg_name]]) && arg_name %in% names(defaults)) {
+      args[arg_name] <- defaults[arg_name]
+    }
+  }
+  still_na <- args[vlapply(args, is_na)]
+  if (length(still_na) > 0) {
+    param_text <- paste0(sprintf("'%s'", names(still_na)), collapse = ", ")
+    if (length(still_na) == 1) {
+      text <- sprintf("query parameter %s is missing but required", param_text)
+    } else {
+      text <- sprintf("query parameters %s are missing but required",
+                      param_text)
+    }
+    porcelain::porcelain_stop(text, "MISSING_INPUT")
+  }
+  args
+}

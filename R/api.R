@@ -128,6 +128,8 @@ endpoint_git_branches <- function(runner) {
 }
 
 target_git_commits <- function(runner, branch) {
+  args <- set_param_defaults(target_git_commits, as.list(environment()))
+  list2env(args, envir = environment())
   git_commits(branch, runner$root, runner$default_branch)
 }
 
@@ -141,21 +143,25 @@ endpoint_git_commits <- function(runner) {
 
 target_available_reports <- function(runner, branch = NULL, commit = NULL,
                                      show_all = FALSE) {
+  args <- set_param_defaults(target_available_reports, as.list(environment()))
+  list2env(args, envir = environment())
   get_reports(branch, commit, show_all, runner$default_branch, runner$root)
 }
 
 endpoint_available_reports <- function(runner) {
   porcelain::porcelain_endpoint$new(
     "GET", "/reports/source", target_available_reports,
-    porcelain::porcelain_input_query(branch = "string"),
-    porcelain::porcelain_input_query(commit = "string"),
-    porcelain::porcelain_input_query(show_all = "logical"),
+    porcelain::porcelain_input_query(branch = "string",
+                                     commit = "string",
+                                     show_all = "logical"),
     porcelain::porcelain_state(runner = runner),
     returning = returning_json("AvailableReports.schema")
   )
 }
 
 target_report_parameters <- function(runner, report_id, commit = NULL) {
+  args <- set_param_defaults(target_report_parameters, as.list(environment()))
+  list2env(args, envir = environment())
   path <- runner$root
   default_branch <- runner$default_branch
   tryCatch(
@@ -194,6 +200,8 @@ endpoint_report_parameters <- function(runner) {
 
 target_bundle_pack <- function(path, name, parameters = NULL,
                                instance = NULL) {
+  args <- set_param_defaults(target_bundle_pack, as.list(environment()))
+  list2env(args, envir = environment())
   if (!is.null(parameters)) {
     parameters <- jsonlite::fromJSON(parameters)
   }
@@ -236,6 +244,8 @@ endpoint_bundle_import <- function(path, data) {
 }
 
 target_report_info <- function(runner, id, name) {
+  args <- set_param_defaults(target_report_info, as.list(environment()))
+  list2env(args, envir = environment())
   info <- orderly::orderly_info(id, name, root = runner$root)
   info <- recursive_scalar(info)
   ## Rename parameters to params for consistency with rest of API
@@ -247,8 +257,8 @@ target_report_info <- function(runner, id, name) {
 endpoint_report_info <- function(runner) {
   porcelain::porcelain_endpoint$new(
     "GET", "/v1/reports/info", target_report_info,
-    porcelain::porcelain_input_query(id = "string"),
-    porcelain::porcelain_input_query(name = "string"),
+    porcelain::porcelain_input_query(id = "string",
+                                     name = "string"),
     porcelain::porcelain_state(runner = runner),
     returning = returning_json("ReportInfo.schema")
   )
@@ -256,6 +266,8 @@ endpoint_report_info <- function(runner) {
 
 target_run <- function(runner, name, body = NULL, ref = NULL,
                        instance = NULL, timeout = 60 * 60 * 3) {
+  args <- set_param_defaults(target_run, as.list(environment()))
+  list2env(args, envir = environment())
   if (!is.null(body)) {
     body <- jsonlite::fromJSON(body)
   }
@@ -281,6 +293,8 @@ endpoint_run <- function(runner) {
 }
 
 target_status <- function(runner, key, output = FALSE) {
+  args <- set_param_defaults(target_status, as.list(environment()))
+  list2env(args, envir = environment())
   res <- runner$status(key, output)
   queue <- res$queue
   if (is.null(queue)) {
@@ -336,6 +350,8 @@ target_dependencies <- function(runner, name,
                                 max_depth = 100,
                                 show_all = FALSE,
                                 use = "archive") {
+  args <- set_param_defaults(target_dependencies, as.list(environment()))
+  list2env(args, envir = environment())
   get_dependencies(path = runner$root,
                    name = name,
                    id = id,
@@ -437,6 +453,8 @@ endpoint_workflow_run <- function(runner) {
 }
 
 target_workflow_status <- function(runner, workflow_key, output = FALSE) {
+  args <- set_param_defaults(target_workflow_status, as.list(environment()))
+  list2env(args, envir = environment())
   res <- runner$workflow_status(workflow_key, output)
   reports <- lapply(res$reports, function(report) {
     list(
@@ -495,6 +513,8 @@ endpoint_report_version_artefact_hashes <- function(path) {
 }
 
 target_reports <- function(path, reports = NULL) {
+  args <- set_param_defaults(target_reports, as.list(environment()))
+  list2env(args, envir = environment())
   if (!is.null(reports)) {
     reports <- unlist(strsplit(reports, split = ","))
   }
@@ -572,6 +592,9 @@ endpoint_report_version_details <- function(path) {
 }
 
 target_report_versions_custom_fields <- function(path, versions) {
+  args <- set_param_defaults(target_report_versions_custom_fields,
+                     as.list(environment()))
+  list2env(args, envir = environment())
   db <- orderly::orderly_db("destination", root = path)
   get_custom_fields_for_versions(db, unlist(strsplit(versions, split = ",")))
 }
@@ -605,6 +628,8 @@ endpoint_custom_fields <- function(path) {
 }
 
 target_report_versions_params <- function(path, versions) {
+  args <- set_param_defaults(target_report_versions_params, as.list(environment()))
+  list2env(args, envir = environment())
   db <- orderly::orderly_db("destination", root = path)
   get_parameters_for_versions(db, unlist(strsplit(versions, split = ",")))
 }
@@ -671,6 +696,8 @@ target_report_version_changelog <- function(path,
                                             name,
                                             id,
                                             public_only = FALSE) {
+  args <- set_param_defaults(target_report_version_changelog, as.list(environment()))
+  list2env(args, envir = environment())
   db <- orderly::orderly_db("destination", root = path)
   version <- get_report_version(db, name, id)
   if (public_only) {

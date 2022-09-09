@@ -182,3 +182,28 @@ test_that("is_empty", {
   expect_true(is_empty(""))
   expect_false(is_empty("text"))
 })
+
+test_that("set_param_defaults", {
+  f <- function(w, x, y = NULL, z = "default") {}
+
+  args <- set_param_defaults(f, list(x = "thing"))
+  expect_equal(args, list(x = "thing"))
+
+  args <- set_param_defaults(f, list(x = "thing", y = NA, z = NA_character_))
+  expect_equal(args,
+               list(x = "thing", y = NULL, z = "default"))
+
+  args <- set_param_defaults(f, list(x = "thing", y = "y", z = "z"))
+  expect_equal(args,
+               list(x = "thing", y = "y", z = "z"))
+
+  args <- set_param_defaults(f, list(x = "thing", y = NULL, z = ""))
+  expect_equal(args,
+               list(x = "thing", y = NULL, z = ""))
+
+  expect_error(set_param_defaults(f, list(x = NA, y = 2, z = "")),
+               "query parameter 'x' is missing but required")
+
+  expect_error(set_param_defaults(f, list(w = NA, x = NA, y = 2, z = "")),
+               "query parameters 'w', 'x' are missing but required")
+})

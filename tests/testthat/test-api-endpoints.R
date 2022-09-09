@@ -126,6 +126,29 @@ test_that("git commits endpoint", {
   expect_lte(res$data$age, data$age)
 })
 
+
+test_that("git commits endpoint returns useful error if branch is NULL", {
+  path <- orderly_prepare_orderly_git_example()
+  runner <- mock_runner(root = path[["local"]])
+  api <- build_api(runner)
+
+  res <- api$request("GET", "/git/commits")
+  expect_equal(res$status, 400)
+  body <- jsonlite::fromJSON(res$body, simplifyVector = FALSE)
+  expect_equal(body$errors[[1]]$error, "INVALID_INPUT")
+  expect_match(body$errors[[1]]$detail,
+               "query parameter 'branch' is missing but required")
+
+  res <- api$request("GET", "/git/commits",
+                     list(branch = NA_character_))
+  expect_equal(res$status, 400)
+  body <- jsonlite::fromJSON(res$body, simplifyVector = FALSE)
+  expect_equal(body$errors[[1]]$error, "MISSING_INPUT")
+  expect_match(body$errors[[1]]$detail,
+               "query parameter 'branch' is missing but required")
+})
+
+
 test_that("can get available reports for a branch & commit", {
   path <- orderly_prepare_orderly_git_example()
   runner <- mock_runner(root = path[["origin"]])
@@ -137,18 +160,43 @@ test_that("can get available reports for a branch & commit", {
   expect_equal(res$data, c("global", "minimal"))
 })
 
+test_that("git commits endpoint returns useful error if branch is NULL", {
+  path <- orderly_prepare_orderly_git_example()
+  runner <- mock_runner(root = path[["local"]])
+  api <- build_api(runner)
+
+  res <- api$request("GET", "/git/commits")
+  expect_equal(res$status, 400)
+  body <- jsonlite::fromJSON(res$body, simplifyVector = FALSE)
+  expect_equal(body$errors[[1]]$error, "INVALID_INPUT")
+  expect_match(body$errors[[1]]$detail,
+               "query parameter 'branch' is missing but required")
+
+  res <- api$request("GET", "/git/commits",
+                     list(branch = NA_character_))
+  expect_equal(res$status, 400)
+  body <- jsonlite::fromJSON(res$body, simplifyVector = FALSE)
+  expect_equal(body$errors[[1]]$error, "MISSING_INPUT")
+  expect_match(body$errors[[1]]$detail,
+               "query parameter 'branch' is missing but required")
+})
+
 test_that("can get available reports with empty or NA branch & commit", {
   path <- orderly_prepare_orderly_git_example()
   runner <- mock_runner(root = path[["origin"]])
-  endpoint <- endpoint_available_reports(runner)
+  api <- build_api(runner)
 
-  res <- endpoint$run("", "", TRUE)
-  expect_equal(res$status_code, 200)
-  expect_equal(res$data, c("global", "minimal"))
+  res <- api$request("GET", "/reports/source")
+  expect_equal(res$status, 200)
+  body <- jsonlite::fromJSON(res$body, simplifyVector = FALSE)
+  expect_equal(body$data, list("global", "minimal"))
 
-  res <- endpoint$run(NA, NA)
-  expect_equal(res$status_code, 200)
-  expect_equal(res$data, c("global", "minimal"))
+  res <- api$request("GET", "/reports/source",
+                     list(branch = NA_character_, commit = NA_character_,
+                          show_all = NA))
+  expect_equal(res$status, 200)
+  body <- jsonlite::fromJSON(res$body, simplifyVector = FALSE)
+  expect_equal(body$data, list("global", "minimal"))
 })
 
 test_that("can get parameters for a report & commit", {
@@ -292,6 +340,38 @@ test_that("run with changelog", {
     mockery::mock_args(runner$submit_task_report)[[1]],
     list("example", NULL, NULL, NULL, changelog = "[test] msg",
          timeout = 60 * 60 * 3))
+})
+
+
+test_that("run supports NA parameters", {
+  path <- orderly_prepare_orderly_git_example()
+  runner <- orderly_runner(path[["local"]])
+  api <- build_api(runner)
+
+  res <- api$request("POST", "/v1/reports/minimal/run/")
+  expect_equal(res$status, 200)
+  body <- jsonlite::fromJSON(res$body, simplifyVector = FALSE)
+  expect_equal(body$data$name, "minimal")
+
+  task_id <- get_task_id_key(runner, body$data$key)
+  result <- runner$queue$task_wait(task_id)
+  status_res <- api$request("GET", body$data$path)
+  expect_equal(status_res$status, 200)
+  status_body <- jsonlite::fromJSON(status_res$body, simplifyVector = FALSE)
+  expect_equal(status_body$data$status, "success")
+
+  res <- api$request("POST", "/v1/reports/minimal/run/",
+                     list(ref = NA_character_))
+  expect_equal(res$status, 200)
+  body <- jsonlite::fromJSON(res$body, simplifyVector = FALSE)
+  expect_equal(body$data$name, "minimal")
+
+  task_id <- get_task_id_key(runner, body$data$key)
+  result <- runner$queue$task_wait(task_id)
+  status_res <- api$request("GET", body$data$path)
+  expect_equal(status_res$status, 200)
+  status_body <- jsonlite::fromJSON(status_res$body, simplifyVector = FALSE)
+  expect_equal(status_body$data$status, "success")
 })
 
 
@@ -647,6 +727,39 @@ test_that("run can specify instance", {
   expect_equal(
     mockery::mock_args(runner$submit_task_report)[[2]],
     list("example", NULL, NULL, "myinstance", changelog = NULL, timeout = 100))
+})
+
+test_that("run can specify ref", {
+  ## We're interested in testing that orderly.server passes instance arg
+  ## to the runner$queue arg
+  key <- "key-1"
+  runner <- mock_runner(key = key)
+
+  res <- target_run(runner, "example", timeout = 100, ref = "a123")
+  expect_equal(
+    res,
+    list(name = scalar("example"),
+         key = scalar(key),
+         path = scalar(sprintf("/v1/reports/%s/status/", key))))
+  expect_equal(
+    mockery::mock_args(runner$submit_task_report)[[1]],
+    list("example", NULL, "a123", NULL, changelog = NULL, timeout = 100))
+
+  ## and via the api
+  api <- build_api(runner)
+
+  res_api <- api$request("POST", "/v1/reports/example/run/",
+                         list(timeout = 100, ref = "a123"))
+  expect_equal(
+    mockery::mock_args(runner$submit_task_report)[[2]],
+    list("example", NULL, "a123", NULL, changelog = NULL, timeout = 100))
+
+  ## With NA ref
+  res_api <- api$request("POST", "/v1/reports/example/run/",
+                         list(timeout = 100, ref = NA_character_))
+  expect_equal(
+    mockery::mock_args(runner$submit_task_report)[[3]],
+    list("example", NULL, NULL, NULL, changelog = NULL, timeout = 100))
 })
 
 test_that("run-metadata", {
