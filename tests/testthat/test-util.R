@@ -184,7 +184,7 @@ test_that("is_empty", {
 })
 
 test_that("set_param_defaults", {
-  f <- function(w, x, y = NULL, z = "default") {}
+  f <- function(w, x, y = NULL, z = "default") {} # nolint
 
   args <- set_param_defaults(f, list(x = "thing"))
   expect_equal(args, list(x = "thing"))

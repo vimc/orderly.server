@@ -628,7 +628,8 @@ endpoint_custom_fields <- function(path) {
 }
 
 target_report_versions_params <- function(path, versions) {
-  args <- set_param_defaults(target_report_versions_params, as.list(environment()))
+  args <- set_param_defaults(target_report_versions_params,
+                             as.list(environment()))
   list2env(args, envir = environment())
   db <- orderly::orderly_db("destination", root = path)
   get_parameters_for_versions(db, unlist(strsplit(versions, split = ",")))
@@ -696,7 +697,8 @@ target_report_version_changelog <- function(path,
                                             name,
                                             id,
                                             public_only = FALSE) {
-  args <- set_param_defaults(target_report_version_changelog, as.list(environment()))
+  args <- set_param_defaults(target_report_version_changelog,
+                             as.list(environment()))
   list2env(args, envir = environment())
   db <- orderly::orderly_db("destination", root = path)
   version <- get_report_version(db, name, id)
