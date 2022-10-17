@@ -5,12 +5,10 @@ on:
     branches:
       - main
       - master
-      - vimc-4192
   pull_request:
     branches:
       - main
       - master
-      - vimc-4192
 
 name: R-CMD-check
 
@@ -44,6 +42,7 @@ jobs:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
       RSPM: ${{ matrix.config.rspm }}
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      ORDERLY_VERSION: master
 
     steps:
       - uses: actions/checkout@v2
@@ -84,7 +83,11 @@ jobs:
           remotes::install_cran("rcmdcheck")
           remotes::install_github("mrc-ide/rrq")
           remotes::install_github("ropensci/jsonvalidate")
-          remotes::install_github("reside-ic/porcelain@22eef9b")
+        shell: Rscript {0}
+
+      - name: Install development orderly
+        if: ${{ env.ORDERLY_VERSION != 'master' }}
+        run: remotes::install_github("vimc/orderly@$ORDERLY_VERSION")
         shell: Rscript {0}
 
       - name: Check
