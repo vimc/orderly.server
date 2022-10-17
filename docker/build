@@ -8,7 +8,7 @@ ORDERLY_VERSION="${ORDERLY_VERSION:-master}"
 docker build --pull \
        -t $TAG_SHA \
        -f docker/Dockerfile \
-       -build-arg "BASE_IMAGE_TAG=${ORDERLY_VERSION}" \
+       --build-arg "BASE_IMAGE_TAG=${ORDERLY_VERSION}" \
        $PACKAGE_ROOT
 
 # We always push the SHA tagged versions, for debugging if the tests
