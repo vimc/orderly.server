@@ -73,7 +73,7 @@ jobs:
       - name: Install development orderly
         if: ${{ github.event.name == 'repository-dispatch' }} && ${{ github.event.client_payload.orderly_version != 'master' }}
         env:
-          ORDERLY_VERION: ${{ github.event.client_payload.orderly_version }}
+          ORDERLY_VERSION: ${{ github.event.client_payload.orderly_version }}
         run: remotes::install_github("vimc/orderly@$ORDERLY_VERSION")
         shell: Rscript {0}
 
