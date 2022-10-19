@@ -5,12 +5,12 @@ on:
     branches:
       - main
       - master
-      - vimc-4192
   pull_request:
     branches:
       - main
       - master
-      - vimc-4192
+  repository_dispatch:
+    types: [orderly-downstream]
 
 name: R-CMD-check
 
@@ -84,7 +84,13 @@ jobs:
           remotes::install_cran("rcmdcheck")
           remotes::install_github("mrc-ide/rrq")
           remotes::install_github("ropensci/jsonvalidate")
-          remotes::install_github("reside-ic/porcelain@22eef9b")
+        shell: Rscript {0}
+
+      - name: Install development orderly
+        if: ${{ github.event.name == 'repository-dispatch' }} && ${{ github.event.client_payload.orderly_version != 'master' }}
+        env:
+          ORDERLY_VERION: ${{ github.event.client_payload.orderly_version }}
+        run: remotes::install_github("vimc/orderly@$ORDERLY_VERSION")
         shell: Rscript {0}
 
       - name: Check
