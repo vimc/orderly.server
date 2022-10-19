@@ -9,6 +9,8 @@ on:
     branches:
       - main
       - master
+  repository_dispatch:
+    types: [orderly-downstream]
 
 name: R-CMD-check
 
@@ -69,7 +71,9 @@ jobs:
 
 
       - name: Install development orderly
-        if: ${{ env.ORDERLY_VERSION != 'master' }}
+        if: ${{ github.event.name == 'repository-dispatch' }} && ${{ github.event.client_payload.orderly_version != 'master' }}
+        env:
+          ORDERLY_VERION: ${{ github.event.client_payload.orderly_version }}
         run: remotes::install_github("vimc/orderly@$ORDERLY_VERSION")
         shell: Rscript {0}
 
