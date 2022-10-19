@@ -74,7 +74,9 @@ jobs:
         if: ${{ github.event.name == 'repository-dispatch' }} && ${{ github.event.client_payload.orderly_version != 'master' }}
         env:
           ORDERLY_VERSION: ${{ github.event.client_payload.orderly_version }}
-        run: remotes::install_github("vimc/orderly@$ORDERLY_VERSION")
+        run: |
+          install <- paste0("vimc/orderly@", Sys.getenv("ORDERLY_VERSION"))
+          remotes::install_github(install)
         shell: Rscript {0}
 
       - name: Check
