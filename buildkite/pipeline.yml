@@ -55,7 +55,7 @@ steps:
     branches: "master"
     build:
       branch: main
- 
+
   - trigger: "threemc-orderly-image"
     label: ":rocket: threemc orderly image (from orderly.server) :scissors:"
     branches: "master"
@@ -67,3 +67,9 @@ steps:
     branches: "master"
     build:
       branch: main
+
+  # The next step triggers orderly-web build using this branch of orderly.server
+  - trigger: "orderly-web"
+    label: ":rocket: orderly-web (from orderly.server) :cloud:"
+    env:
+        ORDERLY_SERVER_VERSION: "${BUIDLKITE_COMMIT}"
