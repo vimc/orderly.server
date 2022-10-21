@@ -71,5 +71,6 @@ steps:
   # The next step triggers orderly-web build using this branch of orderly.server
   - trigger: "orderly-web"
     label: ":rocket: orderly-web (from orderly.server) :cloud:"
-    env:
+    build:
+      env:
         ORDERLY_SERVER_VERSION: "${BUIDLKITE_COMMIT}"
