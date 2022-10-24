@@ -73,4 +73,4 @@ steps:
     label: ":rocket: orderly-web (from orderly.server) :cloud:"
     build:
       env:
-        ORDERLY_SERVER_VERSION: "${BUILDKITE_COMMIT}"
+        ORDERLY_SERVER_VERSION: "${BUILDKITE_COMMIT:0:7}"
