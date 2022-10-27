@@ -71,15 +71,6 @@ jobs:
           remotes::install_cran("covr")
         shell: Rscript {0}
 
-      - name: Install development orderly
-        if: ${{ github.event.name == 'repository-dispatch' }} && ${{ github.event.client_payload.orderly_version != 'master' }}
-        env:
-          ORDERLY_VERSION: ${{ github.event.client_payload.orderly_version }}
-        run: |
-          install <- paste0("vimc/orderly@", Sys.getenv("ORDERLY_VERSION"))
-          remotes::install_github(install)
-        shell: Rscript {0}
-
       - name: Test coverage
         run: covr::codecov()
         shell: Rscript {0}
