@@ -50,13 +50,17 @@ jobs:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
+      - name: Inputs
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: echo "${{ toJSON(github.event.inputs) }}"
+
       - uses: actions/checkout@v2
 
-      - uses: r-lib/actions/setup-r@v1
+      - uses: r-lib/actions/setup-r@v2
         with:
           r-version: ${{ matrix.config.r }}
 
-      - uses: r-lib/actions/setup-pandoc@v1
+      - uses: r-lib/actions/setup-pandoc@v2
 
       - name: Query dependencies
         run: |
@@ -91,7 +95,7 @@ jobs:
         shell: Rscript {0}
 
       - name: Install development orderly
-        if: ${{ github.event.name == 'workflow-dispatch' && github.event.inputs.orderly_version != 'master' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.orderly_version != 'master' }}
         env:
           ORDERLY_VERSION: ${{ github.event.inputs.orderly_version }}
         run: |
