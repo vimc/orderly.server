@@ -51,7 +51,7 @@ jobs:
 
     steps:
       - name: Inputs
-        if: ${{ github.event.name == 'workflow-dispatch' }}
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: echo "${{ toJSON(github.event.inputs) }}"
 
       - uses: actions/checkout@v2
@@ -95,7 +95,7 @@ jobs:
         shell: Rscript {0}
 
       - name: Install development orderly
-        if: ${{ github.event.name == 'workflow-dispatch' && github.event.inputs.orderly_version != 'master' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.orderly_version != 'master' }}
         env:
           ORDERLY_VERSION: ${{ github.event.inputs.orderly_version }}
         run: |
