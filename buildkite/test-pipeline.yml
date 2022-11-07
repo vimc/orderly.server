@@ -12,4 +12,4 @@ steps:
     label: ":rocket: orderly-web (from orderly.server) :cloud:"
     build:
       env:
-        ORDERLY_SERVER_VERSION: $(buildkite-agent meta-data get "orderly-server-sha")
+        ORDERLY_SERVER_VERSION: "${buildkite-agent meta-data get \"orderly-server-sha\"}"
