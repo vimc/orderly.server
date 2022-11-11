@@ -35,4 +35,5 @@ TAG_LATEST="${PACKAGE_ORG}/${PACKAGE_NAME}:latest"
 ORDERLY_VERSION="${ORDERLY_VERSION:-master}"
 if [ "$ORDERLY_VERSION" != "master" ]; then
     TAG_SHA="$TAG_SHA-$ORDERLY_VERSION"
+    buildkite-agent meta-data set "orderly-server-sha" $TAG_SHA
 fi

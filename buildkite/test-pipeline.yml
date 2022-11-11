@@ -6,3 +6,10 @@ steps:
 
   - label: ":hammer: Test"
     command: docker/test
+
+  # The next step triggers orderly-web build using the branch
+  - trigger: "orderly-web"
+    label: ":rocket: orderly-web (from orderly.server) :cloud:"
+    build:
+      env:
+        ORDERLY_SERVER_VERSION: "${buildkite-agent meta-data get \"orderly-server-sha\"}"
