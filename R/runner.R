@@ -201,16 +201,7 @@ orderly_runner_ <- R6::R6Class(
     },
 
     #' @description
-    #' Create object, read configuration and setup redis connection.
-    #'
-    #' @param root Orderly root.
-    #' @param identity Remote identity, as listed in orderly_config.yml
-    #' @param queue_id ID of an existing queue to connect to, creates a new one
-    #'   if NULL.
-    #' @param workers Number of workers to spawn.
-    #' @param cleanup_on_exit If TRUE workers are killed on exit.
-    #' @param worker_timeout How long worker should live for before it is
-    #' killed. Expect this is only finite during local testing.
+    #' Re-read configuration and set options
     reload = function() {
       if (is.null(self$identity)) {
         self$config <- orderly::orderly_config(self$root)
