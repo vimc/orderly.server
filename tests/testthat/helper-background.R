@@ -1,9 +1,9 @@
-start_test_server <- function(path = NULL, port = 8321, log = NULL) {
+start_test_server <- function(path = NULL, port = 8321, log = NULL, identity = NULL) {
   skip_if_no_redis()
   path <- path %||% orderly_git_example("interactive", testing = TRUE)
   get_free_port <- free_port(port)
   port <- get_free_port()
-  server <- orderly_server_background$new(path, port, log)
+  server <- orderly_server_background$new(path, port, log, identity)
   server$start()
   server
 }
@@ -17,8 +17,9 @@ orderly_server_background <- R6::R6Class(
     url = NULL,
     process = NULL,
     log = NULL,
+    identity = NULL,
 
-    initialize = function(path, port, log) {
+    initialize = function(path, port, log, identity) {
       loadNamespace("callr")
       loadNamespace("httr")
 
@@ -34,6 +35,8 @@ orderly_server_background <- R6::R6Class(
       self$port <- port
 
       self$log <- log %||% tempfile()
+
+      self$identity <- identity
     },
 
     finalize = function() {
@@ -47,14 +50,13 @@ orderly_server_background <- R6::R6Class(
       if (!private$server_not_up()) {
         stop("Server already listening on port ", port)
       }
-
       ## For testing don't rate limit server
       self$process <- callr::r_bg(
-        function(path, port) {
+        function(path, port, identity) {
           orderly.server::server(path, port, "127.0.0.1",
-                                 timeout_rate_limit = 0)
+                                 timeout_rate_limit = 0, identity = identity)
         },
-        args = list(path = self$path, port = self$port),
+        args = list(path = self$path, port = self$port, identity = self$identity),
         stdout = self$log, stderr = self$log)
       message("waiting for server to become responsive")
       wait_while(private$server_not_up)
