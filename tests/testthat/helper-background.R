@@ -1,4 +1,5 @@
-start_test_server <- function(path = NULL, port = 8321, log = NULL, identity = NULL) {
+start_test_server <- function(path = NULL, port = 8321, log = NULL,
+                              identity = NULL) {
   skip_if_no_redis()
   path <- path %||% orderly_git_example("interactive", testing = TRUE)
   get_free_port <- free_port(port)
@@ -56,7 +57,8 @@ orderly_server_background <- R6::R6Class(
           orderly.server::server(path, port, "127.0.0.1",
                                  timeout_rate_limit = 0, identity = identity)
         },
-        args = list(path = self$path, port = self$port, identity = self$identity),
+        args = list(path = self$path, port = self$port,
+                    identity = self$identity),
         stdout = self$log, stderr = self$log)
       message("waiting for server to become responsive")
       wait_while(private$server_not_up)
