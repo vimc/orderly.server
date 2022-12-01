@@ -791,3 +791,53 @@ test_that("can get all versions", {
                  "latest_version", "custom_fields", "parameter_values"))
   expect_equal(r$errors, NULL)
 })
+
+
+test_that("can change and reload config", {
+  path <- orderly_prepare_orderly_example(name = "demo", git = TRUE)
+  config_path <- file.path(path, "orderly_config.yml")
+
+  remote <- list(
+    main = list(
+      driver = "orderly::orderly_remote_path",
+      primary = TRUE,
+      default_branch_only = TRUE,
+      args = list(root = path)
+    )
+  )
+  dat <- yaml::read_yaml(config_path)
+  dat$remote <- remote
+  writeLines(yaml::as.yaml(dat), config_path)
+
+  server <- start_test_server(path, identity = "main")
+  on.exit(server$stop())
+
+  # check that ref switching is not allowed
+  r <- httr::POST(server$api_url("/v1/reports/example/run/?ref=other"),
+                  body = NULL, encode = "json")
+  expect_equal(httr::status_code(r), 500)
+  body <- content(r)
+  expect_match(body$errors[[1]]$detail, "Reference switching is disallowed")
+
+  # now change config to allow ref switching
+  remote <- list(
+    main = list(
+      driver = "orderly::orderly_remote_path",
+      primary = TRUE,
+      default_branch_only = FALSE,
+      args = list(root = path)
+    )
+  )
+  dat$remote <- remote
+  writeLines(yaml::as.yaml(dat), config_path)
+  url <- paste0("/v1/reload/")
+  r <- content(httr::POST(server$api_url(url)))
+  expect_equal(r$status, "success")
+  expect_equal(r$data, NULL)
+  expect_equal(r$errors, NULL)
+
+  # confirm that we can now run with a ref
+  r <- httr::POST(server$api_url("/v1/reports/example/run/?ref=other"),
+                  body = NULL, encode = "json")
+  expect_equal(httr::status_code(r), 200)
+})

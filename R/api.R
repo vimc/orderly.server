@@ -24,6 +24,7 @@ build_api <- function(runner, backup_period = NULL,
   api$handle(endpoint_workflow_summary(runner))
   api$handle(endpoint_workflow_run(runner))
   api$handle(endpoint_workflow_status(runner))
+  api$handle(endpoint_reload(runner))
   ## NOTE: these all use path not runner; there's no good reason for
   ## this.
   api$handle(endpoint_reports(path))
@@ -462,6 +463,19 @@ endpoint_workflow_status <- function(runner) {
     porcelain::porcelain_input_query(output = "logical"),
     porcelain::porcelain_state(runner = runner),
     returning = returning_json("WorkflowStatus.schema"))
+}
+
+
+target_reload <- function(runner) {
+  runner$reload()
+}
+
+endpoint_reload <- function(runner) {
+  porcelain::porcelain_endpoint$new(
+    "POST", "/v1/reload/",
+    target_reload,
+    porcelain::porcelain_state(runner = runner),
+    returning = returning_json("Empty.schema.json"))
 }
 
 check_timeout <- function(runner, rate_limit = 2 * 60) {

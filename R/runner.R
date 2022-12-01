@@ -125,6 +125,8 @@ orderly_runner_ <- R6::R6Class(
   public = list(
     #' @field root Orderly root
     root = NULL,
+    #' @field identity Remote identity, as listed in orderly_config.yml
+    identity = NULL,
     #' @field config Orderly config
     config = NULL,
     #' @field allow_ref Allow git to change branch/ref for run
@@ -161,6 +163,7 @@ orderly_runner_ <- R6::R6Class(
       if (is.null(identity)) {
         self$config <- orderly::orderly_config(root)
       } else {
+        self$identity <- identity
         self$config <- withr::with_envvar(
           c(ORDERLY_API_SERVER_IDENTITY = identity),
           orderly::orderly_config(root))
@@ -195,6 +198,25 @@ orderly_runner_ <- R6::R6Class(
       self$queue$worker_config_save("localhost", heartbeat_period = 10)
       self$start_workers(workers, worker_timeout)
       self$keys <- orderly_key(self$queue$queue_id)
+    },
+
+    #' @description
+    #' Re-read configuration and set options
+    reload = function() {
+      if (is.null(self$identity)) {
+        self$config <- orderly::orderly_config(self$root)
+      } else {
+        self$config <- withr::with_envvar(
+          c(ORDERLY_API_SERVER_IDENTITY = self$identity),
+          orderly::orderly_config(self$root))
+      }
+
+      opts <- self$config$server_options()
+      self$allow_ref <- !isTRUE(opts$default_branch_only)
+      self$default_branch <- opts$default_branch %||% "master"
+      message(sprintf("Default git branch: %s", self$default_branch))
+      message(sprintf("%s reference switching in runner",
+                      if (self$allow_ref) "Allowing" else "Disallowing"))
     },
 
     #' @description

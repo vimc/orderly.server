@@ -992,3 +992,18 @@ Gets metadata of all report versions accessible to the user.
     }
 ]
 ```
+
+## POST /reload/
+
+Reloads `orderly` config. This is used to bring config changes into effect where
+`orderly_config.yml` has changed.
+
+### Response 
+
+```json
+{
+  "status": "success",
+  "errors": null,
+  "data": null
+}
+```
