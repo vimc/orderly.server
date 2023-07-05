@@ -1,4 +1,4 @@
-ARG BASE_IMAGE_TAG=master
+ARG BASE_IMAGE_TAG=vimc-7135
 FROM vimc/orderly:${BASE_IMAGE_TAG}
 
 RUN apt-get update || apt-get update && apt-get install -y \
