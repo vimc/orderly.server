@@ -13,7 +13,7 @@ Imports:
     ids,
     jsonlite,
     lgr,
-    orderly (>= 1.4.10),
+    orderly1 (>= 1.7.0),
     porcelain (>= 0.1.9),
     processx,
     redux,
@@ -36,4 +36,4 @@ Remotes:
     mrc-ide/rrq@ebca6d1,
     reside-ic/porcelain,
     ropensci/jsonvalidate,
-    vimc/orderly
+    orderly=vimc/orderly@vimc-7135

@@ -62,13 +62,13 @@ git_checkout_branch <- function(name, force = FALSE, root = NULL,
   ##      ^ this does not return anything sensible when we were in
   ##        detached head state; detect HEAD and get the hash perhaps?
   args <- c("checkout", if (create) "-b", name)
-  orderly::orderly_log("git", sprintf("checkout %s; was %s", name, prev))
+  orderly1::orderly_log("git", sprintf("checkout %s; was %s", name, prev))
   git_run(args, root = root, check = TRUE)
   prev
 }
 
 git_clone_local <- function(source, destination = NULL) {
-  orderly::orderly_log("git", "clone")
+  orderly1::orderly_log("git", "clone")
   if (!length(destination)) {
     destination <- tempfile()
     dir_create(destination)
@@ -83,12 +83,12 @@ git_clone_local <- function(source, destination = NULL) {
 }
 
 git_fetch <- function(root = NULL) {
-  orderly::orderly_log("git", "fetch")
+  orderly1::orderly_log("git", "fetch")
   git_run("fetch", root = root, check = TRUE)
 }
 
 git_pull <- function(root = NULL) {
-  orderly::orderly_log("git", "pull")
+  orderly1::orderly_log("git", "pull")
   git_run("pull", root = root, check = TRUE)
 }
 
