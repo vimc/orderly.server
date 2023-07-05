@@ -447,7 +447,7 @@ test_that("Can pack, run and import a bundle", {
   filename <- httr::headers(res)[["Content-Disposition"]]
   expect_match(filename, "^[0-9]{8}-[0-9]{6}-[[:xdigit:]]{8}\\.zip")
 
-  ans <- orderly::orderly_bundle_run(zip_in, echo = FALSE)
+  ans <- orderly1::orderly_bundle_run(zip_in, echo = FALSE)
   expect_equal(filename, paste0(ans$id, ".zip"))
 
   res_up <- httr::POST(server$api_url("/v1/bundle/import"),
@@ -460,7 +460,7 @@ test_that("Can pack, run and import a bundle", {
   expect_true(dat$data)
 
   expect_equal(
-    orderly::orderly_list_archive(server$path),
+    orderly1::orderly_list_archive(server$path),
     data.frame(name = "example", id = ans$id, stringsAsFactors = FALSE))
 })
 
@@ -681,8 +681,8 @@ test_that("can get report versions", {
   path <- orderly_prepare_orderly_git_example()
   server <- start_test_server(path[["local"]])
   on.exit(server$stop())
-  id <- orderly::orderly_run("minimal", root = path[["local"]], echo = FALSE)
-  orderly::orderly_commit(id, root = path[["local"]])
+  id <- orderly1::orderly_run("minimal", root = path[["local"]], echo = FALSE)
+  orderly1::orderly_commit(id, root = path[["local"]])
 
   r <- content(httr::GET(server$api_url("/v1/reports/minimal/")))
   expect_equal(r$status, "success")
@@ -694,8 +694,8 @@ test_that("can get report versions", {
 test_that("can get report version artefacts", {
   path <- orderly_prepare_orderly_git_example()[["local"]]
   server <- start_test_server(path)
-  id <- orderly::orderly_run("minimal", root = path, echo = FALSE)
-  orderly::orderly_commit(id, root = path)
+  id <- orderly1::orderly_run("minimal", root = path, echo = FALSE)
+  orderly1::orderly_commit(id, root = path)
   on.exit(server$stop())
 
   url <- paste0("/v1/reports/minimal/versions/", id, "/artefacts/")
@@ -710,8 +710,8 @@ test_that("can get report version artefacts", {
 test_that("can get report version details", {
   path <- orderly_prepare_orderly_git_example()[["local"]]
   server <- start_test_server(path)
-  id <- orderly::orderly_run("minimal", root = path, echo = FALSE)
-  orderly::orderly_commit(id, root = path)
+  id <- orderly1::orderly_run("minimal", root = path, echo = FALSE)
+  orderly1::orderly_commit(id, root = path)
   on.exit(server$stop())
 
   url <- paste0("/v1/reports/minimal/versions/", id, "/")
@@ -729,8 +729,8 @@ test_that("can get report version details", {
 test_that("can get report version data hashes", {
   path <- orderly_prepare_orderly_git_example()[["local"]]
   server <- start_test_server(path)
-  id <- orderly::orderly_run("minimal", root = path, echo = FALSE)
-  orderly::orderly_commit(id, root = path)
+  id <- orderly1::orderly_run("minimal", root = path, echo = FALSE)
+  orderly1::orderly_commit(id, root = path)
   on.exit(server$stop())
 
   url <- paste0("/v1/reports/minimal/versions/", id, "/data/")
@@ -745,8 +745,8 @@ test_that("can get report version data hashes", {
 test_that("can get report version resource hashes", {
   path <- orderly_prepare_orderly_example(name = "demo", git = TRUE)
   server <- start_test_server(path)
-  id <- orderly::orderly_run("use_resource", root = path, echo = FALSE)
-  orderly::orderly_commit(id, root = path)
+  id <- orderly1::orderly_run("use_resource", root = path, echo = FALSE)
+  orderly1::orderly_commit(id, root = path)
   on.exit(server$stop())
 
   url <- paste0("/v1/reports/use_resource/versions/", id, "/resources/")
@@ -761,8 +761,8 @@ test_that("can get report version resource hashes", {
 test_that("can get report version changelog", {
   path <- orderly_prepare_orderly_example(name = "demo", git = TRUE)
   server <- start_test_server(path)
-  id <- orderly::orderly_run("changelog", root = path, echo = FALSE)
-  orderly::orderly_commit(id, root = path)
+  id <- orderly1::orderly_run("changelog", root = path, echo = FALSE)
+  orderly1::orderly_commit(id, root = path)
   on.exit(server$stop())
 
   url <- paste0("/v1/reports/changelog/versions/", id, "/changelog/")
@@ -778,8 +778,8 @@ test_that("can get report version changelog", {
 test_that("can get all versions", {
   path <- orderly_prepare_orderly_example(name = "demo", git = TRUE)
   server <- start_test_server(path)
-  id <- orderly::orderly_run("changelog", root = path, echo = FALSE)
-  orderly::orderly_commit(id, root = path)
+  id <- orderly1::orderly_run("changelog", root = path, echo = FALSE)
+  orderly1::orderly_commit(id, root = path)
   on.exit(server$stop())
 
   url <- paste0("/v1/versions/")
@@ -799,7 +799,7 @@ test_that("can change and reload config", {
 
   remote <- list(
     main = list(
-      driver = "orderly::orderly_remote_path",
+      driver = "orderly1::orderly_remote_path",
       primary = TRUE,
       default_branch_only = TRUE,
       args = list(root = path)
@@ -822,7 +822,7 @@ test_that("can change and reload config", {
   # now change config to allow ref switching
   remote <- list(
     main = list(
-      driver = "orderly::orderly_remote_path",
+      driver = "orderly1::orderly_remote_path",
       primary = TRUE,
       default_branch_only = FALSE,
       args = list(root = path)

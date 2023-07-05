@@ -1,6 +1,6 @@
 Package: orderly.server
 Title: Serve Orderly
-Version: 0.3.31
+Version: 0.3.32
 Description: Run orderly reports as a server.
 License: MIT + file LICENSE
 Author: Rich FitzJohn
@@ -13,7 +13,7 @@ Imports:
     ids,
     jsonlite,
     lgr,
-    orderly (>= 1.4.10),
+    orderly1 (>= 1.7.0),
     porcelain (>= 0.1.9),
     processx,
     redux,
@@ -35,4 +35,4 @@ Encoding: UTF-8
 Remotes:
     reside-ic/porcelain,
     ropensci/jsonvalidate,
-    vimc/orderly
+    orderly=vimc/orderly@vimc-7135
