@@ -195,7 +195,8 @@ orderly_runner_ <- R6::R6Class(
       message("Starting queue")
       self$queue_id <- orderly_queue_id(queue_id)
       self$queue <- rrq::rrq_controller$new(self$queue_id, self$con)
-      self$queue$worker_config_save("localhost", heartbeat_period = 10)
+      config <- rrq::rrq_worker_config(heartbeat_period = 10)
+      self$queue$worker_config_save("localhost", config)
       self$start_workers(workers, worker_timeout)
       self$keys <- orderly_key(self$queue$queue_id)
     },
