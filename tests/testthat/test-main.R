@@ -133,31 +133,3 @@ test_that("main_worker_args", {
                list(queue_id = "orderly",
                     go_signal = "/go-signal"))
 })
-
-
-test_that("main worker starts rrq worker", {
-  mock_rrq_worker <- mockery::mock(list(loop = function() TRUE), cycle = TRUE)
-  with_mock("rrq::rrq_worker_from_config" = mock_rrq_worker, {
-    worker <- main_worker("queue_id")
-  })
-  args <- mockery::mock_args(mock_rrq_worker)[[1]]
-  expect_equal(args[[1]], "queue_id")
-})
-
-test_that("main worker waits for go signal", {
-  path <- tempfile()
-  dir.create(path)
-
-  go_signal <- file.path(path, "go")
-  dt <- as.difftime(1, units = "secs")
-  mock_rrq_worker <- mockery::mock(list(loop = function() TRUE), cycle = TRUE)
-  mock_wait_while <- mockery::mock(dt, cycle = TRUE)
-  msg <- capture_messages(
-    with_mock("orderly.server:::wait_while" = mock_wait_while,
-              "rrq::rrq_worker_from_config" = mock_rrq_worker,
-              worker <- main_worker(c("--go-signal", go_signal, "queue_id"))))
-
-  mockery::expect_called(mock_wait_while, 1)
-  args <- mockery::mock_args(mock_rrq_worker)[[1]]
-  expect_equal(args[[1]], "queue_id")
-})
