@@ -35,7 +35,7 @@ only for creating automated tools for use with orderly.
 \examples{
 available <- redux::redis_available()
 if (available) {
-  path <- orderly:::prepare_orderly_git_example()
+  path <- orderly1:::prepare_orderly_git_example()
   runner <- orderly.server::orderly_runner(path[["local"]], workers = 0)
 }
 }

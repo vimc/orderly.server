@@ -940,7 +940,7 @@ test_that("bundle pack can pack basic bundle", {
 
   mock_bundle_pack <- mockery::mock(list(path = tmp))
 
-  with_mock("orderly::orderly_bundle_pack" = mock_bundle_pack, {
+  with_mock("orderly1::orderly_bundle_pack" = mock_bundle_pack, {
     endpoint <- endpoint_bundle_pack("root")
     res <- endpoint$run("name")
   })
@@ -960,7 +960,7 @@ test_that("bundle pack can pass parameters and instance", {
   tmp <- tempfile(fileext = ".zip")
   writeBin(as.raw(0:255), tmp)
   mock_bundle_pack <- mockery::mock(list(path = tmp))
-  with_mock("orderly::orderly_bundle_pack" = mock_bundle_pack, {
+  with_mock("orderly1::orderly_bundle_pack" = mock_bundle_pack, {
     endpoint <- endpoint_bundle_pack("root")
     res <- endpoint$run("name", parameters = '{"a": 1}',
                         instance = "myinstance")
@@ -986,13 +986,13 @@ test_that("Can create and run bundles", {
   writeBin(res$body, path_pack)
   expect_true(file.exists(path_pack))
 
-  res <- orderly::orderly_bundle_run(path_pack, echo = FALSE)
+  res <- orderly1::orderly_bundle_run(path_pack, echo = FALSE)
 
   bundle_import <- endpoint_bundle_import(path)
   bundle_res <- bundle_import$run(readBin(res$path, "raw", 10e6))
   expect_equal(bundle_res$status_code, 200)
   expect_equal(
-    orderly::orderly_list_archive(path),
+    orderly1::orderly_list_archive(path),
     data.frame(name = "other", id = res$id, stringsAsFactors = FALSE))
 })
 
@@ -1025,8 +1025,8 @@ test_that("api runs backup on preroute", {
   expect_equal(nrow(dat_backup), 0)
 
   ## When report is run
-  id <- orderly::orderly_run("example", root = path, echo = FALSE)
-  orderly::orderly_commit(id, root = path)
+  id <- orderly1::orderly_run("example", root = path, echo = FALSE)
+  orderly1::orderly_commit(id, root = path)
 
   ## Call API endpoint to trigger backup from preroute
   Sys.sleep(1.2) ## ensure backup period has passed
@@ -1079,9 +1079,9 @@ test_that("endpoint_report_info can return info from report run", {
   ## Run a report to retrieve info for
   append_lines('stop("some error")',
                file.path(path[["local"]], "src", "minimal", "script.R"))
-  expect_error(orderly::orderly_run("minimal", root = path[["local"]],
+  expect_error(orderly1::orderly_run("minimal", root = path[["local"]],
                                     echo = FALSE), "some error")
-  drafts <- orderly::orderly_list_drafts(root = path[["local"]],
+  drafts <- orderly1::orderly_list_drafts(root = path[["local"]],
                                          include_failed = TRUE)
 
   runner <- mock_runner(root = path[["local"]])
@@ -1103,7 +1103,7 @@ test_that("endpoint_report_info can return info from report run", {
 
 test_that("endpoint_report_info returns parameter info", {
   path <- orderly_prepare_orderly_example("demo")
-  id <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+  id <- orderly1::orderly_run("other", parameters = list(nmin = 0.1),
                              root = path, echo = FALSE)
 
   runner <- mock_runner(root = path)
@@ -1121,9 +1121,9 @@ test_that("endpoint_report_info returns parameter info", {
 
 test_that("can retrieve artefact hashes", {
   path <- orderly_prepare_orderly_example("demo")
-  id <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+  id <- orderly1::orderly_run("other", parameters = list(nmin = 0.1),
                              root = path, echo = FALSE)
-  orderly::orderly_commit(id, root = path)
+  orderly1::orderly_commit(id, root = path)
   endpoint <- endpoint_report_version_artefact_hashes(path)
   res <- endpoint$run(name = "other", id = id)
 
@@ -1137,9 +1137,9 @@ test_that("can retrieve artefact hashes", {
 
 test_that("can retrieve data hashes", {
   path <- orderly_prepare_orderly_example("demo")
-  id <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+  id <- orderly1::orderly_run("other", parameters = list(nmin = 0.1),
                              root = path, echo = FALSE)
-  orderly::orderly_commit(id, root = path)
+  orderly1::orderly_commit(id, root = path)
   endpoint <- endpoint_report_version_data_hashes(path)
   res <- endpoint$run(name = "other", id = id)
 
@@ -1166,9 +1166,9 @@ test_that("data returns 404 if report version does not exist", {
 
 test_that("can return resource hashes", {
   path <- orderly_prepare_orderly_example("demo")
-  id <- orderly::orderly_run("use_resource",
+  id <- orderly1::orderly_run("use_resource",
                              root = path, echo = FALSE)
-  orderly::orderly_commit(id, root = path)
+  orderly1::orderly_commit(id, root = path)
   endpoint <- endpoint_report_version_resource_hashes(path)
   res <- endpoint$run(name = "use_resource", id = id)
 
@@ -1196,17 +1196,17 @@ test_that("resources returns 404 if report version does not exist", {
 
 test_that("can retrieve version list", {
   path <- orderly_prepare_orderly_example("demo")
-  id1 <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+  id1 <- orderly1::orderly_run("other", parameters = list(nmin = 0.1),
                               root = path, echo = FALSE)
-  orderly::orderly_commit(id1, root = path)
+  orderly1::orderly_commit(id1, root = path)
 
-  id2 <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+  id2 <- orderly1::orderly_run("other", parameters = list(nmin = 0.1),
                               root = path, echo = FALSE)
-  orderly::orderly_commit(id2, root = path)
+  orderly1::orderly_commit(id2, root = path)
 
-  id3 <- orderly::orderly_run("minimal",
+  id3 <- orderly1::orderly_run("minimal",
                               root = path, echo = FALSE)
-  orderly::orderly_commit(id3, root = path)
+  orderly1::orderly_commit(id3, root = path)
 
   data <- target_report_versions(path, "other")
   expect_equal(data, c(id1, id2))
@@ -1235,13 +1235,13 @@ test_that("Returns 404 if no report versions", {
 
 test_that("can retrieve custom fields for versions", {
   path <- orderly_prepare_orderly_example("demo")
-  id1 <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+  id1 <- orderly1::orderly_run("other", parameters = list(nmin = 0.1),
                               root = path, echo = FALSE)
-  orderly::orderly_commit(id1, root = path)
+  orderly1::orderly_commit(id1, root = path)
 
-  id2 <- orderly::orderly_run("minimal",
+  id2 <- orderly1::orderly_run("minimal",
                               root = path, echo = FALSE)
-  orderly::orderly_commit(id2, root = path)
+  orderly1::orderly_commit(id2, root = path)
 
   ids <- paste(id1, id2, sep = ",")
   data <- target_report_versions_custom_fields(path, ids)
@@ -1281,13 +1281,13 @@ test_that("can retrieve custom fields", {
 
 test_that("can retrieve parameters for versions", {
   path <- orderly_prepare_orderly_example("demo")
-  id1 <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+  id1 <- orderly1::orderly_run("other", parameters = list(nmin = 0.1),
                               root = path, echo = FALSE)
-  orderly::orderly_commit(id1, root = path)
+  orderly1::orderly_commit(id1, root = path)
 
-  id2 <- orderly::orderly_run("other", parameters = list(nmin = 0.5),
+  id2 <- orderly1::orderly_run("other", parameters = list(nmin = 0.5),
                               root = path, echo = FALSE)
-  orderly::orderly_commit(id2, root = path)
+  orderly1::orderly_commit(id2, root = path)
 
   ids <- paste(id1, id2, sep = ",")
   data <- target_report_versions_params(path, ids)
@@ -1309,9 +1309,9 @@ test_that("can retrieve version details", {
   path <- orderly_prepare_orderly_example("demo")
 
   # check report with parameters
-  id <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+  id <- orderly1::orderly_run("other", parameters = list(nmin = 0.1),
                              root = path, echo = FALSE)
-  orderly::orderly_commit(id, root = path)
+  orderly1::orderly_commit(id, root = path)
 
   data <- target_report_version_details(path, "other", id)
   expect_equal(data$id, scalar(id))
@@ -1339,9 +1339,9 @@ test_that("can retrieve version details", {
   expect_equal(res$data, data)
 
   # check report with resources
-  id <- orderly::orderly_run("use_resource",
+  id <- orderly1::orderly_run("use_resource",
                              root = path, echo = FALSE)
-  orderly::orderly_commit(id, root = path)
+  orderly1::orderly_commit(id, root = path)
 
   data <- target_report_version_details(path, "use_resource", id)
   expect_equal(data$resources$name, "meta/data.csv")
@@ -1381,21 +1381,21 @@ test_that("version details returns 404 for non-existent version", {
 
 test_that("can retrieve report list with latest version", {
   path <- orderly_prepare_orderly_example("demo")
-  id <- orderly::orderly_run("minimal",
+  id <- orderly1::orderly_run("minimal",
                              root = path, echo = FALSE)
-  orderly::orderly_commit(id, root = path)
+  orderly1::orderly_commit(id, root = path)
 
-  id_oldest <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+  id_oldest <- orderly1::orderly_run("other", parameters = list(nmin = 0.1),
                              root = path, echo = FALSE)
-  orderly::orderly_commit(id_oldest, root = path)
+  orderly1::orderly_commit(id_oldest, root = path)
   Sys.sleep(1)
-  id_old <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+  id_old <- orderly1::orderly_run("other", parameters = list(nmin = 0.1),
                              root = path, echo = FALSE)
-  orderly::orderly_commit(id_old, root = path)
+  orderly1::orderly_commit(id_old, root = path)
   Sys.sleep(1)
-  id_latest <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+  id_latest <- orderly1::orderly_run("other", parameters = list(nmin = 0.1),
                              root = path, echo = FALSE)
-  orderly::orderly_commit(id_latest, root = path)
+  orderly1::orderly_commit(id_latest, root = path)
 
   data <- target_reports(path, NULL)
   expect_equal(nrow(data), 2)
@@ -1416,17 +1416,17 @@ test_that("can retrieve report list with latest version", {
 
 test_that("can retrieve report list filtered to report names", {
   path <- orderly_prepare_orderly_example("demo")
-  id_minimal <- orderly::orderly_run("minimal",
+  id_minimal <- orderly1::orderly_run("minimal",
                              root = path, echo = FALSE)
-  orderly::orderly_commit(id_minimal, root = path)
+  orderly1::orderly_commit(id_minimal, root = path)
 
-  id_other <- orderly::orderly_run("other", parameters = list(nmin = 0.1),
+  id_other <- orderly1::orderly_run("other", parameters = list(nmin = 0.1),
                                     root = path, echo = FALSE)
-  orderly::orderly_commit(id_other, root = path)
+  orderly1::orderly_commit(id_other, root = path)
 
-  id_use_resource <- orderly::orderly_run("use_resource",
+  id_use_resource <- orderly1::orderly_run("use_resource",
                              root = path, echo = FALSE)
-  orderly::orderly_commit(id_use_resource, root = path)
+  orderly1::orderly_commit(id_use_resource, root = path)
 
   data <- target_reports(path, "minimal,use_resource")
   expect_equal(nrow(data), 2)
@@ -1437,10 +1437,10 @@ test_that("can retrieve report list filtered to report names", {
 
 test_that("can get all changelog for report version", {
   path <- orderly_prepare_orderly_example("demo")
-  id <- orderly::orderly_run("changelog",
+  id <- orderly1::orderly_run("changelog",
                                      root = path, echo = FALSE)
-  orderly::orderly_commit(id, root = path)
-  db <- orderly::orderly_db("destination", root = path)
+  orderly1::orderly_commit(id, root = path)
+  db <- orderly1::orderly_db("destination", root = path)
   data <- target_report_version_changelog(path, "changelog", id)
   expect_equal(nrow(data), 2)
   expect_equal(data$label, c("public", "internal"))
@@ -1456,22 +1456,22 @@ test_that("can get all changelog for report version", {
 
 test_that("can get public changelogs for report version", {
   path <- orderly_prepare_orderly_example("demo")
-  id_older <- orderly::orderly_run("changelog",
+  id_older <- orderly1::orderly_run("changelog",
                              root = path, echo = FALSE)
-  orderly::orderly_commit(id_older, root = path)
+  orderly1::orderly_commit(id_older, root = path)
   Sys.sleep(1)
-  id <- orderly::orderly_run("changelog",
+  id <- orderly1::orderly_run("changelog",
                              root = path, echo = FALSE)
-  orderly::orderly_commit(id, root = path)
-  id_diff <- orderly::orderly_run("minimal",
+  orderly1::orderly_commit(id, root = path)
+  id_diff <- orderly1::orderly_run("minimal",
                                   root = path, echo = FALSE)
-  orderly::orderly_commit(id_diff, root = path)
+  orderly1::orderly_commit(id_diff, root = path)
   Sys.sleep(1)
-  id_later <- orderly::orderly_run("changelog",
+  id_later <- orderly1::orderly_run("changelog",
                              root = path, echo = FALSE)
-  orderly::orderly_commit(id_later, root = path)
+  orderly1::orderly_commit(id_later, root = path)
 
-  db <- orderly::orderly_db("destination", root = path)
+  db <- orderly1::orderly_db("destination", root = path)
 
   insert_changelog(db, list(1, "public", "blah blah", 1, id), TRUE)
   # shouldn't return for non-public
@@ -1524,7 +1524,7 @@ test_that("can get all versions", {
                          echo = FALSE),
            orderly_run_with_wait(root = path, name = "changelog", echo = FALSE))
 
-  lapply(ids, function(id) orderly::orderly_commit(id, root = path))
+  lapply(ids, function(id) orderly1::orderly_commit(id, root = path))
 
   data <- target_all_versions(path)
   expect_equal(length(data), 6)

@@ -73,7 +73,7 @@ orderly_backup_ <- R6::R6Class(
       }
       now <- Sys.time()
       message(sprintf("%s - Backing up orderly db", now))
-      orderly:::orderly_backup(self$config)
+      orderly1:::orderly_backup(self$config)
       self$last_backup <- now
       invisible(TRUE)
     }

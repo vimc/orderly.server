@@ -406,7 +406,7 @@ As for the `/reports/:name/run/` endpoint, accepts as `POST` body json that will
 
 Also accepts the query parameter `instance` which can be used to change database instance.
 
-Returns binary data, being the created bundle object for use with `orderly::orderly_bundle_run`
+Returns binary data, being the created bundle object for use with `orderly1::orderly_bundle_run`
 
 ## POST /bundle/import
 

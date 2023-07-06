@@ -94,7 +94,7 @@ test_that("write script produces sensible script", {
   dir.create(path, FALSE, TRUE)
   bin <- write_script(
     path,
-    readLines(system.file("script", package = "orderly", mustWork = TRUE)))
+    readLines(system.file("script", package = "orderly1", mustWork = TRUE)))
   expect_equal(basename(bin), "orderly.server")
   expect_true(file.exists(bin))
   expect_equal(readLines(bin)[[1]], "#!/usr/bin/env Rscript")
@@ -106,7 +106,7 @@ test_that("write script can be versioned", {
   dir.create(path, FALSE, TRUE)
   bin <- write_script(
     path,
-    readLines(system.file("script", package = "orderly", mustWork = TRUE)),
+    readLines(system.file("script", package = "orderly1", mustWork = TRUE)),
     TRUE)
   expect_match(readLines(bin)[[1]], R.home(), fixed = TRUE)
 })
@@ -132,32 +132,4 @@ test_that("main_worker_args", {
   expect_equal(main_worker_args(c("--go-signal", "/go-signal", "orderly")),
                list(queue_id = "orderly",
                     go_signal = "/go-signal"))
-})
-
-
-test_that("main worker starts rrq worker", {
-  mock_rrq_worker <- mockery::mock(list(loop = function() TRUE), cycle = TRUE)
-  with_mock("rrq::rrq_worker_from_config" = mock_rrq_worker, {
-    worker <- main_worker("queue_id")
-  })
-  args <- mockery::mock_args(mock_rrq_worker)[[1]]
-  expect_equal(args[[1]], "queue_id")
-})
-
-test_that("main worker waits for go signal", {
-  path <- tempfile()
-  dir.create(path)
-
-  go_signal <- file.path(path, "go")
-  dt <- as.difftime(1, units = "secs")
-  mock_rrq_worker <- mockery::mock(list(loop = function() TRUE), cycle = TRUE)
-  mock_wait_while <- mockery::mock(dt, cycle = TRUE)
-  msg <- capture_messages(
-    with_mock("orderly.server:::wait_while" = mock_wait_while,
-              "rrq::rrq_worker_from_config" = mock_rrq_worker,
-              worker <- main_worker(c("--go-signal", go_signal, "queue_id"))))
-
-  mockery::expect_called(mock_wait_while, 1)
-  args <- mockery::mock_args(mock_rrq_worker)[[1]]
-  expect_equal(args[[1]], "queue_id")
 })

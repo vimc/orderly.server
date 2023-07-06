@@ -32,7 +32,7 @@ TAG_LATEST="${PACKAGE_ORG}/${PACKAGE_NAME}:latest"
 ## combined tag so that we never replace an existing tagged
 ## image built off master with an image with a different
 ## version of orderly installed
-ORDERLY_VERSION="${ORDERLY_VERSION:-master}"
+ORDERLY_VERSION="${ORDERLY_VERSION:-vimc-7135}"
 if [ "$ORDERLY_VERSION" != "master" ]; then
     TAG_SHA="$TAG_SHA-$ORDERLY_VERSION"
     buildkite-agent meta-data set "orderly-server-sha" $TAG_SHA

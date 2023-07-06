@@ -18,8 +18,8 @@ All the query stuff is already dealt with in [montagu-reporting-api](https://git
 IMAGE=docker.montagu.dide.ic.ac.uk:5000/orderly.server:master
 docker pull $IMAGE
 mkdir orderly
-docker run --rm --entrypoint Rscript -v ${PWD}/orderly:/orderly --user ${UID} $IMAGE -e 'orderly:::prepare_orderly_git_example("/orderly")'
-docker run --rm --entrypoint Rscript -v ${PWD}/orderly:/orderly --user ${UID} $IMAGE -e 'orderly::orderly_rebuild("/orderly")'
+docker run --rm --entrypoint Rscript -v ${PWD}/orderly:/orderly --user ${UID} $IMAGE -e 'orderly1:::prepare_orderly_git_example("/orderly")'
+docker run --rm --entrypoint Rscript -v ${PWD}/orderly:/orderly --user ${UID} $IMAGE -e 'orderly1::orderly_rebuild("/orderly")'
 docker run --rm -p 8321:8321 -v ${PWD}/orderly:/orderly --user ${UID} $IMAGE /orderly
 ```
 
