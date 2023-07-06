@@ -198,8 +198,8 @@ target_bundle_pack <- function(path, name, parameters = NULL,
   if (!is.null(parameters)) {
     parameters <- jsonlite::fromJSON(parameters)
   }
-  res <- orderly1::orderly_bundle_pack(tempfile(), name, parameters, root = path,
-                                      instance = instance)
+  res <- orderly1::orderly_bundle_pack(tempfile(), name, parameters,
+                                       root = path, instance = instance)
   on.exit(unlink(res$path))
   bytes <- readBin(res$path, "raw", n = file.size(res$path))
   bytes <- porcelain::porcelain_add_headers(

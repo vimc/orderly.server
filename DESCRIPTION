@@ -35,4 +35,4 @@ Encoding: UTF-8
 Remotes:
     reside-ic/porcelain,
     ropensci/jsonvalidate,
-    orderly=vimc/orderly@vimc-7135
+    orderly1=vimc/orderly@vimc-7135
