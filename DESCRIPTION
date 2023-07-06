@@ -30,7 +30,7 @@ Suggests:
     testthat,
     withr,
     zip
-RoxygenNote: 7.2.0
+RoxygenNote: 7.2.3
 Encoding: UTF-8
 Remotes:
     mrc-ide/rrq@ebca6d1,
