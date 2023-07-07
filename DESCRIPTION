@@ -17,7 +17,7 @@ Imports:
     porcelain (>= 0.1.9),
     processx,
     redux,
-    rrq (>= 0.6.0),
+    rrq (== 0.6.0),
     utils,
     yaml
 Suggests:
@@ -33,6 +33,7 @@ Suggests:
 RoxygenNote: 7.2.0
 Encoding: UTF-8
 Remotes:
+    mrc-ide/rrq@ebca6d1,
     reside-ic/porcelain,
     ropensci/jsonvalidate,
     vimc/orderly

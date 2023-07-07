@@ -61,7 +61,6 @@ jobs:
           remotes::install_deps(dependencies = TRUE)
           install.packages("pkgdown")
           remotes::install_cran("rcmdcheck")
-          remotes::install_github("mrc-ide/rrq")
           remotes::install_github("ropensci/jsonvalidate")
         shell: Rscript {0}
 

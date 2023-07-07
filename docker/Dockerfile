@@ -20,8 +20,8 @@ RUN install2.r --error \
   porcelain \
   processx \
   remotes \
-  rrq \
-  webutils
+  webutils && \
+  Rscript -e 'remotes::install_github("mrc-ide/rrq@ebca6d1", upgrade = FALSE)'
 
 COPY . /src
 
