@@ -26,7 +26,7 @@
 ##' @examples
 ##' available <- redux::redis_available()
 ##' if (available) {
-##'   path <- orderly:::prepare_orderly_git_example()
+##'   path <- orderly1:::prepare_orderly_git_example()
 ##'   runner <- orderly.server::orderly_runner(path[["local"]], workers = 0)
 ##' }
 orderly_runner <- function(path, identity = NULL, queue_id = NULL,
@@ -41,7 +41,7 @@ runner_run <- function(key_report_id, key, root, name, parameters, instance,
   dir.create(bin)
   orderly_bin <- write_script(
     bin,
-    readLines(system.file("script", package = "orderly", mustWork = TRUE)),
+    readLines(system.file("script", package = "orderly1", mustWork = TRUE)),
     versioned = TRUE)
   id_file <- path_id_file(root, key)
   if (!is.null(parameters)) {
@@ -161,12 +161,12 @@ orderly_runner_ <- R6::R6Class(
                           workers, cleanup_on_exit = workers > 0,
                           worker_timeout = Inf) {
       if (is.null(identity)) {
-        self$config <- orderly::orderly_config(root)
+        self$config <- orderly1::orderly_config(root)
       } else {
         self$identity <- identity
         self$config <- withr::with_envvar(
           c(ORDERLY_API_SERVER_IDENTITY = identity),
-          orderly::orderly_config(root))
+          orderly1::orderly_config(root))
       }
       self$root <- self$config$root
       if (!runner_has_git(self$root)) {
@@ -182,7 +182,7 @@ orderly_runner_ <- R6::R6Class(
 
       ## This ensures that the index will be present, which will be
       ## useful if something else wants to access the database!
-      DBI::dbDisconnect(orderly::orderly_db("destination", self$config, FALSE))
+      DBI::dbDisconnect(orderly1::orderly_db("destination", self$config, FALSE))
 
       ## Create directories for storing logs and id files
       dir_create(dirname(path_stderr(self$root, "ignore")))
@@ -204,11 +204,11 @@ orderly_runner_ <- R6::R6Class(
     #' Re-read configuration and set options
     reload = function() {
       if (is.null(self$identity)) {
-        self$config <- orderly::orderly_config(self$root)
+        self$config <- orderly1::orderly_config(self$root)
       } else {
         self$config <- withr::with_envvar(
           c(ORDERLY_API_SERVER_IDENTITY = self$identity),
-          orderly::orderly_config(self$root))
+          orderly1::orderly_config(self$root))
       }
 
       opts <- self$config$server_options()

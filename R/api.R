@@ -87,7 +87,7 @@ target_git_fetch <- function(runner) {
   path <- runner$root
   res <- git_fetch(path)
   if (length(res$output) > 0L) {
-    orderly::orderly_log("fetch", res$output)
+    orderly1::orderly_log("fetch", res$output)
   }
   res$output
 }
@@ -102,7 +102,7 @@ endpoint_git_fetch <- function(runner) {
 target_git_pull <- function(runner) {
   res <- git_pull(runner$root)
   if (length(res$output) > 0L) {
-    orderly::orderly_log("pull", res$output)
+    orderly1::orderly_log("pull", res$output)
   }
   res$output
 }
@@ -198,8 +198,8 @@ target_bundle_pack <- function(path, name, parameters = NULL,
   if (!is.null(parameters)) {
     parameters <- jsonlite::fromJSON(parameters)
   }
-  res <- orderly::orderly_bundle_pack(tempfile(), name, parameters, root = path,
-                                      instance = instance)
+  res <- orderly1::orderly_bundle_pack(tempfile(), name, parameters,
+                                       root = path, instance = instance)
   on.exit(unlink(res$path))
   bytes <- readBin(res$path, "raw", n = file.size(res$path))
   bytes <- porcelain::porcelain_add_headers(
@@ -221,7 +221,7 @@ target_bundle_import <- function(path, data) {
   data_path <- tempfile(fileext = ".zip")
   on.exit(unlink(data_path))
   writeBin(data, data_path)
-  orderly::orderly_bundle_import(data_path, root = path)
+  orderly1::orderly_bundle_import(data_path, root = path)
   scalar(TRUE)
 }
 
@@ -237,7 +237,7 @@ endpoint_bundle_import <- function(path, data) {
 }
 
 target_report_info <- function(runner, id, name) {
-  info <- orderly::orderly_info(id, name, root = runner$root)
+  info <- orderly1::orderly_info(id, name, root = runner$root)
   info <- recursive_scalar(info)
   ## Rename parameters to params for consistency with rest of API
   info <- append(info, list(params = info$parameters))
@@ -483,7 +483,7 @@ check_timeout <- function(runner, rate_limit = 2 * 60) {
 }
 
 target_report_version_artefact_hashes <- function(path, name, id) {
-  db <- orderly::orderly_db("destination", root = path)
+  db <- orderly1::orderly_db("destination", root = path)
   get_report_version(db, name, id)
   sql <- paste(
     "select",
@@ -512,7 +512,7 @@ target_reports <- function(path, reports = NULL) {
   if (!is.null(reports)) {
     reports <- unlist(strsplit(reports, split = ","))
   }
-  db <- orderly::orderly_db("destination", root = path)
+  db <- orderly1::orderly_db("destination", root = path)
   get_all_reports(db, reports)
 }
 
@@ -526,7 +526,7 @@ endpoint_reports <- function(path) {
 }
 
 target_report_versions <- function(path, name) {
-  db <- orderly::orderly_db("destination", root = path)
+  db <- orderly1::orderly_db("destination", root = path)
   sql <- paste(
     "select report_version.id",
     "from report_version",
@@ -551,7 +551,7 @@ endpoint_report_versions <- function(path) {
 }
 
 target_report_version_details <- function(path, name, id) {
-  db <- orderly::orderly_db("destination", root = path)
+  db <- orderly1::orderly_db("destination", root = path)
   report_version <- get_report_version(db, name, id)
   artefacts <- get_artefacts_for_version(db, id)
   parameters <- get_parameters_for_versions(db, id)
@@ -586,7 +586,7 @@ endpoint_report_version_details <- function(path) {
 }
 
 target_report_versions_custom_fields <- function(path, versions) {
-  db <- orderly::orderly_db("destination", root = path)
+  db <- orderly1::orderly_db("destination", root = path)
   get_custom_fields_for_versions(db, unlist(strsplit(versions, split = ",")))
 }
 
@@ -600,7 +600,7 @@ endpoint_report_versions_custom_fields <- function(path) {
 }
 
 target_custom_fields <- function(path) {
-  db <- orderly::orderly_db("destination", root = path)
+  db <- orderly1::orderly_db("destination", root = path)
 
   sql <- paste(
     "select custom_fields.id",
@@ -619,7 +619,7 @@ endpoint_custom_fields <- function(path) {
 }
 
 target_report_versions_params <- function(path, versions) {
-  db <- orderly::orderly_db("destination", root = path)
+  db <- orderly1::orderly_db("destination", root = path)
   get_parameters_for_versions(db, unlist(strsplit(versions, split = ",")))
 }
 
@@ -633,7 +633,7 @@ endpoint_report_versions_params <- function(path) {
 }
 
 target_report_version_data_hashes <- function(path, name, id) {
-  db <- orderly::orderly_db("destination", root = path)
+  db <- orderly1::orderly_db("destination", root = path)
   get_report_version(db, name, id)
   sql <- paste(
     "select",
@@ -657,7 +657,7 @@ endpoint_report_version_data_hashes <- function(path) {
 }
 
 target_report_version_resource_hashes <- function(path, name, id) {
-  db <- orderly::orderly_db("destination", root = path)
+  db <- orderly1::orderly_db("destination", root = path)
   get_report_version(db, name, id)
   sql <- paste(
     "select",
@@ -685,7 +685,7 @@ target_report_version_changelog <- function(path,
                                             name,
                                             id,
                                             public_only = FALSE) {
-  db <- orderly::orderly_db("destination", root = path)
+  db <- orderly1::orderly_db("destination", root = path)
   version <- get_report_version(db, name, id)
   if (public_only) {
     version_field <- "changelog.report_version_public"
@@ -743,7 +743,7 @@ build_version <- function(v, custom_fields, params) {
 }
 
 target_all_versions <- function(path) {
-  db <- orderly::orderly_db("destination", root = path)
+  db <- orderly1::orderly_db("destination", root = path)
   versions <- get_all_versions(db)
   custom_fields <- get_custom_fields_for_versions(db, versions$id)
   params <- get_parameters_for_versions(db, versions$id)

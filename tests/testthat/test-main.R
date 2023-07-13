@@ -94,7 +94,7 @@ test_that("write script produces sensible script", {
   dir.create(path, FALSE, TRUE)
   bin <- write_script(
     path,
-    readLines(system.file("script", package = "orderly", mustWork = TRUE)))
+    readLines(system.file("script", package = "orderly1", mustWork = TRUE)))
   expect_equal(basename(bin), "orderly.server")
   expect_true(file.exists(bin))
   expect_equal(readLines(bin)[[1]], "#!/usr/bin/env Rscript")
@@ -106,7 +106,7 @@ test_that("write script can be versioned", {
   dir.create(path, FALSE, TRUE)
   bin <- write_script(
     path,
-    readLines(system.file("script", package = "orderly", mustWork = TRUE)),
+    readLines(system.file("script", package = "orderly1", mustWork = TRUE)),
     TRUE)
   expect_match(readLines(bin)[[1]], R.home(), fixed = TRUE)
 })

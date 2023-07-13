@@ -14,6 +14,8 @@ Object for managing running jobs on the redis queue
 \describe{
 \item{\code{root}}{Orderly root}
 
+\item{\code{identity}}{Remote identity, as listed in orderly_config.yml}
+
 \item{\code{config}}{Orderly config}
 
 \item{\code{allow_ref}}{Allow git to change branch/ref for run}
@@ -37,6 +39,7 @@ and task_id}
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-orderly_runner-new}{\code{orderly_runner_$new()}}
+\item \href{#method-orderly_runner-reload}{\code{orderly_runner_$reload()}}
 \item \href{#method-orderly_runner-start_workers}{\code{orderly_runner_$start_workers()}}
 \item \href{#method-orderly_runner-assert_ref_switching_allowed}{\code{orderly_runner_$assert_ref_switching_allowed()}}
 \item \href{#method-orderly_runner-submit_task_report}{\code{orderly_runner_$submit_task_report()}}
@@ -86,6 +89,16 @@ killed. Expect this is only finite during local testing.}
 }
 \if{html}{\out{</div>}}
 }
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-orderly_runner-reload"></a>}}
+\if{latex}{\out{\hypertarget{method-orderly_runner-reload}{}}}
+\subsection{Method \code{reload()}}{
+Re-read configuration and set options
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{orderly_runner_$reload()}\if{html}{\out{</div>}}
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-orderly_runner-start_workers"></a>}}

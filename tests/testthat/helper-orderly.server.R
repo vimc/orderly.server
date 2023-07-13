@@ -128,17 +128,17 @@ expect_simple_endpoint_runs <- function(endpoint, data, status_code = 200,
 
 
 ## nolint start
-orderly_prepare_orderly_git_example <- orderly:::prepare_orderly_git_example
-orderly_prepare_orderly_example <- orderly:::prepare_orderly_example
-orderly_unzip_git_demo <- orderly:::unzip_git_demo
-orderly_path_db_backup <- orderly:::path_db_backup
-orderly_path_orderly_run_rds <- orderly:::path_orderly_run_rds
-orderly_git_checkout_branch <- orderly:::git_checkout_branch
+orderly_prepare_orderly_git_example <- orderly1:::prepare_orderly_git_example
+orderly_prepare_orderly_example <- orderly1:::prepare_orderly_example
+orderly_unzip_git_demo <- orderly1:::unzip_git_demo
+orderly_path_db_backup <- orderly1:::path_db_backup
+orderly_path_orderly_run_rds <- orderly1:::path_orderly_run_rds
+orderly_git_checkout_branch <- orderly1:::git_checkout_branch
 ## nolint end
 
 orderly_run_with_wait <- function(root, wait = 1, ...) {
   Sys.sleep(wait)
-  orderly::orderly_run(root = root, ...)
+  orderly1::orderly_run(root = root, ...)
 }
 
 orderly_git_example <- function(name, path = tempfile(), testing = FALSE) {

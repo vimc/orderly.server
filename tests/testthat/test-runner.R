@@ -222,7 +222,7 @@ test_that("run: success", {
   expect_equal(status$queue, list())
 
   ## Report is in archive
-  d <- orderly::orderly_list_archive(path)
+  d <- orderly1::orderly_list_archive(path)
   expect_equal(d$name, "slow1")
   expect_equal(d$id, report_id)
 })
@@ -266,7 +266,7 @@ test_that("run report with parameters", {
   task_id <- get_task_id_key(runner, key)
   result <- runner$queue$task_wait(task_id)
 
-  d <- orderly::orderly_list_archive(path)
+  d <- orderly1::orderly_list_archive(path)
   expect_equal(d$name, "other")
   expect_equal(d$id, result$report_id)
 
@@ -287,7 +287,7 @@ test_that("run in branch (local)", {
   task_id <- get_task_id_key(runner, key)
   result <- runner$queue$task_wait(task_id)
 
-  d <- orderly::orderly_list_archive(path[["local"]])
+  d <- orderly1::orderly_list_archive(path[["local"]])
   expect_equal(nrow(d), 1L)
   expect_equal(d$name, "other")
   expect_equal(d$id, result$report_id)
@@ -306,7 +306,7 @@ test_that("prevent ref change", {
           dbname = "dbname: source.sqlite"))),
     remote = list(
       main = list(
-        driver = "orderly::orderly_remote_path",
+        driver = "orderly1::orderly_remote_path",
         primary = TRUE,
         default_branch_only = TRUE,
         args = list(root = path))))
@@ -468,12 +468,12 @@ test_that("prevent git changes", {
           dbname = "dbname: source.sqlite"))),
     remote = list(
       main = list(
-        driver = "orderly::orderly_remote_path",
+        driver = "orderly1::orderly_remote_path",
         primary = TRUE,
         default_branch_only = TRUE,
         args = list(root = path[["origin"]])),
       other = list(
-        driver = "orderly::orderly_remote_path",
+        driver = "orderly1::orderly_remote_path",
         args = list(root = path[["origin"]]))))
 
   path_local <- path[["local"]]
@@ -525,7 +525,7 @@ test_that("runner can set instance", {
   file.copy(file.path(path, "source.sqlite"),
             file.path(path, "alternative.sqlite"))
 
-  con <- orderly::orderly_db("source", root = path, instance = "alternative")
+  con <- orderly1::orderly_db("source", root = path, instance = "alternative")
   DBI::dbExecute(con$source, "DELETE from thing where id > 10")
   DBI::dbDisconnect(con$source)
 
@@ -772,7 +772,7 @@ test_that("run: changelog", {
   expect_equal(status$version, report_id)
 
   ## Report is in archive
-  d <- orderly::orderly_list_archive(path)
+  d <- orderly1::orderly_list_archive(path)
   expect_equal(d$name, "minimal")
   expect_equal(d$id, report_id)
 

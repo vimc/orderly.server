@@ -34,7 +34,7 @@ test_that("can get_dependencies", {
       )
     )
   )
-  with_mock("orderly::orderly_graph" = mock_graph, {
+  with_mock("orderly1::orderly_graph" = mock_graph, {
     res <- get_dependencies(path = "test_path",
                             name = "test_name",
                             id = "test_id",

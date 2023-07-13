@@ -1,6 +1,6 @@
 get_dependencies <- function(path, name, id,
                              direction, propagate, max_depth, show_all, use) {
-  report_tree <- orderly::orderly_graph(name = name, id = id,
+  report_tree <- orderly1::orderly_graph(name = name, id = id,
                                        root = path, locate = FALSE,
                                        direction = direction,
                                        propagate = propagate,
